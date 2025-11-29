@@ -1,0 +1,88 @@
+// Place your key bindings in this file to override the defaults
+[
+	// NAVIGATION
+	{
+		"key": "ctrl+shift+a",
+		"command": "workbench.action.terminal.focusNext",
+		"when": "terminalFocus"
+	},
+	{
+		"key": "ctrl+shift+b",
+		"command": "workbench.action.terminal.focusPrevious",
+		"when": "terminalFocus"
+	},
+	{
+		"key": "ctrl+shift+j",
+		"command": "workbench.action.togglePanel"
+	},
+	{
+		"key": "ctrl+shift+n",
+		"command": "workbench.action.terminal.new",
+		"when": "terminalFocus"
+	},
+	{
+		"key": "ctrl+shift+w",
+		"command": "workbench.action.terminal.kill",
+		"when": "terminalFocus"
+	},
+	// FILE TREE
+	{
+		"command": "workbench.view.explorer",
+		"key": "ctrl+h"
+	},
+	{
+		"command": "workbench.action.focusActiveEditorGroup",
+		"key": "ctrl+l",
+	},
+	{
+		"key": "n",
+		"command": "explorer.newFile",
+		"when": "filesExplorerFocus && !inputFocus"
+	},
+	{
+		"command": "renameFile",
+		"key": "r",
+		"when": "filesExplorerFocus && !inputFocus"
+	},
+	{
+		"key": "shift+n",
+		"command": "explorer.newFolder",
+		"when": "explorerViewletFocus"
+	},
+	{
+		"key": "shift+n",
+		"command": "-workbench.action.files.newUntitledFile"
+	},
+	{
+		"command": "deleteFile",
+		"key": "d",
+		"when": "filesExplorerFocus && !inputFocus"
+	},
+	{
+		"key": "alt+f3",
+		"command": "-editor.action.dirtydiff.next",
+		"when": "editorTextFocus && !textCompareEditorActive"
+	},
+	{
+		"key": "enter",
+		"command": "-renameFile",
+		"when": "explorerViewletVisible && filesExplorerFocus && !inputFocus"
+	},
+	{
+		"key": "enter",
+		"command": "explorer.openAndPassFocus",
+		"when": "explorerViewletVisible && filesExplorerFocus && !inputFocus"
+	},
+	{ "key": "cmd+1", "command": "workbench.action.openEditorAtIndex1" },
+	{ "key": "cmd+2", "command": "workbench.action.openEditorAtIndex2" },
+	{ "key": "cmd+3", "command": "workbench.action.openEditorAtIndex3" },
+	{ "key": "cmd+4", "command": "workbench.action.openEditorAtIndex4" },
+	{ "key": "cmd+5", "command": "workbench.action.openEditorAtIndex5" },
+	{ "key": "cmd+6", "command": "workbench.action.openEditorAtIndex6" },
+	{ "key": "cmd+7", "command": "workbench.action.openEditorAtIndex7" },
+	{ "key": "cmd+8", "command": "workbench.action.openEditorAtIndex8" },
+	{
+		"key": "cmd+9",
+		"command": "workbench.action.openLastEditorInGroup"
+	},
+]
