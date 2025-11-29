@@ -1,0 +1,2 @@
+keybind = opt+h=goto_split:previous
+keybind = opt+l=goto_split:next
