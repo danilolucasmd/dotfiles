@@ -3,7 +3,7 @@ return {
     "gthelding/monokai-pro.nvim",
     config = function()
       require("monokai-pro").setup({
-        filter = "ristretto",
+        filter = "pro",
         override = function()
           return {
             NonText = { fg = "#948a8b" },

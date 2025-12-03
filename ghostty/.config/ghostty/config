@@ -1,4 +1,4 @@
-background = #2C2524
+background = #2C292F
 font-size = 11
 
 keybind = opt+h=goto_split:previous
