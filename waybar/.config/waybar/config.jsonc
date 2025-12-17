@@ -2,7 +2,7 @@
   "layer": "top",
   "position": "top",
   "height": 30,
-  "spacing": 8,
+  "spacing": 0,
 
   "modules-left": [
     "custom/arch",
@@ -59,8 +59,4 @@
     "format-charging": "󰂄 {capacity}%",
     "format-icons": ["󰁺","󰁻","󰁼","󰁽","󰁾","󰁿","󰂀","󰂁","󰂂","󰁹"]
   },
-
-  "tray": {
-    "spacing": 8
-  }
 }

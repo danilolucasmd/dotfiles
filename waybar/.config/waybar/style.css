@@ -3,24 +3,33 @@
   border-radius: 0;
   font-family: "JetBrainsMono Nerd Font", monospace;
   min-height: 0;
+  padding: 0;
 }
 
 window#waybar {
   background: rgba(15, 15, 15, 0.95);
   color: #cdd6f4;
-  padding: 0 10px;
 }
 
 /* Workspaces */
+#workspaces {
+  padding: 0 10px;
+}
+
 #workspaces button {
-  padding: 0 4px;
   color: #6c7086;
   font-size: 16px;
   font-weight: 600;
+  padding: 0 4px;
 }
 
 #workspaces button.active {
   color: #cdd6f4;
+}
+
+#workspaces button:hover {
+  background: rgba(15, 15, 15, 0.95);
+  color: #6c7086;
 }
 
 /* Center clock */
@@ -35,9 +44,9 @@ window#waybar {
 #network,
 #battery,
 #tray {
-  padding: 0 5px;
   color: #cdd6f4;
   font-size: 12px;
+  padding-right: 20px;
 }
 
 #battery.charging {

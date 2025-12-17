@@ -18,6 +18,8 @@
 # bluetui
 # wiremix
 #
+# unzip
+#
 # hyprpaper
 #
 ### Applications
