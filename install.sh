@@ -22,6 +22,8 @@
 # unzip
 #
 # hyprpaper
+# hyprlock
+# hypridle
 #
 # 1password
 # brave-bin

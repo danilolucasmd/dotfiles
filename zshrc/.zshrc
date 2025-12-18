@@ -107,5 +107,10 @@ source $ZSH/oh-my-zsh.sh
 source /usr/share/nvm/init-nvm.sh
 
 # Aliases
+## Apps
 alias bluetooth=bluetui
 alias audio=wiremix
+## Commands
+alias lock=hyprlock
+alias suspend="systemctl suspend"
+
