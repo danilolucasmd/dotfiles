@@ -1,7 +1,5 @@
 # TODO - convert this into a script installing the following pagckages:
 #
-### Teminal
-#
 # kitty
 # git (maybe more stuff to add yay after)
 # yay
@@ -15,14 +13,14 @@
 # ripgrep
 # fd
 #
+# walker-bin
+#
 # bluetui
 # wiremix
 #
 # unzip
 #
 # hyprpaper
-#
-### Applications
 #
 # 1password
 # brave-bin
