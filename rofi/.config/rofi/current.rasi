@@ -7,14 +7,14 @@
     text-color:       var(fg0);
 
     /* Foregrounds */
-    fg3:              rgba ( 130, 130, 130, 100 % );   /* placeholder / subtle */
+    fg3:              rgba ( 130, 130, 130, 100 % );   /* placeholder */
     fg2:              rgba ( 200, 200, 200, 100 % );   /* prompt */
     fg1:              rgba ( 235, 235, 235, 100 % );   /* primary text */
     fg0:              rgba ( 220, 220, 220, 100 % );   /* default text */
 
     /* Backgrounds */
-    bg3:              rgba ( 90, 140, 160, 90 % );     /* accent / selection */
-    bg2:              rgba ( 255, 255, 255, 6 % );     /* subtle message bg */
+    bg3:              rgba ( 221, 221, 221, 100 % );   /* #dddddd selection */
+    bg2:              rgba ( 255, 255, 255, 6 % );     /* subtle message */
     bg1:              rgba ( 40, 40, 40, 100 % );      /* input bar */
     bg0:              rgba ( 31, 31, 31, 100 % );      /* #1f1f1f base */
 
@@ -82,11 +82,11 @@ element {
 }
 
 element normal.active {
-    text-color: var(bg3);
+    text-color: var(fg1);
 }
 
 element alternate.active {
-    text-color: var(bg3);
+    text-color: var(fg1);
 }
 
 element selected {
