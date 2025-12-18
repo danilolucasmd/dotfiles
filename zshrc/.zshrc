@@ -113,4 +113,5 @@ alias audio=wiremix
 ## Commands
 alias lock=hyprlock
 alias suspend="systemctl suspend"
+alias logout="hyprctl dispatch exit"
 

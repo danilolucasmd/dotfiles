@@ -30,3 +30,4 @@
 # brave-bin
 #
 # stow <dotfiles> (might need to be doned before installing them)
+# stow -t / sddm
