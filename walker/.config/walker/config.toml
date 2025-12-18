@@ -3,3 +3,6 @@ applications = true
 files = true
 commands = true
 
+[runner]
+launch_command = "dex"
+
