@@ -13,7 +13,7 @@
 # ripgrep
 # fd
 #
-# walker-bin
+# rofi
 #
 # bluetui
 # wiremix
