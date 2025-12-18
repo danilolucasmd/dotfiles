@@ -12,6 +12,7 @@
 # fzf
 # ripgrep
 # fd
+# wl-clipboard
 #
 # rofi
 #
@@ -27,3 +28,5 @@
 #
 # 1password
 # brave-bin
+#
+# stow <dotfiles> (might need to be doned before installing them)
