@@ -30,7 +30,7 @@ window {
     background-color: var(bg0);
     location:         north;
     y-offset:         calc( ( 50.0000% - 176px ));
-    border-radius:    16px;
+    border-radius:    10px;
 }
 
 mainbox {
@@ -43,7 +43,7 @@ inputbar {
     border:           2px;
     border-color:     var(bg3);
     spacing:          8px;
-    border-radius:    8px;
+    border-radius:    10px;
     children:         [ "prompt", "entry" ];
 }
 
@@ -60,7 +60,7 @@ message {
     margin:           12px 0px 0px;
     background-color: var(bg2);
     border-color:     var(bg2);
-    border-radius:    8px;
+    border-radius:    10px;
 }
 
 textbox {
@@ -78,7 +78,7 @@ listview {
 element {
     padding:       8px 16px;
     spacing:       8px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 element normal.active {
