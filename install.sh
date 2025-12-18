@@ -1,6 +1,9 @@
 # TODO - convert this into a script installing the following pagckages:
 #
+# Assumed to be installed from archinstall
 # kitty
+# sddm
+#
 # git (maybe more stuff to add yay after)
 # yay
 # stow
