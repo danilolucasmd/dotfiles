@@ -1,0 +1,89 @@
+/**
+ * rofi -dump-theme output.
+ * Rofi version: 2.0.0
+ **/
+* {
+    text-color:       var(fg0);
+    fg3:              rgba ( 76, 86, 106, 100 % );
+    fg2:              rgba ( 216, 222, 233, 100 % );
+    bg3:              rgba ( 136, 192, 208, 95 % );
+    bg2:              rgba ( 76, 86, 106, 50 % );
+    fg1:              rgba ( 236, 239, 244, 100 % );
+    fg0:              rgba ( 216, 222, 233, 100 % );
+    bg1:              rgba ( 59, 66, 82, 100 % );
+    bg0:              rgba ( 46, 52, 64, 95 % );
+    font:             "Roboto 12";
+    background-color: transparent;
+    spacing:          0px ;
+    padding:          0px ;
+    margin:           0px ;
+}
+window {
+    width:            480;
+    background-color: var(bg0);
+    location:         north;
+    y-offset:         calc( ( 50.0000%  - 176px  ));
+    border-radius:    24px ;
+}
+mainbox {
+    padding: 12px ;
+}
+inputbar {
+    padding:          8px 16px ;
+    background-color: var(bg1);
+    border:           2px ;
+    border-color:     var(bg3);
+    spacing:          8px ;
+    border-radius:    16px ;
+    children:         [ "prompt","entry" ];
+}
+prompt {
+    text-color: var(fg2);
+}
+entry {
+    placeholder:       "Search";
+    placeholder-color: var(fg3);
+}
+message {
+    margin:           12px 0px 0px ;
+    background-color: var(bg2);
+    border-color:     var(bg2);
+    border-radius:    16px ;
+}
+textbox {
+    padding: 8px 24px ;
+}
+listview {
+    background-color: transparent;
+    margin:           12px 0px 0px ;
+    columns:          1;
+    lines:            8;
+    fixed-height:     false;
+}
+element {
+    padding:       8px 16px ;
+    spacing:       8px ;
+    border-radius: 16px ;
+}
+element normal.active {
+    text-color: var(bg3);
+}
+element alternate.active {
+    text-color: var(bg3);
+}
+element selected {
+    text-color: var(bg1);
+}
+element selected.normal {
+    background-color: var(bg3);
+}
+element selected.active {
+    background-color: var(bg3);
+}
+element-icon {
+    size:           1.0000em ;
+    vertical-align: 0.50;
+}
+element-text {
+    text-color: inherit;
+}
