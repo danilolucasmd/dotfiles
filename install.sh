@@ -38,3 +38,11 @@
 #
 # stow <dotfiles> (might need to be doned before installing them)
 # stow -t / sddm
+#
+#### Manual settings
+#
+# 1 - Add the following directories to Dolphin's left nav
+#     - Downloads
+#     - Pictures
+# 2 - Add pt-br to Brave's languages, and turn on Spell check for English and Portuguese
+# 3 -
