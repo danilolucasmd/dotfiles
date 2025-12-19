@@ -109,6 +109,7 @@ source /usr/share/nvm/init-nvm.sh
 # Aliases
 ## Apps
 alias bluetooth=bluetui
+alias bt=bluetui
 alias audio=wiremix
 ## Commands
 alias lock=hyprlock
