@@ -32,6 +32,7 @@
 # hyprlock
 # hypridle
 # hyprshot
+# hyprpicker
 #
 # 1password
 # brave-bin
