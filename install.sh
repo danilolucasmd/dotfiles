@@ -1,10 +1,13 @@
-# TODO - convert this into a script installing the following pagckages:
+# TODO - convert this into a script applying the following:
 #
+#### Dirs
 # mkdir ~/Downloads
 # mkdir ~/Pictures/Screenshots
-#
+
+#### Fixes
 # exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
-#
+
+#### Install packages
 # kitty
 # sddm
 # git (maybe more stuff to add yay after)
@@ -19,29 +22,36 @@
 # ripgrep
 # fd
 # wl-clipboard
-#
+# unzip
+
+#### Launcher
 # rofi
-#
+
+#### TUI apps
 # bluetui
 # wiremix
 # btop
-#
-# unzip
-#
+
+#### Hypr utilities
 # hyprpaper
 # hyprlock
 # hypridle
 # hyprshot
 # hyprpicker
-#
+
+#### GUI apps
 # 1password
 # brave-bin
-#
+
+#### Theme
+# adw-gtk-theme
+# qt5ct qt6ct kvantum kvantum breeze-icons
+
+#### Stow
 # stow <dotfiles> (might need to be doned before installing them)
 # stow -t / sddm
-#
+
 #### Manual settings
-#
 # 1 - Add the following directories to Dolphin's left nav
 #     - Downloads
 #     - Pictures
