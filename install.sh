@@ -7,6 +7,10 @@
 #### Fixes
 # exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
 
+#### Debloat (pacman -R)
+# dolphin
+# wofi
+
 #### Install packages
 # kitty
 # sddm
@@ -42,10 +46,13 @@
 #### GUI apps
 # 1password
 # brave-bin
+# nautilus
+# sushi
 
 #### Theme
 # adw-gtk-theme
 # qt5ct qt6ct kvantum kvantum breeze-icons
+# xdg-desktop-portal-hyprland (maybe more stuff)
 
 #### Stow
 # stow <dotfiles> (might need to be doned before installing them)
