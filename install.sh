@@ -3,6 +3,8 @@
 # mkdir ~/Downloads
 # mkdir ~/Pictures/Screenshots
 #
+# exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
+#
 # kitty
 # sddm
 # git (maybe more stuff to add yay after)
