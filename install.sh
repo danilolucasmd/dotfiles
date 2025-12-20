@@ -33,6 +33,7 @@
 
 #### Launcher
 # rofi
+# rofi-calc
 
 #### TUI apps
 # bluetui
