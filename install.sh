@@ -27,7 +27,7 @@
 # fd
 # wl-clipboard
 # unzip
-# sudo pacman -S ttf-joypixels
+# yay -S ttf-joypixels
 
 #### Launcher
 # rofi
