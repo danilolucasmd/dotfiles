@@ -49,6 +49,7 @@
 # brave-bin
 # nautilus
 # sushi
+# yay -S orca-slicer-bin
 
 #### Theme
 # adw-gtk-theme
