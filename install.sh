@@ -26,6 +26,7 @@
 # ripgrep
 # fd
 # wl-clipboard
+# wtype
 # cliphist
 # unzip
 # yay -S ttf-joypixels
