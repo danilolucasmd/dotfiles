@@ -43,7 +43,7 @@
   "pulseaudio#icon": {
     "format": "{icon}",
     "format-icons": {
-      "default": ["󰕿", "󰖀", "󰕾", "󰕾"]
+      "default": ["󰕿", "󰖀", "󰕾"]
     }
   },
 
