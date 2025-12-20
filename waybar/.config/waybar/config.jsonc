@@ -15,7 +15,8 @@
 
   "modules-right": [
     "custom/mic",
-    "pulseaudio",
+    "pulseaudio#icon",
+    "pulseaudio#text",
     "network",
     "battery",
     "tray"
@@ -39,13 +40,15 @@
     "tooltip": false,
   },
 
-  "pulseaudio": {
-    "format": "{icon} {volume}%",
-    "format-muted": "󰝟 muted",
+  "pulseaudio#icon": {
+    "format": "{icon}",
     "format-icons": {
-      "default": ["󰕿", "󰖀", "󰕾"]
-    },
-    "on-click": "pavucontrol"
+      "default": ["󰕿", "󰖀", "󰕾", "󰕾"]
+    }
+  },
+
+  "pulseaudio#text": {
+    "format": "{volume}%"
   },
 
   "custom/mic": {

@@ -19,7 +19,7 @@ window#waybar {
 #workspaces button {
   font-size: 16px;
   font-weight: 600;
-  padding: 0 4px;
+  margin: 0 4px;
   color: #dddddd;
 }
 
@@ -40,12 +40,22 @@ window#waybar {
 
 /* Right modules */
 #custom-mic,
-#pulseaudio,
 #network,
 #battery,
 #tray {
+  font-size: 16px;
+  margin-right: 16px;
+}
+
+#pulseaudio.icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+#pulseaudio.text {
   font-size: 12px;
-  padding-right: 16px;
+  margin-right: 10px;
+  min-width: 30px;
 }
 
 #custom-mic.muted {
