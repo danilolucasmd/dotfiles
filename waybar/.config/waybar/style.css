@@ -39,12 +39,17 @@ window#waybar {
 }
 
 /* Right modules */
+#custom-mic,
 #pulseaudio,
 #network,
 #battery,
 #tray {
   font-size: 12px;
   padding-right: 16px;
+}
+
+#custom-mic.muted {
+  color: #f38ba8;
 }
 
 #battery.charging {

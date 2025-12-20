@@ -7,6 +7,10 @@
 #### Fixes
 # exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
 
+#### Permissions
+# chmod +x ~/.config/waybar/scripts/mic.sh
+# chmod +x ~/.config/hypr/scripts/toggle-mic.sh
+
 #### Debloat (pacman -R)
 # dolphin
 # wofi
@@ -27,6 +31,7 @@
 # fd
 # wl-clipboard
 # unzip
+# sound-theme-freedesktop
 
 #### Launcher
 # rofi

@@ -14,6 +14,7 @@
   ],
 
   "modules-right": [
+    "custom/mic",
     "pulseaudio",
     "network",
     "battery",
@@ -45,6 +46,14 @@
       "default": ["󰕿", "󰖀", "󰕾"]
     },
     "on-click": "pavucontrol"
+  },
+
+  "custom/mic": {
+    "exec": "~/.config/waybar/scripts/mic.sh",
+    "interval": 1,
+    "return-type": "json",
+    "on-click": "pactl set-source-mute @DEFAULT_SOURCE@ toggle",
+    "tooltip": true
   },
 
   "network": {
