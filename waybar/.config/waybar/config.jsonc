@@ -59,4 +59,8 @@
     "format-charging": "󰂄 {capacity}%",
     "format-icons": ["󰁺","󰁻","󰁼","󰁽","󰁾","󰁿","󰂀","󰂁","󰂂","󰁹"]
   },
+
+  "tray": {
+    "spacing": 16
+  }
 }

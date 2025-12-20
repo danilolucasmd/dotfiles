@@ -33,7 +33,7 @@ window#waybar {
 
 /* Center clock */
 #clock {
-  padding: 0 12px;
+  padding: 0 16px;
   font-weight: bold;
   font-size: 12px;
 }
@@ -44,7 +44,7 @@ window#waybar {
 #battery,
 #tray {
   font-size: 12px;
-  padding-right: 20px;
+  padding-right: 16px;
 }
 
 #battery.charging {
