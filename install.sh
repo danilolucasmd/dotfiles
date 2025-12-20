@@ -7,10 +7,6 @@
 #### Fixes
 # exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
 
-#### Permissions
-# chmod +x ~/.config/waybar/scripts/mic.sh
-# chmod +x ~/.config/hypr/scripts/toggle-mic.sh
-
 #### Debloat (pacman -R)
 # dolphin
 # wofi
@@ -31,7 +27,6 @@
 # fd
 # wl-clipboard
 # unzip
-# sound-theme-freedesktop
 
 #### Launcher
 # rofi
@@ -62,6 +57,16 @@
 #### Stow
 # stow <dotfiles> (might need to be doned before installing them)
 # stow -t / sddm
+
+#### Permissions
+# chmod +x ~/.config/waybar/scripts/mic.sh
+# chmod +x ~/.config/hypr/scripts/toggle-mic.sh
+
+#### Git
+# git config --global core.editor "nvim"
+# git config --global pull.rebase false
+# git config --global user.name "Danilo de Lucas"
+# git config --global user.email "danilolucasmd@gmail.com"
 
 #### Manual settings
 # 1 - Add the following directories to Dolphin's left nav
