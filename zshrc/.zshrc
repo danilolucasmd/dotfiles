@@ -107,6 +107,8 @@ source $ZSH/oh-my-zsh.sh
 source /usr/share/nvm/init-nvm.sh
 
 # Aliases
+## General
+alias ls="ls --color=auto -l"
 ## Apps
 alias bluetooth=bluetui
 alias bt=bluetui
