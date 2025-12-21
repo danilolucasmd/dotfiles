@@ -31,11 +31,8 @@
 
 #### Launcher
 # yay -S walker-bin
-# yay -S elephant-desktopapplications
-
-# Providers, f.e.
-
-yay -S elephant-desktopapplications
+# yay -S elephant-desktopapplications-bin
+# yay -S elephant-clipboard-bin
 
 #### TUI apps
 # bluetui
