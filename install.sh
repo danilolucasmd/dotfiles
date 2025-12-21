@@ -16,6 +16,7 @@
 # sddm
 # git (maybe more stuff to add yay after)
 # yay
+# keyd
 
 #### Install packages
 # stow
@@ -62,11 +63,15 @@
 
 #### Stow
 # stow <dotfiles> (might need to be doned before installing them)
-# stow -t / sddm
+# sudo stow -t / sddm
+# sudo stow -t / keyd
 
 #### Permissions
 # chmod +x ~/.config/waybar/scripts/mic.sh
 # chmod +x ~/.config/hypr/scripts/toggle-mic.sh
+
+#### Services
+# sudo systemctl enable --now keyd
 
 #### Git
 # git config --global core.editor "nvim"
