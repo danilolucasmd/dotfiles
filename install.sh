@@ -26,14 +26,16 @@
 # ripgrep
 # fd
 # wl-clipboard
-# wtype
-# cliphist
 # unzip
 # yay -S ttf-joypixels
 
 #### Launcher
-# rofi
-# rofi-calc
+# yay -S walker-bin
+# yay -S elephant-desktopapplications
+
+# Providers, f.e.
+
+yay -S elephant-desktopapplications
 
 #### TUI apps
 # bluetui

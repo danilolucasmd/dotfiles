@@ -1,0 +1,4 @@
+[providers]
+applications = true
+files = true
+commands = true
