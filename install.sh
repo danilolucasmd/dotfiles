@@ -11,11 +11,13 @@
 # dolphin
 # wofi
 
-#### Install packages
+#### Core
 # kitty
 # sddm
 # git (maybe more stuff to add yay after)
 # yay
+
+#### Install packages
 # stow
 # nvim
 # lazygit
@@ -73,7 +75,7 @@
 # git config --global user.email "danilolucasmd@gmail.com"
 
 #### Manual settings
-# 1 - Add the following directories to Dolphin's left nav
+# 1 - Add the following directories to Nautilus' left nav
 #     - Downloads
 #     - Pictures
 # 2 - Add pt-br to Brave's languages, and turn on Spell check for English and Portuguese
