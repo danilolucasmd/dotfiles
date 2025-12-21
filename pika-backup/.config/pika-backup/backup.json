@@ -29,7 +29,7 @@
       "VmsContainers"
     ],
     "schedule": {
-      "enabled": false,
+      "enabled": true,
       "settings": {
         "run_on_battery": false
       },
@@ -40,13 +40,13 @@
       }
     },
     "prune": {
-      "enabled": false,
+      "enabled": true,
       "keep": {
-        "hourly": 48,
-        "daily": 14,
-        "weekly": 4,
-        "monthly": 12,
-        "yearly": 10
+        "hourly": 24,
+        "daily": 7,
+        "weekly": 2,
+        "monthly": 6,
+        "yearly": 0
       }
     },
     "title": "",
