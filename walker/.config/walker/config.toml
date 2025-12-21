@@ -10,7 +10,7 @@ disable_mouse = false           # disable mouse (on input and list only)
 debug = false                   # enables debug printing for some stuff, f.e. keybinds
 page_jump_items = 10            # number of items to skip with Page Up/Down
 hide_quick_activation = false   # globally hide the quick activation buttons
-hide_action_hints = true        # globally hide the action hints
+hide_action_hints = false       # globally hide the action hints
 hide_action_hints_dmenu = true  # hide the actions hints for dmenu
 hide_return_action = false      # hide actions that are bound to Return
 resume_last_query = false       # open walker with the last query in place
@@ -152,10 +152,10 @@ desktopapplications = [
   { action = "start:keep", label = "open+next", bind = "shift Return", after = "KeepOpen" },
   { action = "new_instance", label = "new instance", bind = "ctrl Return" },
   { action = "new_instance:keep", label = "new+next", bind = "ctrl alt Return", after = "KeepOpen" },
-  { action = "pin", bind = "alt p", after = "AsyncReload" },
-  { action = "unpin", bind = "alt p", after = "AsyncReload" },
-  { action = "pinup", bind = "alt n", after = "AsyncReload" },
-  { action = "pindown", bind = "alt m", after = "AsyncReload" },
+  { action = "pin", bind = "ctrl shift p", after = "AsyncReload" },
+  { action = "unpin", bind = "ctrl shift p", after = "AsyncReload" },
+  { action = "pinup", bind = "ctrl shift n", after = "AsyncReload" },
+  { action = "pindown", bind = "ctrl shift m", after = "AsyncReload" },
 ]
 
 files = [
@@ -211,8 +211,8 @@ clipboard = [
   { action = "show_images_only", label = "only images", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_text_only", label = "only text", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_combined", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
-  { action = "pause", bind = "ctrl p" },
-  { action = "unpause", bind = "ctrl p" },
+  { action = "pause", bind = "ctrl shift p" },
+  { action = "unpause", bind = "ctrl shift p" },
   { action = "edit", bind = "ctrl o" },
   { action = "localsend", bind = "ctrl l" },
 ]
