@@ -30,12 +30,12 @@ anchor_right = true
 
 [keybinds]
 close = ["Escape"]
-next = ["ctrl n"]
-previous = ["ctrl p"]
-left = ["h"]
-right = ["l"]
-down = ["j"]
-up = ["k"]
+next = ["Down"]
+previous = ["Up"]
+left = ["Left"]
+right = ["Right"]
+down = ["Down"]
+up = ["Up"]
 toggle_exact = ["ctrl e"]
 resume_last_query = ["ctrl r"]
 quick_activate = ["F1", "F2", "F3", "F4"]
@@ -152,10 +152,10 @@ desktopapplications = [
   { action = "start:keep", label = "open+next", bind = "shift Return", after = "KeepOpen" },
   { action = "new_instance", label = "new instance", bind = "ctrl Return" },
   { action = "new_instance:keep", label = "new+next", bind = "ctrl alt Return", after = "KeepOpen" },
-  { action = "pin", bind = "ctrl shift p", after = "AsyncReload" },
-  { action = "unpin", bind = "ctrl shift p", after = "AsyncReload" },
-  { action = "pinup", bind = "ctrl shift n", after = "AsyncReload" },
-  { action = "pindown", bind = "ctrl shift m", after = "AsyncReload" },
+  { action = "pin", bind = "ctrl p", after = "AsyncReload" },
+  { action = "unpin", bind = "ctrl p", after = "AsyncReload" },
+  { action = "pinup", bind = "ctrl n", after = "AsyncReload" },
+  { action = "pindown", bind = "ctrl m", after = "AsyncReload" },
 ]
 
 files = [
@@ -211,8 +211,8 @@ clipboard = [
   { action = "show_images_only", label = "only images", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_text_only", label = "only text", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_combined", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
-  { action = "pause", bind = "ctrl shift p" },
-  { action = "unpause", bind = "ctrl shift p" },
+  { action = "pause", bind = "ctrl p" },
+  { action = "unpause", bind = "ctrl p" },
   { action = "edit", bind = "ctrl o" },
   { action = "localsend", bind = "ctrl l" },
 ]
