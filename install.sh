@@ -56,6 +56,7 @@
 # nautilus
 # sushi
 # yay -S orca-slicer-bin
+# sudo pacman -S pika-backup
 
 #### Theme
 # adw-gtk-theme

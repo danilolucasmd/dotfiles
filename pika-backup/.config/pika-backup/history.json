@@ -1,0 +1,108 @@
+{
+  "c8442e60-25c5-4042-9b79-35e6c1d43e69": {
+    "config_version": 2,
+    "run": [
+      {
+        "end": "2025-12-21T19:24:19.079618138-03:00",
+        "outcome": {
+          "Completed": {
+            "stats": {
+              "archive": {
+                "duration": 30.373032,
+                "id": "171c99882557d8968140e6842d89a73c57b924e3a1c56d0423057c3d04d03c09",
+                "name": "a7b6d8-76515730",
+                "stats": {
+                  "compressed_size": 1131533001,
+                  "deduplicated_size": 1030304921,
+                  "nfiles": 32519,
+                  "original_size": 2133327048
+                }
+              }
+            }
+          }
+        },
+        "messages": [],
+        "include": [
+          ""
+        ],
+        "exclude": [
+          {
+            "PathPrefix": "/home/danilolucasmd/.local/share/Steam"
+          },
+          {
+            "PathPrefix": "/home/danilolucasmd/Downloads"
+          },
+          "Caches",
+          "Trash",
+          "FlatpakApps",
+          "VmsContainers"
+        ]
+      },
+      {
+        "end": "2025-12-21T19:22:17.223692228-03:00",
+        "outcome": {
+          "Aborted": "User"
+        },
+        "messages": [
+          {
+            "ParsedErr": {
+              "levelname": "ERROR",
+              "name": "borg.archiver",
+              "message": "Error: Got Ctrl-C / SIGINT.",
+              "msgid": {
+                "Other": "Error"
+              }
+            }
+          }
+        ],
+        "include": [
+          ""
+        ],
+        "exclude": [
+          "Caches"
+        ]
+      }
+    ],
+    "running": null,
+    "last_completed": {
+      "end": "2025-12-21T19:24:19.079618138-03:00",
+      "outcome": {
+        "Completed": {
+          "stats": {
+            "archive": {
+              "duration": 30.373032,
+              "id": "171c99882557d8968140e6842d89a73c57b924e3a1c56d0423057c3d04d03c09",
+              "name": "a7b6d8-76515730",
+              "stats": {
+                "compressed_size": 1131533001,
+                "deduplicated_size": 1030304921,
+                "nfiles": 32519,
+                "original_size": 2133327048
+              }
+            }
+          }
+        }
+      },
+      "messages": [],
+      "include": [
+        ""
+      ],
+      "exclude": [
+        {
+          "PathPrefix": "/home/danilolucasmd/.local/share/Steam"
+        },
+        {
+          "PathPrefix": "/home/danilolucasmd/Downloads"
+        },
+        "Caches",
+        "Trash",
+        "FlatpakApps",
+        "VmsContainers"
+      ]
+    },
+    "last_check": null,
+    "suggested_exclude": {
+      "PermissionDenied": []
+    }
+  }
+}
