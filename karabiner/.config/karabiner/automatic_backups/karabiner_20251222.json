@@ -4,64 +4,26 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Caps Lock to Escape/Control + HJKL Arrows + Disable Physical Control",
+                        "description": "Toggle input source when both Shift keys are pressed",
                         "manipulators": [
                             {
-                                "description": "Caps Lock to Control (held) and Escape (tapped). HJKL to Arrows while Control is held.",
                                 "from": {
-                                    "key_code": "caps_lock",
-                                    "modifiers": { "optional": ["any"] }
+                                    "simultaneous": [
+                                        { "key_code": "left_shift" },
+                                        { "key_code": "right_shift" }
+                                    ],
+                                    "simultaneous_options": {
+                                        "detect_key_down_uninterruptedly": true,
+                                        "key_down_order": "insensitive",
+                                        "key_up_order": "insensitive"
+                                    }
                                 },
-                                "to": [{ "key_code": "left_control" }],
-                                "to_if_alone": [{ "key_code": "escape" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "HJKL to Arrows when Control is held",
-                                "from": {
-                                    "key_code": "h",
-                                    "modifiers": { "mandatory": ["left_control"] }
-                                },
-                                "to": [{ "key_code": "left_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "HJKL to Arrows when Control is held",
-                                "from": {
-                                    "key_code": "j",
-                                    "modifiers": { "mandatory": ["left_control"] }
-                                },
-                                "to": [{ "key_code": "down_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "HJKL to Arrows when Control is held",
-                                "from": {
-                                    "key_code": "k",
-                                    "modifiers": { "mandatory": ["left_control"] }
-                                },
-                                "to": [{ "key_code": "up_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "HJKL to Arrows when Control is held",
-                                "from": {
-                                    "key_code": "l",
-                                    "modifiers": { "mandatory": ["left_control"] }
-                                },
-                                "to": [{ "key_code": "right_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "Disable physical Left Control",
-                                "from": { "key_code": "left_control" },
-                                "to": [{ "key_code": "vk_none" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "Disable physical Right Control",
-                                "from": { "key_code": "right_control" },
-                                "to": [{ "key_code": "vk_none" }],
+                                "to": [
+                                    {
+                                        "key_code": "spacebar",
+                                        "modifiers": ["left_control", "left_option"]
+                                    }
+                                ],
                                 "type": "basic"
                             }
                         ]
