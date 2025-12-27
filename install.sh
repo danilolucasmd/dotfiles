@@ -17,7 +17,6 @@
 # git (maybe more stuff to add yay after)
 # yay
 # sudo pacman -S fcitx5 # For kb layout switching
-# keyd
 
 #### Install packages
 # stow
@@ -66,14 +65,13 @@
 #### Stow
 # stow <dotfiles> (might need to be doned before installing them)
 # sudo stow -t / sddm
-# sudo stow -t / keyd
 
 #### Permissions
 # chmod +x ~/.config/waybar/scripts/mic.sh
 # chmod +x ~/.config/hypr/scripts/toggle-mic.sh
 
 #### Services
-# sudo systemctl enable --now keyd
+#
 
 #### Git
 # git config --global core.editor "nvim"
