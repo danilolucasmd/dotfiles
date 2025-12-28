@@ -17,6 +17,7 @@
 # git (maybe more stuff to add yay after)
 # yay
 # sudo pacman -S fcitx5 # For kb layout switching
+# sudo pacman -S fastfetch
 
 #### Install packages
 # stow
