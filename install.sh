@@ -20,6 +20,7 @@
 
 #### Install packages
 # stow
+# tmux
 # nvim
 # lazygit
 # nvm
