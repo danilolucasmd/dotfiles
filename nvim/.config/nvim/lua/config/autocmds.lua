@@ -14,3 +14,20 @@ function _G.set_terminal_keymaps()
 end
 
 vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
+
+-- Hide tmux bar when enter neovim
+if vim.env.TMUX then
+  vim.api.nvim_create_autocmd({ "VimEnter", "VimResume" }, {
+    callback = function()
+      -- Hide the tmux status bar when Neovim starts or resumes
+      vim.cmd("silent !tmux set status off")
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "VimLeave", "VimSuspend" }, {
+    callback = function()
+      -- Show the tmux status bar when Neovim exits or is suspended
+      vim.cmd("silent !tmux set status on")
+    end,
+  })
+end
