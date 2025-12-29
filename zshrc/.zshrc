@@ -103,7 +103,10 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-# Packages init
+# Set up fzf key bindings and fuzzy completion
+source <(fzf --zsh)
+
+# nvm
 source /usr/share/nvm/init-nvm.sh
 
 # Aliases
