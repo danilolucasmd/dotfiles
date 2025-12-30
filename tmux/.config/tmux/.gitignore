@@ -1,0 +1,3 @@
+# tmux/.config/tmux/.gitignore
+plugins/*
+!plugins/tpm/
