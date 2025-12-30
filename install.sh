@@ -71,7 +71,7 @@
 
 #### Permissions
 # chmod +x ~/.config/waybar/scripts/mic.sh
-# chmod +x ~/.config/hypr/scripts/toggle-mic.sh
+# chmod +x ~/.config/sounds/scripts/toggle-mic.sh
 
 #### Services
 #

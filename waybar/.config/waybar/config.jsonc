@@ -55,7 +55,7 @@
     "exec": "~/.config/waybar/scripts/mic.sh",
     "interval": 1,
     "return-type": "json",
-    "on-click": "pactl set-source-mute @DEFAULT_SOURCE@ toggle",
+    "on-click": "~/.config/sounds/scripts/toggle-mic.sh",
     "tooltip": true
   },
 
