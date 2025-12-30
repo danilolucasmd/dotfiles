@@ -8,11 +8,12 @@
 # exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
 
 #### Debloat (pacman -R)
+# kitty
 # dolphin
 # wofi
 
 #### Core
-# kitty
+# ghostty
 # sddm
 # git (maybe more stuff to add yay after)
 # yay
