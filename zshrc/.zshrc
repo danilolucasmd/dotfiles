@@ -103,12 +103,6 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-# Set up fzf key bindings and fuzzy completion
-source <(fzf --zsh)
-
-# nvm
-source /usr/share/nvm/init-nvm.sh
-
 # Aliases
 ## General
 alias ls="ls --color=auto -l"
@@ -121,3 +115,19 @@ alias lock=hyprlock
 alias suspend="systemctl suspend"
 alias logout="hyprctl dispatch exit"
 
+# Set up fzf key bindings and fuzzy completion
+source <(fzf --zsh)
+
+# NVM
+source /usr/share/nvm/init-nvm.sh
+
+# Yazi setup
+export EDITOR="nvim"
+
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}

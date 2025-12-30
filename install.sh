@@ -19,6 +19,7 @@
 # yay
 # sudo pacman -S fcitx5 # For kb layout switching
 # sudo pacman -S fastfetch
+# sudo pacman -S nerd-fonts
 
 #### Install packages
 # stow
@@ -41,7 +42,7 @@
 # yay -S elephant-clipboard-bin
 
 #### TUI apps
-# yazi
+# sudo pacman -S yazi ffmpeg 7zip jq poppler fd ripgrep fzf zoxide resvg imagemagick
 # bluetui
 # wiremix
 # btop
