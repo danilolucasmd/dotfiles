@@ -41,6 +41,7 @@
 # yay -S elephant-clipboard-bin
 
 #### TUI apps
+# yazi
 # bluetui
 # wiremix
 # btop
@@ -55,8 +56,6 @@
 #### GUI apps
 # 1password
 # brave-bin
-# nautilus
-# sushi
 # yay -S orca-slicer-bin
 # sudo pacman -S pika-backup
 
@@ -83,8 +82,5 @@
 # git config --global user.email "danilolucasmd@gmail.com"
 
 #### Manual settings
-# 1 - Add the following directories to Nautilus' left nav
-#     - Downloads
-#     - Pictures
-# 2 - Add pt-br to Brave's languages, and turn on Spell check for English and Portuguese
-# 3 -
+# 1 - Add pt-br to Brave's languages, and turn on Spell check for English and Portuguese
+# 2 -
