@@ -76,6 +76,9 @@
 #### Services
 #
 
+#### Defaults
+# xdg-mime default ghostty.desktop inode/directory
+
 #### Git
 # git config --global core.editor "nvim"
 # git config --global pull.rebase false
