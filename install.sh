@@ -120,7 +120,13 @@ sudo systemctl enable sddm
 
 sudo pacman -S --needed --noconfirm zsh
 
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+export RUNZSH=no
+export CHSH=no
+export KEEP_ZSHRC=yes
+
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
 
 ############################################################
 # CORE / DEV / CLI PACKAGES                                #
@@ -227,6 +233,19 @@ chmod +x \
 
 echo "==> Setting default applications"
 xdg-mime default ghostty.desktop inode/directory
+
+############################################################
+# SET DEFAULT SHELL                                        #
+############################################################
+
+ZSH_PATH="$(command -v zsh)"
+
+if [[ -n "$ZSH_PATH" && "$SHELL" != "$ZSH_PATH" ]]; then
+  echo "Setting default shell to zsh"
+  chsh -s "$ZSH_PATH"
+else
+  echo "Zsh already set as default shell"
+fi
 
 ############################################################
 # GIT CONFIGURATION                                        #
