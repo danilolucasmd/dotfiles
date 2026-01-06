@@ -11,7 +11,7 @@ trap 'echo; echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"' EX
 ############################################################
 
 ############################################################
-# PRE-FLIGHT CHECKS                                     #
+# PRE-FLIGHT CHECKS                                        #
 ############################################################
 
 if [[ $EUID -eq 0 ]]; then
@@ -25,7 +25,7 @@ command -v sudo >/dev/null || {
 }
 
 ############################################################
-# DIRECTORY STRUCTURE                                   #
+# DIRECTORY STRUCTURE                                      #
 ############################################################
 
 echo "==> Creating directories"
@@ -34,7 +34,7 @@ mkdir -p \
   "$HOME/Pictures/Screenshots"
 
 ############################################################
-# DEBLOAT DEFAULT PACKAGES                              #
+# DEBLOAT DEFAULT PACKAGES                                 #
 ############################################################
 
 echo "==> Removing unwanted packages"
@@ -45,7 +45,7 @@ sudo pacman -Rns --noconfirm \
   true
 
 ############################################################
-# CORE SYSTEM TOOLS                                     #
+# CORE SYSTEM TOOLS                                        #
 ############################################################
 
 echo "==> Installing core tools"
@@ -60,7 +60,7 @@ sudo pacman -Syu --needed --noconfirm \
   stow
 
 ############################################################
-# AUR HELPER (yay)                                      #
+# AUR HELPER (yay)                                         #
 ############################################################
 
 if ! command -v yay >/dev/null 2>&1; then
@@ -82,7 +82,7 @@ if ! command -v yay >/dev/null 2>&1; then
 fi
 
 ############################################################
-# HYPRLAND + WAYLAND STACK + WAYBAR                     #
+# HYPRLAND + WAYLAND STACK + WAYBAR                        #
 ############################################################
 
 echo "==> Installing Hyprland and Wayland stack"
@@ -104,7 +104,7 @@ sudo pacman -S --needed --noconfirm \
   waybar
 
 ############################################################
-# DISPLAY MANAGER (SDDM)                               #
+# DISPLAY MANAGER (SDDM)                                   #
 ############################################################
 
 echo "==> Installing and enabling SDDM"
@@ -115,13 +115,15 @@ sudo pacman -S --needed --noconfirm sddm
 sudo systemctl enable sddm
 
 ############################################################
-# ZSH                                                   #
+# ZSH + on-my-zsh                                          #
 ############################################################
+
+sudo pacman -S --needed --noconfirm zsh
 
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 ############################################################
-# CORE / DEV / CLI PACKAGES                             #
+# CORE / DEV / CLI PACKAGES                                #
 ############################################################
 
 echo "==> Installing pacman packages"
@@ -156,7 +158,7 @@ sudo pacman -S --needed --noconfirm \
   qt6ct
 
 ############################################################
-# AUR PACKAGES                                         #
+# AUR PACKAGES                                             #
 ############################################################
 
 echo "==> Installing AUR packages"
@@ -178,7 +180,7 @@ yay -S --needed --noconfirm \
   btop
 
 ############################################################
-# NODE / NVM SETUP                                      #
+# NODE / NVM SETUP                                         #
 ############################################################
 
 echo "==> Installing nvm and Node.js"
@@ -195,7 +197,7 @@ nvm install --lts
 npm install -g tree-sitter-cli
 
 ############################################################
-# SYSTEM DOTFILES
+# SYSTEM DOTFILES                                          #
 ############################################################
 
 echo "==> Applying system dotfiles"
@@ -203,14 +205,14 @@ cd "$HOME/dotfiles"
 sudo stow -t / sddm
 
 ############################################################
-# USER DOTFILES
+# USER DOTFILES                                            #
 ############################################################
 
 echo "==> Applying user dotfiles"
 stow */
 
 ############################################################
-# FILE PERMISSIONS                                     #
+# FILE PERMISSIONS                                         #
 ############################################################
 
 echo "==> Fixing executable permissions"
@@ -220,14 +222,14 @@ chmod +x \
   "$HOME/.config/sounds/scripts/toggle-mic.sh"
 
 ############################################################
-# DEFAULT APPLICATIONS                                 #
+# DEFAULT APPLICATIONS                                     #
 ############################################################
 
 echo "==> Setting default applications"
 xdg-mime default ghostty.desktop inode/directory
 
 ############################################################
-# GIT CONFIGURATION                                    #
+# GIT CONFIGURATION                                        #
 ############################################################
 
 echo "==> Configuring git"
@@ -238,7 +240,7 @@ git config --global user.name "Danilo de Lucas"
 git config --global user.email "danilolucasmd@gmail.com"
 
 ############################################################
-# SANITY CHECKS                                        #
+# SANITY CHECKS                                            #
 ############################################################
 
 command -v Hyprland >/dev/null || {
@@ -252,7 +254,7 @@ ls /usr/share/wayland-sessions/hyprland.desktop >/dev/null || {
 }
 
 ############################################################
-# DONE                                                 #
+# DONE                                                     #
 ############################################################
 
 echo "========================================================"
