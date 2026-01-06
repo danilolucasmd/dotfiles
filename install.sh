@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SECONDS=0
+trap 'echo; echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"' EXIT
+
 ############################################################
 #                                                          #
 #              ARCH LINUX FRESH INSTALL SETUP               #
