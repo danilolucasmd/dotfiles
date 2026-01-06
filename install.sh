@@ -80,7 +80,7 @@ if ! command -v yay >/dev/null 2>&1; then
 fi
 
 ############################################################
-# 5. HYPRLAND + WAYLAND STACK                              #
+# 5. HYPRLAND + WAYLAND STACK + WAYBAR                     #
 ############################################################
 
 echo "==> Installing Hyprland and Wayland stack"
@@ -98,7 +98,8 @@ sudo pacman -S --needed --noconfirm \
   grim \
   slurp \
   polkit \
-  polkit-gnome
+  polkit-gnome \
+  waybar
 
 ############################################################
 # 6. CORE / DEV / CLI PACKAGES                             #
