@@ -142,9 +142,10 @@ sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
 yay -S --needed --noconfirm \
   ghostty \
-  walker-bin \
+  elephant-bin \
   elephant-desktopapplications-bin \
   elephant-clipboard-bin \
+  walker-bin \
   ttf-joypixels \
   1password \
   brave-bin \
