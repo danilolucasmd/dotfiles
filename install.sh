@@ -138,6 +138,8 @@ sudo pacman -S --needed --noconfirm \
 
 echo "==> Installing AUR packages"
 
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
 yay -S --needed --noconfirm \
   ghostty \
   walker-bin \
