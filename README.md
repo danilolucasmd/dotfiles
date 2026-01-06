@@ -5,7 +5,7 @@ using:
 
 - pacman + yay for packages
 - GNU Stow for dotfiles (user and system)
-- A single install.sh bootstrap script
+- A single `install.sh` bootstrap script
 
 Most of the system is fully automated.
 This document describes what is intentionally manual and what requires
@@ -20,8 +20,6 @@ Add the following directories to Nautilus’ left sidebar manually:
 - Code
 - Downloads
 - Pictures
-
-This is intentionally not automated.
 
 ---
 
@@ -42,8 +40,7 @@ After installation:
 
 - Open 1Password
 - Sign in
-- Enable browser integration if desired
-- Enable developer options (ssh keys)
+- Enable SSH agent
 
 ---
 
