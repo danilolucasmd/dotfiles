@@ -3,7 +3,7 @@ set -euo pipefail
 
 ############################################################
 #                                                          #
-#                ARCH FRESH INSTALL SETUP                  #
+#              ARCH LINUX FRESH INSTALL SETUP               #
 #                                                          #
 ############################################################
 
@@ -50,9 +50,11 @@ sudo pacman -Syu --needed --noconfirm \
   base-devel \
   git \
   sudo \
+  curl \
   fcitx5 \
   fastfetch \
-  nerd-fonts
+  nerd-fonts \
+  stow
 
 ############################################################
 # 4. AUR HELPER (yay)                                      #
@@ -68,10 +70,33 @@ if ! command -v yay &>/dev/null; then
 fi
 
 ############################################################
-# 5. PACMAN PACKAGES                                       #
+# 5. HYPRLAND + WAYLAND STACK                              #
+############################################################
+
+echo "==> Installing Hyprland and Wayland stack"
+
+sudo pacman -S --needed --noconfirm \
+  hyprland \
+  wayland \
+  xorg-xwayland \
+  wlroots \
+  xdg-desktop-portal \
+  xdg-desktop-portal-hyprland \
+  qt5-wayland \
+  qt6-wayland \
+  pipewire \
+  wireplumber \
+  grim \
+  slurp \
+  polkit \
+  polkit-gnome
+
+############################################################
+# 6. CORE / DEV / CLI PACKAGES                             #
 ############################################################
 
 echo "==> Installing pacman packages"
+
 sudo pacman -S --needed --noconfirm \
   stow \
   tmux \
@@ -105,10 +130,11 @@ sudo pacman -S --needed --noconfirm \
   xdg-desktop-portal-hyprland
 
 ############################################################
-# 6. AUR PACKAGES                                          #
+# 7. AUR PACKAGES                                         #
 ############################################################
 
 echo "==> Installing AUR packages"
+
 yay -S --needed --noconfirm \
   ghostty \
   walker-bin \
@@ -123,10 +149,11 @@ yay -S --needed --noconfirm \
   btop
 
 ############################################################
-# 7. NODE / NVM SETUP                                      #
+# 8. NODE / NVM SETUP                                      #
 ############################################################
 
 echo "==> Installing nvm and Node.js"
+
 if [[ ! -d "$HOME/.nvm" ]]; then
   curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 fi
@@ -139,56 +166,78 @@ nvm install --lts
 npm install -g tree-sitter-cli
 
 ############################################################
-# 8. DOTFILES (GNU STOW)                                   #
+# 9. SYSTEM DOTFILES (CEDILLA FIX, SDDM, ETC)               #
 ############################################################
 
-echo "==> Applying dotfiles with stow"
-cd "$HOME/dotfiles"
-
-stow */
-
 echo "==> Applying system dotfiles"
+cd "$HOME/dotfiles"
 sudo stow -t / system
 sudo stow -t / sddm
 
 ############################################################
-# 9. FILE PERMISSIONS                                      #
+# 10. USER DOTFILES (GNU STOW)                              #
+############################################################
+
+echo "==> Applying user dotfiles"
+stow */
+
+############################################################
+# 11. FILE PERMISSIONS                                     #
 ############################################################
 
 echo "==> Fixing executable permissions"
+
 chmod +x \
   "$HOME/.config/waybar/scripts/mic.sh" \
   "$HOME/.config/sounds/scripts/toggle-mic.sh"
 
 ############################################################
-# 10. SERVICES                                             #
+# 12. DISPLAY MANAGER (SDDM)                                #
 ############################################################
 
-echo "==> Enabling services"
+echo "==> Installing and enabling SDDM"
+
+sudo pacman -S --needed --noconfirm sddm
 sudo systemctl enable sddm
 
 ############################################################
-# 11. DEFAULT APPLICATIONS                                 #
+# 13. DEFAULT APPLICATIONS                                 #
 ############################################################
 
 echo "==> Setting default applications"
 xdg-mime default ghostty.desktop inode/directory
 
 ############################################################
-# 12. GIT CONFIGURATION                                    #
+# 14. GIT CONFIGURATION                                    #
 ############################################################
 
 echo "==> Configuring git"
+
 git config --global core.editor nvim
 git config --global pull.rebase false
 git config --global user.name "Danilo de Lucas"
 git config --global user.email "danilolucasmd@gmail.com"
 
 ############################################################
-# 13. DONE                                                 #
+# 15. SANITY CHECKS                                        #
+############################################################
+
+command -v Hyprland >/dev/null || {
+  echo "ERROR: Hyprland not found."
+  exit 1
+}
+
+ls /usr/share/wayland-sessions/hyprland.desktop >/dev/null || {
+  echo "ERROR: Hyprland session file missing."
+  exit 1
+}
+
+############################################################
+# 16. DONE                                                 #
 ############################################################
 
 echo "========================================================"
 echo " Setup complete."
+echo " Reboot and log into the Hyprland session."
 echo " Review README.md for remaining manual steps."
 echo "========================================================"
