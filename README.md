@@ -13,6 +13,12 @@ special attention over time.
 
 ---
 
+### Archinstall
+
+If Arch is not installed yet you can follow the [Arch Linux Installation Guide](https://github.com/danilolucasmd/dotfiles/blob/arch/archinstall.md).
+
+---
+
 ## 1. Nautilus Sidebar
 
 Add the following directories to Nautilus’ left sidebar manually:
