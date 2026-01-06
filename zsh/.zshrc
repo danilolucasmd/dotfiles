@@ -118,9 +118,6 @@ alias logout="hyprctl dispatch exit"
 # Set up fzf key bindings and fuzzy completion
 source <(fzf --zsh)
 
-# NVM
-source /usr/share/nvm/init-nvm.sh
-
 # Yazi setup
 export EDITOR="nvim"
 

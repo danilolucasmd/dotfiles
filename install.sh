@@ -180,20 +180,22 @@ yay -S --needed --noconfirm \
   btop
 
 ############################################################
-# NODE / NVM SETUP                                         #
+# NODE SETUP                                               #
 ############################################################
 
-echo "==> Installing nvm and Node.js"
+echo "==> Installing Node.js and packages"
 
 if [[ ! -d "$HOME/.nvm" ]]; then
-  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  curl -o- raw.githubusercontent.com | bash
 fi
 
 export NVM_DIR="$HOME/.nvm"
-# shellcheck disable=SC1091
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 source "$NVM_DIR/nvm.sh"
 
 nvm install --lts
+nvm use --lts
 npm install -g tree-sitter-cli
 
 ############################################################
