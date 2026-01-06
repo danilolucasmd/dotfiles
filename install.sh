@@ -186,7 +186,7 @@ yay -S --needed --noconfirm \
 echo "==> Installing Node.js and packages"
 
 sudo pacman -S --needed --noconfirm nodejs npm
-npm install -g tree-sitter-cli
+sudo npm install -g tree-sitter-cli
 
 ############################################################
 # SYSTEM DOTFILES                                          #
