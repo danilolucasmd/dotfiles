@@ -185,15 +185,7 @@ yay -S --needed --noconfirm \
 
 echo "==> Installing Node.js and packages"
 
-if [[ ! -d "$HOME/.nvm" ]]; then
-  curl -o- raw.githubusercontent.com | bash
-fi
-
-export NVM_DIR="$HOME/.nvm"
-source "$NVM_DIR/nvm.sh"
-
-nvm install --lts
-nvm use --lts
+sudo pacman -S --needed --noconfirm nodejs npm
 npm install -g tree-sitter-cli
 
 ############################################################
