@@ -233,19 +233,7 @@ chmod +x \
 
 echo "==> Setting default applications"
 xdg-mime default ghostty.desktop inode/directory
-
-############################################################
-# SET DEFAULT SHELL                                        #
-############################################################
-
-ZSH_PATH="$(command -v zsh)"
-
-if [[ -n "$ZSH_PATH" && "$SHELL" != "$ZSH_PATH" ]]; then
-  echo "Setting default shell to zsh"
-  chsh -s "$ZSH_PATH"
-else
-  echo "Zsh already set as default shell"
-fi
+chsh -s /bin/zsh
 
 ############################################################
 # GIT CONFIGURATION                                        #
