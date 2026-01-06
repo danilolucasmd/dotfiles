@@ -6,12 +6,12 @@ trap 'echo; echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"' EX
 
 ############################################################
 #                                                          #
-#              ARCH LINUX FRESH INSTALL SETUP               #
+#              ARCH LINUX FRESH INSTALL SETUP              #
 #                                                          #
 ############################################################
 
 ############################################################
-# 0. PRE-FLIGHT CHECKS                                     #
+# PRE-FLIGHT CHECKS                                     #
 ############################################################
 
 if [[ $EUID -eq 0 ]]; then
@@ -25,7 +25,7 @@ command -v sudo >/dev/null || {
 }
 
 ############################################################
-# 1. DIRECTORY STRUCTURE                                   #
+# DIRECTORY STRUCTURE                                   #
 ############################################################
 
 echo "==> Creating directories"
@@ -34,7 +34,7 @@ mkdir -p \
   "$HOME/Pictures/Screenshots"
 
 ############################################################
-# 2. DEBLOAT DEFAULT PACKAGES                              #
+# DEBLOAT DEFAULT PACKAGES                              #
 ############################################################
 
 echo "==> Removing unwanted packages"
@@ -45,7 +45,7 @@ sudo pacman -Rns --noconfirm \
   true
 
 ############################################################
-# 3. CORE SYSTEM TOOLS                                     #
+# CORE SYSTEM TOOLS                                     #
 ############################################################
 
 echo "==> Installing core tools"
@@ -60,7 +60,7 @@ sudo pacman -Syu --needed --noconfirm \
   stow
 
 ############################################################
-# 4. AUR HELPER (yay)                                      #
+# AUR HELPER (yay)                                      #
 ############################################################
 
 if ! command -v yay >/dev/null 2>&1; then
@@ -82,7 +82,7 @@ if ! command -v yay >/dev/null 2>&1; then
 fi
 
 ############################################################
-# 5. HYPRLAND + WAYLAND STACK + WAYBAR                     #
+# HYPRLAND + WAYLAND STACK + WAYBAR                     #
 ############################################################
 
 echo "==> Installing Hyprland and Wayland stack"
@@ -104,7 +104,7 @@ sudo pacman -S --needed --noconfirm \
   waybar
 
 ############################################################
-# 12. DISPLAY MANAGER (SDDM)                                #
+# DISPLAY MANAGER (SDDM)                               #
 ############################################################
 
 echo "==> Installing and enabling SDDM"
@@ -115,7 +115,13 @@ sudo pacman -S --needed --noconfirm sddm
 sudo systemctl enable sddm
 
 ############################################################
-# 6. CORE / DEV / CLI PACKAGES                             #
+# ZSH                                                   #
+############################################################
+
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+############################################################
+# CORE / DEV / CLI PACKAGES                             #
 ############################################################
 
 echo "==> Installing pacman packages"
@@ -150,7 +156,7 @@ sudo pacman -S --needed --noconfirm \
   qt6ct
 
 ############################################################
-# 7. AUR PACKAGES                                         #
+# AUR PACKAGES                                         #
 ############################################################
 
 echo "==> Installing AUR packages"
@@ -172,7 +178,7 @@ yay -S --needed --noconfirm \
   btop
 
 ############################################################
-# 8. NODE / NVM SETUP                                      #
+# NODE / NVM SETUP                                      #
 ############################################################
 
 echo "==> Installing nvm and Node.js"
@@ -189,7 +195,7 @@ nvm install --lts
 npm install -g tree-sitter-cli
 
 ############################################################
-# 9. SYSTEM DOTFILES
+# SYSTEM DOTFILES
 ############################################################
 
 echo "==> Applying system dotfiles"
@@ -197,14 +203,14 @@ cd "$HOME/dotfiles"
 sudo stow -t / sddm
 
 ############################################################
-# 10. USER DOTFILES
+# USER DOTFILES
 ############################################################
 
 echo "==> Applying user dotfiles"
 stow */
 
 ############################################################
-# 11. FILE PERMISSIONS                                     #
+# FILE PERMISSIONS                                     #
 ############################################################
 
 echo "==> Fixing executable permissions"
@@ -214,14 +220,14 @@ chmod +x \
   "$HOME/.config/sounds/scripts/toggle-mic.sh"
 
 ############################################################
-# 13. DEFAULT APPLICATIONS                                 #
+# DEFAULT APPLICATIONS                                 #
 ############################################################
 
 echo "==> Setting default applications"
 xdg-mime default ghostty.desktop inode/directory
 
 ############################################################
-# 14. GIT CONFIGURATION                                    #
+# GIT CONFIGURATION                                    #
 ############################################################
 
 echo "==> Configuring git"
@@ -232,7 +238,7 @@ git config --global user.name "Danilo de Lucas"
 git config --global user.email "danilolucasmd@gmail.com"
 
 ############################################################
-# 15. SANITY CHECKS                                        #
+# SANITY CHECKS                                        #
 ############################################################
 
 command -v Hyprland >/dev/null || {
@@ -246,7 +252,7 @@ ls /usr/share/wayland-sessions/hyprland.desktop >/dev/null || {
 }
 
 ############################################################
-# 16. DONE                                                 #
+# DONE                                                 #
 ############################################################
 
 echo "========================================================"
