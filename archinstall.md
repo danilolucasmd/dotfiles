@@ -1,4 +1,4 @@
-# Arch Linux Installation Guide
+j# Arch Linux Installation Guide
 
 ## Arch Linux Installation (archinstall)
 
@@ -91,8 +91,9 @@ After logging in:
 
 ```bash
 sudo pacman -Syu
-sudo pacman -S --needed git base-devel
+sudo pacman -S --needed git
 git clone <your-dotfiles-repo>
 cd dotfiles
+chmod +x install.sh
 ./install.sh
 ```
