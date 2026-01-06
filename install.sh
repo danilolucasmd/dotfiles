@@ -109,9 +109,6 @@ sudo pacman -S --needed --noconfirm \
 
 echo "==> Installing and enabling SDDM"
 
-sudo pacman -S --needed --noconfirm sddm
-sudo systemctl enable sddm
-
 sudo chmod o+x /home
 sudo chmod o+x /home/danilolucasmd
 sudo chmod o+x ~/dotfiles
@@ -122,7 +119,8 @@ sudo chmod o+x ~/dotfiles/sddm/usr/share/sddm
 sudo chmod o+x ~/dotfiles/sddm/usr/share/sddm/themes
 sudo chmod o+x ~/dotfiles/sddm/usr/share/sddm/themes/minimal-input
 
-sudo systemctl restart sddm
+sudo pacman -S --needed --noconfirm sddm
+sudo systemctl enable sddm
 
 ############################################################
 # CORE / DEV / CLI PACKAGES                                #
