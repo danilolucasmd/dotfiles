@@ -60,13 +60,20 @@ sudo pacman -Syu --needed --noconfirm \
 # 4. AUR HELPER (yay)                                      #
 ############################################################
 
-if ! command -v yay &>/dev/null; then
-  echo "==> Installing yay"
-  git clone https://aur.archlinux.org/yay.git /tmp/yay
+if ! command -v yay >/dev/null 2>&1; then
+  echo "==> Installing yay (yay-bin)"
+
+  sudo pacman -S --needed --noconfirm base-devel git
+
+  tmpdir="$(mktemp -d)"
+  git clone https://aur.archlinux.org/yay-bin.git "$tmpdir"
+
   (
-    cd /tmp/yay
-    makepkg -si --noconfirm
+    cd "$tmpdir" || exit 1
+    makepkg -si --noconfirm --needed
   )
+
+  rm -rf "$tmpdir"
 fi
 
 ############################################################
@@ -79,7 +86,6 @@ sudo pacman -S --needed --noconfirm \
   hyprland \
   wayland \
   xorg-xwayland \
-  wlroots \
   xdg-desktop-portal \
   xdg-desktop-portal-hyprland \
   qt5-wayland \
