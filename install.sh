@@ -102,6 +102,15 @@ sudo pacman -S --needed --noconfirm \
   waybar
 
 ############################################################
+# 12. DISPLAY MANAGER (SDDM)                                #
+############################################################
+
+echo "==> Installing and enabling SDDM"
+
+# sudo pacman -S --needed --noconfirm sddm
+sudo systemctl enable sddm
+
+############################################################
 # 6. CORE / DEV / CLI PACKAGES                             #
 ############################################################
 
@@ -199,15 +208,6 @@ echo "==> Fixing executable permissions"
 chmod +x \
   "$HOME/.config/waybar/scripts/mic.sh" \
   "$HOME/.config/sounds/scripts/toggle-mic.sh"
-
-############################################################
-# 12. DISPLAY MANAGER (SDDM)                                #
-############################################################
-
-echo "==> Installing and enabling SDDM"
-
-# sudo pacman -S --needed --noconfirm sddm
-# sudo systemctl enable sddm
 
 ############################################################
 # 13. DEFAULT APPLICATIONS                                 #
