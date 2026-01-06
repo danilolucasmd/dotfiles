@@ -175,16 +175,15 @@ nvm install --lts
 npm install -g tree-sitter-cli
 
 ############################################################
-# 9. SYSTEM DOTFILES (CEDILLA FIX, SDDM, ETC)               #
+# 9. SYSTEM DOTFILES
 ############################################################
 
 echo "==> Applying system dotfiles"
 cd "$HOME/dotfiles"
-sudo stow -t / system
 sudo stow -t / sddm
 
 ############################################################
-# 10. USER DOTFILES (GNU STOW)                              #
+# 10. USER DOTFILES
 ############################################################
 
 echo "==> Applying user dotfiles"
