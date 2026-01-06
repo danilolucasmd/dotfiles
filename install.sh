@@ -1,95 +1,194 @@
-# TODO - convert this into a script applying the following:
-#
-#### Dirs
-# mkdir ~/Downloads
-# mkdir ~/Pictures/Screenshots
+#!/usr/bin/env bash
+set -euo pipefail
 
-#### Fixes
-# exec cedilha fix (automate somehow): https://www.reddit.com/r/archlinux/comments/1fceq7p/cedilla_not_working_as_intended/?tl=pt-br
+############################################################
+#                                                          #
+#                ARCH FRESH INSTALL SETUP                  #
+#                                                          #
+############################################################
 
-#### Debloat (pacman -R)
-# kitty
-# dolphin
-# wofi
+############################################################
+# 0. PRE-FLIGHT CHECKS                                     #
+############################################################
 
-#### Core
-# ghostty
-# sddm
-# git (maybe more stuff to add yay after)
-# yay
-# sudo pacman -S fcitx5 # For kb layout switching
-# sudo pacman -S fastfetch
-# sudo pacman -S nerd-fonts
+if [[ $EUID -eq 0 ]]; then
+  echo "Do not run this script as root."
+  exit 1
+fi
 
-#### Install packages
-# stow
-# tmux
-# nvim
-# lazygit
-# nvm
-# node (through nvm)
-# tree-sitter-cli (globally through npm)
-# fzf
-# ripgrep
-# fd
-# wl-clipboard
-# unzip
-# yay -S ttf-joypixels
+command -v sudo >/dev/null || {
+  echo "sudo is required."
+  exit 1
+}
 
-#### Launcher
-# yay -S walker-bin
-# yay -S elephant-desktopapplications-bin
-# yay -S elephant-clipboard-bin
+############################################################
+# 1. DIRECTORY STRUCTURE                                   #
+############################################################
 
-#### TUI apps
-# sudo pacman -S yazi ffmpeg 7zip jq poppler fd ripgrep fzf zoxide resvg imagemagick
-# bluetui
-# wiremix
-# btop
+echo "==> Creating directories"
+mkdir -p \
+  "$HOME/Downloads" \
+  "$HOME/Pictures/Screenshots"
 
-#### Hypr utilities
-# hyprpaper
-# hyprlock
-# hypridle
-# hyprshot
-# hyprpicker
+############################################################
+# 2. DEBLOAT DEFAULT PACKAGES                              #
+############################################################
 
-#### GUI apps
-# 1password
-# brave-bin
-# sudo pacman -S nautilus sushi
-# yay -S orca-slicer-bin
-# sudo pacman -S pika-backup
+echo "==> Removing unwanted packages"
+sudo pacman -Rns --noconfirm \
+  kitty \
+  dolphin \
+  wofi ||
+  true
 
-#### Theme
-# adw-gtk-theme
-# qt5ct qt6ct kvantum kvantum breeze-icons
-# xdg-desktop-portal-hyprland (maybe more stuff)
+############################################################
+# 3. CORE SYSTEM TOOLS                                     #
+############################################################
 
-#### Stow
-# stow <dotfiles> (might need to be doned before installing them)
-# sudo stow -t / sddm
+echo "==> Installing core tools"
+sudo pacman -Syu --needed --noconfirm \
+  base-devel \
+  git \
+  sudo \
+  fcitx5 \
+  fastfetch \
+  nerd-fonts
 
-#### Permissions
-# chmod +x ~/.config/waybar/scripts/mic.sh
-# chmod +x ~/.config/sounds/scripts/toggle-mic.sh
+############################################################
+# 4. AUR HELPER (yay)                                      #
+############################################################
 
-#### Services
-#
+if ! command -v yay &>/dev/null; then
+  echo "==> Installing yay"
+  git clone https://aur.archlinux.org/yay.git /tmp/yay
+  (
+    cd /tmp/yay
+    makepkg -si --noconfirm
+  )
+fi
 
-#### Defaults
-# xdg-mime default ghostty.desktop inode/directory
+############################################################
+# 5. PACMAN PACKAGES                                       #
+############################################################
 
-#### Git
-# git config --global core.editor "nvim"
-# git config --global pull.rebase false
-# git config --global user.name "Danilo de Lucas"
-# git config --global user.email "danilolucasmd@gmail.com"
+echo "==> Installing pacman packages"
+sudo pacman -S --needed --noconfirm \
+  stow \
+  tmux \
+  neovim \
+  lazygit \
+  fzf \
+  ripgrep \
+  fd \
+  wl-clipboard \
+  unzip \
+  yazi \
+  ffmpeg \
+  p7zip \
+  jq \
+  poppler \
+  zoxide \
+  imagemagick \
+  hyprpaper \
+  hyprlock \
+  hypridle \
+  hyprshot \
+  hyprpicker \
+  nautilus \
+  sushi \
+  pika-backup \
+  adw-gtk-theme \
+  qt5ct \
+  qt6ct \
+  kvantum \
+  kvantum-breeze-icons \
+  xdg-desktop-portal-hyprland
 
-#### Manual settings
-# 1 - Add the following directories to Nautilus' left nav
-#    - Code
-#    - Downloads
-#    - Pictures
-# 2 - Add pt-br to Brave's languages, and turn on Spell check for English and Portuguese
-# 3 -
+############################################################
+# 6. AUR PACKAGES                                          #
+############################################################
+
+echo "==> Installing AUR packages"
+yay -S --needed --noconfirm \
+  ghostty \
+  walker-bin \
+  elephant-desktopapplications-bin \
+  elephant-clipboard-bin \
+  ttf-joypixels \
+  1password \
+  brave-bin \
+  orca-slicer-bin \
+  bluetui \
+  wiremix \
+  btop
+
+############################################################
+# 7. NODE / NVM SETUP                                      #
+############################################################
+
+echo "==> Installing nvm and Node.js"
+if [[ ! -d "$HOME/.nvm" ]]; then
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+fi
+
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1091
+source "$NVM_DIR/nvm.sh"
+
+nvm install --lts
+npm install -g tree-sitter-cli
+
+############################################################
+# 8. DOTFILES (GNU STOW)                                   #
+############################################################
+
+echo "==> Applying dotfiles with stow"
+cd "$HOME/dotfiles"
+
+stow */
+
+echo "==> Applying system dotfiles"
+sudo stow -t / system
+sudo stow -t / sddm
+
+############################################################
+# 9. FILE PERMISSIONS                                      #
+############################################################
+
+echo "==> Fixing executable permissions"
+chmod +x \
+  "$HOME/.config/waybar/scripts/mic.sh" \
+  "$HOME/.config/sounds/scripts/toggle-mic.sh"
+
+############################################################
+# 10. SERVICES                                             #
+############################################################
+
+echo "==> Enabling services"
+sudo systemctl enable sddm
+
+############################################################
+# 11. DEFAULT APPLICATIONS                                 #
+############################################################
+
+echo "==> Setting default applications"
+xdg-mime default ghostty.desktop inode/directory
+
+############################################################
+# 12. GIT CONFIGURATION                                    #
+############################################################
+
+echo "==> Configuring git"
+git config --global core.editor nvim
+git config --global pull.rebase false
+git config --global user.name "Danilo de Lucas"
+git config --global user.email "danilolucasmd@gmail.com"
+
+############################################################
+# 13. DONE                                                 #
+############################################################
+
+echo "========================================================"
+echo " Setup complete."
+echo " Review README.md for remaining manual steps."
+echo "========================================================"
