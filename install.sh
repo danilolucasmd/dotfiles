@@ -115,20 +115,6 @@ sudo pacman -S --needed --noconfirm sddm
 sudo systemctl enable sddm
 
 ############################################################
-# ZSH + on-my-zsh                                          #
-############################################################
-
-sudo pacman -S --needed --noconfirm zsh
-
-export RUNZSH=no
-export CHSH=no
-export KEEP_ZSHRC=yes
-
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-fi
-
-############################################################
 # CORE / DEV / CLI PACKAGES                                #
 ############################################################
 
@@ -216,6 +202,20 @@ sudo stow -t / sddm
 
 echo "==> Applying user dotfiles"
 stow */
+
+############################################################
+# ZSH + on-my-zsh                                          #
+############################################################
+
+sudo pacman -S --needed --noconfirm zsh
+
+export RUNZSH=no
+export CHSH=no
+export KEEP_ZSHRC=yes
+
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
 
 ############################################################
 # FILE PERMISSIONS                                         #
