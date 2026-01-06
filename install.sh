@@ -205,8 +205,8 @@ chmod +x \
 
 echo "==> Installing and enabling SDDM"
 
-sudo pacman -S --needed --noconfirm sddm
-sudo systemctl enable sddm
+# sudo pacman -S --needed --noconfirm sddm
+# sudo systemctl enable sddm
 
 ############################################################
 # 13. DEFAULT APPLICATIONS                                 #
