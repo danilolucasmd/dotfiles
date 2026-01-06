@@ -130,10 +130,7 @@ sudo pacman -S --needed --noconfirm \
   pika-backup \
   adw-gtk-theme \
   qt5ct \
-  qt6ct \
-  kvantum \
-  kvantum-breeze-icons \
-  xdg-desktop-portal-hyprland
+  qt6ct
 
 ############################################################
 # 7. AUR PACKAGES                                         #
