@@ -201,7 +201,19 @@ sudo stow -t / sddm
 ############################################################
 
 echo "==> Applying user dotfiles"
-stow */
+stow \
+  elephant \
+  ghostty \
+  hypr \
+  nvim \
+  sounds \
+  steam \
+  tmux \
+  walker \
+  wallpapers \
+  waybar \
+  yazi \
+  zsh
 
 ############################################################
 # ZSH + on-my-zsh                                          #
