@@ -68,6 +68,8 @@ if ! command -v yay >/dev/null 2>&1; then
 
   sudo pacman -S --needed --noconfirm base-devel git
 
+  sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+
   tmpdir="$(mktemp -d)"
   git clone https://aur.archlinux.org/yay-bin.git "$tmpdir"
 
