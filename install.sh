@@ -230,6 +230,17 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
 fi
 
 ############################################################
+# Nvidia drivers                                           #
+############################################################
+
+sudo pacman -S --needed --noconfirm \
+  nvidia-dkms \
+  nvidia-utils \
+  lib32-nvidia-utils \
+  egl-wayland \
+  nvidia-settings
+
+############################################################
 # FILE PERMISSIONS                                         #
 ############################################################
 
