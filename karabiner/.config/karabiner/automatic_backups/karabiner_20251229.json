@@ -4,11 +4,10 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Caps Lock: Esc/Ctrl | Physical L-Ctrl: fn1 (Hyper) Layer for Navigation",
-                        "enabled": false,
+                        "description": "Caps Lock to Escape/Control + HJKL Arrows",
                         "manipulators": [
                             {
-                                "description": "Caps Lock to Control (held) and Escape (tapped)",
+                                "description": "Caps Lock to Control (held) and Escape (tapped). HJKL to Arrows while Control is held.",
                                 "from": {
                                     "key_code": "caps_lock",
                                     "modifiers": { "optional": ["any"] }
@@ -18,89 +17,39 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "Remap physical Left Control to fn1 (Hyper Layer)",
-                                "from": {
-                                    "key_code": "left_control",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [
-                                    {
-                                        "key_code": "left_shift",
-                                        "modifiers": ["left_control", "left_option", "left_command"]
-                                    }
-                                ],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "fn1 + HJKL/PN to Arrows, UD to Page Up/Down",
+                                "description": "HJKL to Arrows when Control is held",
                                 "from": {
                                     "key_code": "h",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                    "modifiers": { "mandatory": ["left_control"] }
                                 },
                                 "to": [{ "key_code": "left_arrow" }],
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 navigation",
+                                "description": "HJKL to Arrows when Control is held",
                                 "from": {
                                     "key_code": "j",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                    "modifiers": { "mandatory": ["left_control"] }
                                 },
                                 "to": [{ "key_code": "down_arrow" }],
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 navigation",
+                                "description": "HJKL to Arrows when Control is held",
                                 "from": {
                                     "key_code": "k",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                    "modifiers": { "mandatory": ["left_control"] }
                                 },
                                 "to": [{ "key_code": "up_arrow" }],
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 navigation",
+                                "description": "HJKL to Arrows when Control is held",
                                 "from": {
                                     "key_code": "l",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                    "modifiers": { "mandatory": ["left_control"] }
                                 },
                                 "to": [{ "key_code": "right_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "fn1 + p (Up)",
-                                "from": {
-                                    "key_code": "p",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
-                                },
-                                "to": [{ "key_code": "up_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "fn1 + n (Down)",
-                                "from": {
-                                    "key_code": "n",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
-                                },
-                                "to": [{ "key_code": "down_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "fn1 + d (Page Down)",
-                                "from": {
-                                    "key_code": "d",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
-                                },
-                                "to": [{ "key_code": "page_down" }],
-                                "type": "basic"
-                            },
-                            {
-                                "description": "fn1 + u (Page Up)",
-                                "from": {
-                                    "key_code": "u",
-                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
-                                },
-                                "to": [{ "key_code": "page_up" }],
                                 "type": "basic"
                             }
                         ]
@@ -1216,7 +1165,6 @@
                     },
                     {
                         "description": "Ctrl+B => Cmd+B (Bold)",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -1928,7 +1876,7 @@
                     "simple_modifications": [
                         {
                             "from": { "apple_vendor_top_case_key_code": "keyboard_fn" },
-                            "to": [{ "key_code": "left_control" }]
+                            "to": [{ "key_code": "right_control" }]
                         }
                     ]
                 },
@@ -1937,23 +1885,6 @@
                         "is_keyboard": true,
                         "product_id": 64009,
                         "vendor_id": 13652
-                    },
-                    "simple_modifications": [
-                        {
-                            "from": { "key_code": "left_command" },
-                            "to": [{ "key_code": "left_option" }]
-                        },
-                        {
-                            "from": { "key_code": "left_option" },
-                            "to": [{ "key_code": "left_command" }]
-                        }
-                    ]
-                },
-                {
-                    "identifiers": {
-                        "is_keyboard": true,
-                        "product_id": 41619,
-                        "vendor_id": 1241
                     },
                     "simple_modifications": [
                         {

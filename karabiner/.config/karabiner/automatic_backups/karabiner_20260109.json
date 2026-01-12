@@ -5,7 +5,6 @@
                 "rules": [
                     {
                         "description": "Caps Lock: Esc/Ctrl | Physical L-Ctrl: fn1 (Hyper) Layer for Navigation",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "description": "Caps Lock to Control (held) and Escape (tapped)",
