@@ -19,7 +19,7 @@ window#waybar {
 #workspaces button {
   font-size: 12px;
   font-weight: 600;
-  margin: 4px;
+  margin: 5px 4px;
   color: #dddddd;
   border-radius: 2px;
 }
