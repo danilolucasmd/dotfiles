@@ -17,14 +17,16 @@ window#waybar {
 }
 
 #workspaces button {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
-  margin: 0 4px;
+  margin: 5px 4px;
   color: #dddddd;
+  border-radius: 2px;
 }
 
 #workspaces button.active {
-  /* Placeholder */
+  background: #dddddd;
+  color: #1f1f1f;
 }
 
 #workspaces button:hover {
