@@ -1,5 +1,5 @@
 {
-  "keyMappings": "# Insert your preferred key mappings here.\n\n# History\nmap <c-o> goBack\nmap <c-i> goForward\n\n# Tab manipulation\nmap L nextTab\nmap H previousTab\nmap gbo closeOtherTabs\nmap gbr closeTabsOnRight\nmap gbH moveTabLeft\nmap gbL moveTabRight\n\n# Scrolling\nmap <c-u> scrollPageUp\nmap <c-d> scrollPageDown\n\n# Resets\nunmap J\nunmap K\nunmap u\nunmap d\nunmap b\nunmap t\nunmap x",
+  "keyMappings": "# Insert your preferred key mappings here.\n\n# History\nmap <c-o> goBack\nmap <c-i> goForward\n\n# Tab manipulation\nmap L nextTab\nmap H previousTab\nmap gbo closeOtherTabs\nmap gbr closeTabsOnRight\nmap gbH moveTabLeft\nmap gbL moveTabRight\n\n# Scrolling\nmap <c-u> scrollPageUp\nmap <c-d> scrollPageDown\n\n# Resets\nunmap J\nunmap K\nunmap u\nunmap d\nunmap b\nunmap t\nunmap x\nunmap o\nunmap p",
   "ignoreKeyboardLayout": true,
   "grabBackFocus": true,
   "settingsVersion": "2.3.1",
