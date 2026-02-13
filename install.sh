@@ -152,6 +152,7 @@ sudo pacman -S --needed --noconfirm \
   hyprpicker \
   nautilus \
   sushi \
+  gvfs-mtp \
   pika-backup \
   adw-gtk-theme \
   qt5ct \
