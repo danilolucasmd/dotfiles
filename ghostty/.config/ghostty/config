@@ -1,11 +1,2 @@
 background = #2C292F
 font-size = 11
-
-keybind = opt+h=goto_split:previous
-keybind = opt+l=goto_split:next
-keybind = opt+enter=new_split:right
-keybind = opt+w=close_surface
-keybind = shift+enter=text:\x1b\r
-
-keybind = opt+,=resize_split:left,50
-keybind = opt+.=resize_split:right,50
