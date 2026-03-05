@@ -35,10 +35,15 @@
                         ]
                     },
                     {
-                        "description": "Caps Lock: Esc/Ctrl | Physical L-Ctrl: fn1 (Hyper) Layer for Navigation",
-                        "enabled": false,
+                        "description": "Internal Keyboard Only: Caps Lock: Esc/Ctrl | Physical L-Ctrl: fn1 (Hyper)",
                         "manipulators": [
                             {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
                                 "description": "Caps Lock to Control (held) and Escape (tapped)",
                                 "from": {
                                     "key_code": "caps_lock",
@@ -49,6 +54,12 @@
                                 "type": "basic"
                             },
                             {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
                                 "description": "Remap physical Left Control to fn1 (Hyper Layer)",
                                 "from": {
                                     "key_code": "left_control",
@@ -63,7 +74,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 + HJKL/PN to Arrows, UD to Page Up/Down",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + H to Left Arrow",
                                 "from": {
                                     "key_code": "h",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -72,7 +89,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 navigation",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + J to Down Arrow",
                                 "from": {
                                     "key_code": "j",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -81,7 +104,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 navigation",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + K to Up Arrow",
                                 "from": {
                                     "key_code": "k",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -90,7 +119,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 navigation",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + L to Right Arrow",
                                 "from": {
                                     "key_code": "l",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -99,7 +134,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 + p (Up)",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + P to Up Arrow",
                                 "from": {
                                     "key_code": "p",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -108,7 +149,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 + n (Down)",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + N to Down Arrow",
                                 "from": {
                                     "key_code": "n",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -117,7 +164,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 + d (Page Down)",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + D to Page Down",
                                 "from": {
                                     "key_code": "d",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
@@ -126,7 +179,13 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "fn1 + u (Page Up)",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + U to Page Up",
                                 "from": {
                                     "key_code": "u",
                                     "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
