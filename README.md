@@ -11,6 +11,8 @@ Most of the system is fully automated.
 This document describes what is intentionally manual and what requires
 special attention over time.
 
+ <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e086451d-e5fe-48d8-bd4f-c63ac52cff3c" />
+
 ---
 
 ### Archinstall
