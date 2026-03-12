@@ -1,0 +1,15 @@
+# Focus windows
+alt - h : yabai -m window --focus west
+alt - j : yabai -m window --focus south
+alt - k : yabai -m window --focus north
+alt - l : yabai -m window --focus east
+
+# Optional: Swap windows (Shift + Alt + hjkl)
+shift + alt - h : yabai -m window --swap west
+shift + alt - j : yabai -m window --swap south
+shift + alt - k : yabai -m window --swap north
+shift + alt - l : yabai -m window --swap east
+
+# Windows resize
+alt - 0x2F : yabai -m window --ratio rel:0.05
+alt - 0x2B : yabai -m window --ratio rel:-0.05
