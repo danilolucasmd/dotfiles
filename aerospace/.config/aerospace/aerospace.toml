@@ -106,8 +106,11 @@ on-mode-changed = []
     # end tell'
     # '''
 
-    # https://nikitabobko.github.io/AeroSpace/commands#close
+    # See: https://nikitabobko.github.io/AeroSpace/commands#close
     alt-w = 'close'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#fullscreen
+    alt-f = 'fullscreen'
 
     # See: https://nikitabobko.github.io/AeroSpace/commands#layout
     alt-slash = 'layout tiles horizontal vertical'
