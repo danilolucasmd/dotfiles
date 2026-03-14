@@ -5,6 +5,7 @@
                 "rules": [
                     {
                         "description": "Map Cmd+, to Alt+, and Cmd+. to Alt+.",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
