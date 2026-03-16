@@ -29,10 +29,6 @@ window#waybar {
   color: #1f1f1f;
 }
 
-#workspaces button:hover {
-  background: #1f1f1f;
-}
-
 /* Center clock */
 #clock {
   padding: 0 16px;
