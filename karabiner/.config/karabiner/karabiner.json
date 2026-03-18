@@ -4,8 +4,7 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Map Cmd+, to Alt+, and Cmd+. to Alt+.",
-                        "enabled": false,
+                        "description": "Map Cmd+, to Control+, and Cmd+. to Control+.",
                         "manipulators": [
                             {
                                 "from": {
@@ -15,7 +14,7 @@
                                 "to": [
                                     {
                                         "key_code": "comma",
-                                        "modifiers": ["left_option"]
+                                        "modifiers": ["left_control"]
                                     }
                                 ],
                                 "type": "basic"
@@ -28,7 +27,7 @@
                                 "to": [
                                     {
                                         "key_code": "period",
-                                        "modifiers": ["left_option"]
+                                        "modifiers": ["left_control"]
                                     }
                                 ],
                                 "type": "basic"
