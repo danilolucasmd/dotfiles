@@ -128,3 +128,6 @@ function y() {
 	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
 }
+
+# opencode
+export PATH=/home/danilolucasmd/.opencode/bin:$PATH
