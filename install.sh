@@ -178,7 +178,8 @@ yay -S --needed --noconfirm \
   orca-slicer-bin \
   bluetui \
   wiremix \
-  btop
+  btop \
+  localsend-bin
 
 ############################################################
 # NODE SETUP                                               #

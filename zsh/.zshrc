@@ -114,6 +114,8 @@ alias audio=wiremix
 alias lock=hyprlock
 alias suspend="systemctl suspend"
 alias logout="hyprctl dispatch exit"
+## Fix
+alias bar="nohup waybar >/dev/null 2>&1 &"
 
 # Set up fzf key bindings and fuzzy completion
 source <(fzf --zsh)
@@ -128,3 +130,6 @@ function y() {
 	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
 }
+
+# opencode
+export PATH=/home/danilolucasmd/.opencode/bin:$PATH
