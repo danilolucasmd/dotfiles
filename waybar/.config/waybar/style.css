@@ -19,7 +19,8 @@ window#waybar {
 #workspaces button {
   font-size: 12px;
   font-weight: 600;
-  margin: 5px 4px;
+  margin: 5px 3px;
+  padding: 1px;
   color: #dddddd;
   border-radius: 2px;
 }
@@ -27,6 +28,18 @@ window#waybar {
 #workspaces button.active {
   background: #dddddd;
   color: #1f1f1f;
+}
+
+/* Hide hyprland/window module  */
+#window {
+  opacity: 0;
+}
+
+/* Visual clue for when there's a window in fullscreen in the active workspace */
+window#waybar.fullscreen button.active {
+  border: 1px dashed #000000;
+  padding: 0;
+  border-radius: 2px;
 }
 
 /* Center clock */

@@ -6,7 +6,8 @@
 
   "modules-left": [
     "custom/arch",
-    "hyprland/workspaces"
+    "hyprland/workspaces",
+    "hyprland/window"
   ],
 
   "modules-center": [
@@ -21,6 +22,10 @@
     "battery",
     "tray"
   ],
+
+  "hyprland/window": {
+    "separate-outputs": true
+  },
 
   "hyprland/workspaces": {
     "disable-scroll": true,
