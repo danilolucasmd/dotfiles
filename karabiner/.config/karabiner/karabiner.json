@@ -4,6 +4,19 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "Lock screen with Option + Escape (Shell Command)",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "escape",
+                                    "modifiers": { "mandatory": ["option"] }
+                                },
+                                "to": [{ "shell_command": "osascript -e 'tell application \"System Events\" to lock screen'" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Map Cmd+, to Control+, and Cmd+. to Control+.",
                         "manipulators": [
                             {
