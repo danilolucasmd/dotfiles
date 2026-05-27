@@ -55,3 +55,6 @@ background = #2C292F
 
 # Behaviour
 keybind = ctrl+backspace=text:\x1b\x7f
+
+# Notifications
+desktop-notifications = true

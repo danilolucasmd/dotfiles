@@ -1,0 +1,12 @@
+#!/bin/bash
+TITLE="$1"
+BODY="$2"
+
+# If running inside Tmux, send the escaped OSC 777 notification to the underlying TTY
+if [ -n "$TMUX" ]; then
+    PANE_TTY=$(tmux display-message -p '#{pane_tty}')
+    printf '\ePtmux;\e\e]777;notify;%s;%s\a\e\\' "$TITLE" "$BODY" > "$PANE_TTY"
+else
+    # Outside Tmux, notify Ghostty directly
+    printf '\e]777;notify;%s;%s\a' "$TITLE" "$BODY"
+fi
