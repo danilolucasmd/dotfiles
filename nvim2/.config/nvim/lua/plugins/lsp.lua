@@ -13,22 +13,6 @@ return {
           },
         },
       },
-      biome = {
-        cmd = { "biome", "lsp-proxy" },
-        filetypes = {
-          "css",
-          "graphql",
-          "javascript",
-          "javascriptreact",
-          "json",
-          "jsonc",
-          "typescript",
-          "typescript.tsx",
-          "typescriptreact",
-        },
-        root_dir = require("lspconfig.util").root_pattern("biome.json", "biome.jsonc"),
-        single_file_support = false,
-      },
       -- Add Relay LSP configuration
       relay_lsp = {
         filetypes = {
@@ -42,6 +26,7 @@ return {
         auto_start_compiler = false,
         path_to_config = nil,
       },
+      biome = false,
     },
   },
 }
