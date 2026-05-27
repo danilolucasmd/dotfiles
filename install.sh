@@ -137,6 +137,7 @@ sudo pacman -S --needed --noconfirm \
   ripgrep \
   fd \
   wl-clipboard \
+  wf-recorder \
   unzip \
   yazi \
   ffmpeg \
@@ -250,7 +251,8 @@ echo "==> Fixing executable permissions"
 
 chmod +x \
   "$HOME/.config/waybar/scripts/mic.sh" \
-  "$HOME/.config/sounds/scripts/toggle-mic.sh"
+  "$HOME/.config/sounds/scripts/toggle-mic.sh" \
+  "$HOME/.config/scripts/screen-record.sh"
 
 ############################################################
 # DEFAULT APPLICATIONS                                     #
