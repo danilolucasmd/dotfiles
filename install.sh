@@ -101,7 +101,8 @@ sudo pacman -S --needed --noconfirm \
   slurp \
   polkit \
   polkit-gnome \
-  waybar
+  waybar \
+  mako
 
 ############################################################
 # DISPLAY MANAGER (SDDM)                                   #
