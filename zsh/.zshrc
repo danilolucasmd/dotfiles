@@ -110,10 +110,12 @@ alias ls="ls --color=auto -l"
 alias bluetooth=bluetui
 alias bt=bluetui
 alias audio=wiremix
+alias vim=nvim
 ## Commands
 alias lock=hyprlock
 alias suspend="systemctl suspend"
 alias logout="hyprctl dispatch exit"
+alias copy="wl-copy --trim-newline"
 ## Fix
 alias bar="nohup waybar >/dev/null 2>&1 &"
 

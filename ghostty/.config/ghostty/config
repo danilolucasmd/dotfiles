@@ -55,6 +55,8 @@ background = #2C292F
 
 # Behaviour
 keybind = ctrl+backspace=text:\x1b\x7f
+keybind = performable:ctrl+c=copy_to_clipboard
+keybind = ctrl+v=paste_from_clipboard
 
 # Notifications
 desktop-notifications = true
