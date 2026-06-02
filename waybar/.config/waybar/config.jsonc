@@ -15,6 +15,7 @@
   ],
 
   "modules-right": [
+    "custom/recording",
     "custom/mic",
     "pulseaudio#icon",
     "pulseaudio#text",
@@ -39,6 +40,13 @@
   "clock": {
     "format": "{:%a %d %b %H:%M}",
     "tooltip": false,
+  },
+
+  "custom/recording": {
+    "exec": "~/.config/waybar/scripts/recording.sh",
+    "interval": 1,
+    "return-type": "json",
+    "tooltip": true
   },
 
   "pulseaudio#icon": {
