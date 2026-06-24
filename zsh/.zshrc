@@ -70,7 +70,10 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+# Note: fzf-tab must come after zsh-autosuggestions (it wraps the
+# completion widget) and is what renders completions in the tmux popup.
+# zsh-syntax-highlighting MUST be loaded last.
+plugins=(git zsh-autosuggestions fzf-tab zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -121,6 +124,21 @@ alias bar="nohup waybar >/dev/null 2>&1 &"
 
 # Set up fzf key bindings and fuzzy completion
 source <(fzf --zsh)
+
+# fzf-tab: render TAB completions in a floating tmux popup
+## Let fzf-tab take over zsh's menu so it can capture the prefix
+zstyle ':completion:*' menu no
+## Group support + filename colorizing in the completion list
+zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+## Don't sort `git checkout` candidates (keep ref ordering)
+zstyle ':completion:*:git-checkout:*' sort false
+## Preview directory contents when completing `cd`
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color=auto $realpath'
+## Render the completion menu in a tmux popup (falls back to inline fzf
+## when not inside tmux)
+zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
+zstyle ':fzf-tab:*' popup-min-size 50 8
 
 # Yazi setup
 export EDITOR="nvim"

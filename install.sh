@@ -235,6 +235,29 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
 fi
 
 ############################################################
+# ZSH PLUGINS (oh-my-zsh custom)                           #
+############################################################
+
+echo "==> Installing zsh plugins"
+
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+
+if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
+  git clone https://github.com/zsh-users/zsh-autosuggestions \
+    "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+fi
+
+if [[ ! -d "$ZSH_CUSTOM/plugins/fzf-tab" ]]; then
+  git clone https://github.com/Aloxaf/fzf-tab \
+    "$ZSH_CUSTOM/plugins/fzf-tab"
+fi
+
+if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting \
+    "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+fi
+
+############################################################
 # Nvidia drivers                                           #
 ############################################################
 
