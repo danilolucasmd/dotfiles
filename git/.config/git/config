@@ -1,0 +1,8 @@
+[user]
+    email = danilolucasmd@gmail.com
+    name = Danilo de Lucas
+[core]
+    editor = nvim
+    pager = hunk pager
+[pull]
+    rebase = false

@@ -264,17 +264,6 @@ xdg-mime default ghostty.desktop inode/directory
 chsh -s /bin/zsh
 
 ############################################################
-# GIT CONFIGURATION                                        #
-############################################################
-
-echo "==> Configuring git"
-
-git config --global core.editor nvim
-git config --global pull.rebase false
-git config --global user.name "Danilo de Lucas"
-git config --global user.email "danilolucasmd@gmail.com"
-
-############################################################
 # SANITY CHECKS                                            #
 ############################################################
 
