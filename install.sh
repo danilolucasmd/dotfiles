@@ -170,6 +170,7 @@ sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
 yay -S --needed --noconfirm \
   ghostty \
+  hunk-bin \
   elephant-bin \
   elephant-desktopapplications-bin \
   elephant-clipboard-bin \
