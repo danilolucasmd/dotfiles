@@ -16,6 +16,7 @@
 
   "modules-right": [
     "custom/recording",
+    "custom/keyboard-layout",
     "custom/mic",
     "pulseaudio#icon",
     "pulseaudio#text",
@@ -58,6 +59,12 @@
 
   "pulseaudio#text": {
     "format": "{volume}%"
+  },
+
+  "custom/keyboard-layout": {
+    "exec": "~/.config/waybar/scripts/keyboard-layout.sh",
+    "return-type": "json",
+    "tooltip": true
   },
 
   "custom/mic": {

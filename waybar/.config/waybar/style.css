@@ -80,6 +80,13 @@ window#waybar.fullscreen button.active {
 	color: #f38ba8;
 }
 
+/* Keyboard layout indicator */
+#custom-keyboard-layout {
+	font-size: 12px;
+	font-weight: 600;
+	margin-right: 16px;
+}
+
 #battery.charging {
 	color: #a6e3a1;
 }
