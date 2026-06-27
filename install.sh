@@ -161,6 +161,27 @@ sudo pacman -S --needed --noconfirm \
   qt6ct
 
 ############################################################
+# WIFI DONGLE (Realtek RTL8188GU)                          #
+############################################################
+
+# The RTL8188GU dongle boots in USB CD-ROM mode and has no
+# in-kernel driver. usb_modeswitch flips it into wifi mode,
+# and the rtl8188gu-dkms-git driver (in the AUR list below)
+# provides the kernel module. dkms + linux-headers are
+# required to build that module against the running kernel.
+
+echo "==> Installing wifi dongle support (RTL8188GU)"
+
+sudo pacman -S --needed --noconfirm \
+  usb_modeswitch \
+  dkms \
+  linux-headers \
+  iwd
+
+# iwd is the wifi backend that wifitui (AUR list) drives.
+sudo systemctl enable iwd
+
+############################################################
 # AUR PACKAGES                                             #
 ############################################################
 
@@ -170,6 +191,7 @@ sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
 yay -S --needed --noconfirm \
   ghostty \
+  rtl8188gu-dkms-git \
   hunk-bin \
   elephant-bin \
   elephant-desktopapplications-bin \
