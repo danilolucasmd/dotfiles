@@ -153,3 +153,8 @@ function y() {
 
 # opencode
 export PATH=/home/danilolucasmd/.opencode/bin:$PATH
+
+# Disable auto_cd (Oh My Zsh enables it): typing a bare directory name like
+# `claude` should run the command / error, not silently cd into the folder.
+# Must come after `source $ZSH/oh-my-zsh.sh` so it overrides OMZ's setopt.
+unsetopt auto_cd
