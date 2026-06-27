@@ -112,6 +112,7 @@ alias ls="ls --color=auto -l"
 ## Apps
 alias bluetooth=bluetui
 alias bt=bluetui
+alias wifi=wifitui
 alias audio=wiremix
 alias vim=nvim
 ## Commands

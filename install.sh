@@ -180,6 +180,7 @@ yay -S --needed --noconfirm \
   brave-bin \
   orca-slicer-bin \
   bluetui \
+  wifitui \
   wiremix \
   btop \
   localsend-bin
