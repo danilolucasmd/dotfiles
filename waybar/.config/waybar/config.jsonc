@@ -20,6 +20,7 @@
     "custom/mic",
     "pulseaudio#icon",
     "pulseaudio#text",
+    "custom/bluetooth",
     "network",
     "battery",
     "custom/updates",
@@ -83,6 +84,13 @@
     "on-click": "pkill -RTMIN+8 waybar",
     "exec-on-event": false,
     "return-type": "json",
+    "tooltip": true
+  },
+
+  "custom/bluetooth": {
+    "exec": "~/.config/waybar/scripts/bluetooth.sh",
+    "return-type": "json",
+    "on-click": "~/.config/waybar/scripts/bluetooth.sh toggle",
     "tooltip": true
   },
 

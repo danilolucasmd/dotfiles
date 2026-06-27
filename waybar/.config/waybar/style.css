@@ -58,11 +58,21 @@ window#waybar.fullscreen button.active {
 
 /* Right modules */
 #custom-mic,
+#custom-bluetooth,
 #network,
 #battery,
 #tray {
 	font-size: 16px;
 	margin-right: 16px;
+}
+
+/* Bluetooth indicator */
+#custom-bluetooth.connected {
+	color: #89b4fa;
+}
+
+#custom-bluetooth.disconnected {
+	color: #6c7086;
 }
 
 #pulseaudio.icon {
