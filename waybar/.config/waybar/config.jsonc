@@ -22,6 +22,7 @@
     "pulseaudio#text",
     "network",
     "battery",
+    "custom/updates",
     "tray"
   ],
 
@@ -72,6 +73,16 @@
     "interval": 1,
     "return-type": "json",
     "on-click": "~/.config/sounds/scripts/toggle-mic.sh",
+    "tooltip": true
+  },
+
+  "custom/updates": {
+    "exec": "~/.config/waybar/scripts/updates.sh",
+    "interval": 1800,
+    "signal": 8,
+    "on-click": "pkill -RTMIN+8 waybar",
+    "exec-on-event": false,
+    "return-type": "json",
     "tooltip": true
   },
 

@@ -98,3 +98,10 @@ window#waybar.fullscreen button.active {
 #battery.critical {
 	color: #f38ba8;
 }
+
+/* Updates indicator (only visible when updates are available) */
+#custom-updates {
+	color: #f9e2af;
+	font-size: 12px;
+	margin-right: 16px;
+}
