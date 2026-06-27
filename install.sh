@@ -233,6 +233,7 @@ stow \
   elephant \
   ghostty \
   hypr \
+  mako \
   nvim \
   sounds \
   steam \

@@ -14,6 +14,9 @@ font=monospace 11
 padding=12
 margin=10
 
+# Log every notification to a persistent history store (for the waybar bell).
+on-notify=exec "$HOME/.config/mako/scripts/capture.sh" "$id"
+
 [urgency=low]
 border-color=#cccccc
 
