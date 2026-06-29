@@ -182,7 +182,10 @@
         }
       },
       "pointer" : {
-        "acceleration" : 19.967
+        "acceleration" : "unset",
+        "disableAcceleration" : false,
+        "redirectsToScroll" : false,
+        "speed" : "unset"
       },
       "scrolling" : {
         "acceleration" : {
