@@ -54,6 +54,7 @@ font-family = "JetBrainsMono Nerd Font"
 background = #2C292F
 
 # Behaviour
+confirm-close-surface = false
 keybind = ctrl+backspace=text:\x1b\x7f
 keybind = performable:ctrl+c=copy_to_clipboard
 keybind = ctrl+v=paste_from_clipboard
