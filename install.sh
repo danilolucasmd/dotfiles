@@ -158,7 +158,8 @@ sudo pacman -S --needed --noconfirm \
   pika-backup \
   adw-gtk-theme \
   qt5ct \
-  qt6ct
+  qt6ct \
+  kdeconnect
 
 ############################################################
 # WIFI DONGLE (Realtek RTL8188GU)                          #
