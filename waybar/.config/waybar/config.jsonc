@@ -7,6 +7,7 @@
   "modules-left": [
     "custom/arch",
     "hyprland/workspaces",
+    "custom/media",
     "hyprland/window"
   ],
 
@@ -44,6 +45,16 @@
   "clock": {
     "format": "{:%a %d %b %H:%M}",
     "tooltip": false,
+  },
+
+  "custom/media": {
+    "exec": "~/.config/waybar/scripts/media.sh",
+    "return-type": "json",
+    "on-click": "playerctl play-pause",
+    "on-scroll-up": "playerctl next",
+    "on-scroll-down": "playerctl previous",
+    "max-length": 45,
+    "tooltip": true
   },
 
   "custom/notifications": {
