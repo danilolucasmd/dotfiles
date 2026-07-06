@@ -313,6 +313,15 @@ xdg-mime default ghostty.desktop inode/directory
 chsh -s /bin/zsh
 
 ############################################################
+# BRAVE WEB APPS                                           #
+############################################################
+
+# Generate toolbar-free Brave web-app launchers (--app=URL)
+# from webapps/apps.conf. See webapps/README.md.
+echo "==> Generating Brave web app launchers"
+"$HOME/dotfiles/webapps/generate.sh"
+
+############################################################
 # SANITY CHECKS                                            #
 ############################################################
 
