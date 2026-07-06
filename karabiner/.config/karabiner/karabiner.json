@@ -25,14 +25,14 @@
                         ]
                     },
                     {
-                        "description": "Lock screen with Option + Escape (Shell Command)",
+                        "description": "Lock screen with Option + Escape (sends Control+Cmd+Q)",
                         "manipulators": [
                             {
                                 "from": {
                                     "key_code": "escape",
                                     "modifiers": { "mandatory": ["option"] }
                                 },
-                                "to": [{ "shell_command": "osascript -e 'tell application \"System Events\" to lock screen'" }],
+                                "to": [{ "key_code": "q", "modifiers": ["left_control", "left_command"] }],
                                 "type": "basic"
                             }
                         ]
