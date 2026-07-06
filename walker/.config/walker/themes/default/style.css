@@ -1,0 +1,23 @@
+/* Inherit the full system default theme styling. */
+@import url("file:///etc/xdg/walker/themes/default/style.css");
+
+/* Emoji picker: hide the name labels for a clean glyph-only grid.
+   Walker compiles the item templates into its binary, so the labels
+   can't be removed via XML overrides — only collapsed via CSS. */
+.symbols .item-text-box,
+.symbols .item-text {
+  font-size: 0;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Bigger glyphs and roomy, square-ish cells now that labels are gone. */
+.symbols .item-image {
+  font-size: 30px;
+}
+
+.symbols .item-box {
+  padding: 12px;
+}
