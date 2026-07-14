@@ -11,35 +11,75 @@ window#waybar {
 	color: #dddddd;
 }
 
-/* Workspaces */
-#workspaces {
-	padding: 0 10px;
-}
-
-#workspaces button {
+/* Workspaces (script-driven custom modules ws1..ws5) */
+#custom-ws1,
+#custom-ws2,
+#custom-ws3,
+#custom-ws4,
+#custom-ws5 {
 	font-size: 12px;
 	font-weight: 600;
-	margin: 5px 3px;
-	padding: 1px;
+	/* horizontal margin = the spacing between adjacent workspace boxes. */
+	margin: 5px 1px;
+	/* min-width gives the fill some body (a rounded square) instead of
+	   hugging the digit, so there's room for a real gap. */
+	min-width: 15px;
+	/* padding is the gap between the border and the filled box. */
+	padding: 2px;
 	color: #dddddd;
-	border-radius: 2px;
+	border-radius: 6px;
+	/* No visible border by default — reserve a 1px transparent one so the box
+	   never shifts when it turns into the dashed fullscreen border. */
+	border: 1px solid transparent;
+	/* Clip the fill to the content box so it never reaches the border,
+	   leaving the padding as the gap. */
+	background-clip: content-box;
 }
 
-#workspaces button.active {
-	background: #dddddd;
+/* Match the old #workspaces { padding: 0 10px } group padding. */
+#custom-ws1 {
+	margin-left: 10px;
+}
+
+#custom-ws5 {
+	margin-right: 10px;
+}
+
+/* Active (focused) workspace: the filled box. */
+#custom-ws1.active,
+#custom-ws2.active,
+#custom-ws3.active,
+#custom-ws4.active,
+#custom-ws5.active {
+	/* Use background-color (not the `background` shorthand) and re-assert the
+	   clip: the shorthand would reset background-clip to border-box and the
+	   fill would cover the gap, hiding the dashed border on the active box. */
+	background-color: #dddddd;
+	background-clip: content-box;
 	color: #1f1f1f;
+}
+
+/* A workspace holding a fullscreen window: the box border turns dashed and
+   bright (same colour as the active fill), focused or not. */
+#custom-ws1.fullscreen,
+#custom-ws2.fullscreen,
+#custom-ws3.fullscreen,
+#custom-ws4.fullscreen,
+#custom-ws5.fullscreen {
+	border-style: dashed;
+	border-color: #dddddd;
+}
+
+/* Hidden Hyprland event listener that refreshes the workspace buttons. */
+#custom-ws-events {
+	margin: 0;
+	padding: 0;
+	min-width: 0;
 }
 
 /* Hide hyprland/window module  */
 #window {
 	opacity: 0;
-}
-
-/* Visual clue for when there's a window in fullscreen in the active workspace */
-window#waybar.fullscreen button.active {
-	border: 1px dashed #000000;
-	padding: 0;
-	border-radius: 2px;
 }
 
 /* Now playing / media indicator */

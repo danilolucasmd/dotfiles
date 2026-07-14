@@ -6,7 +6,12 @@
 
   "modules-left": [
     "custom/arch",
-    "hyprland/workspaces",
+    "custom/ws1",
+    "custom/ws2",
+    "custom/ws3",
+    "custom/ws4",
+    "custom/ws5",
+    "custom/ws-events",
     "custom/media",
     "hyprland/window"
   ],
@@ -33,13 +38,51 @@
     "separate-outputs": true
   },
 
-  "hyprland/workspaces": {
-    "disable-scroll": true,
-    "all-outputs": true,
-    "format": "{name}",
-    "persistent-workspaces": {
-      "*": 5
-    }
+  "custom/ws1": {
+    "exec": "~/.config/waybar/scripts/workspace-state.sh 1",
+    "return-type": "json",
+    "format": "{}",
+    "signal": 1,
+    "on-click": "hyprctl dispatch workspace 1",
+    "tooltip": false
+  },
+  "custom/ws2": {
+    "exec": "~/.config/waybar/scripts/workspace-state.sh 2",
+    "return-type": "json",
+    "format": "{}",
+    "signal": 1,
+    "on-click": "hyprctl dispatch workspace 2",
+    "tooltip": false
+  },
+  "custom/ws3": {
+    "exec": "~/.config/waybar/scripts/workspace-state.sh 3",
+    "return-type": "json",
+    "format": "{}",
+    "signal": 1,
+    "on-click": "hyprctl dispatch workspace 3",
+    "tooltip": false
+  },
+  "custom/ws4": {
+    "exec": "~/.config/waybar/scripts/workspace-state.sh 4",
+    "return-type": "json",
+    "format": "{}",
+    "signal": 1,
+    "on-click": "hyprctl dispatch workspace 4",
+    "tooltip": false
+  },
+  "custom/ws5": {
+    "exec": "~/.config/waybar/scripts/workspace-state.sh 5",
+    "return-type": "json",
+    "format": "{}",
+    "signal": 1,
+    "on-click": "hyprctl dispatch workspace 5",
+    "tooltip": false
+  },
+  "custom/ws-events": {
+    "exec": "~/.config/waybar/scripts/ws-events.py",
+    "restart-interval": 3,
+    "format": "",
+    "tooltip": false
   },
 
   "clock": {
