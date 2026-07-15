@@ -1,0 +1,24 @@
+[user]
+	name = Danilo Dias
+	email = ddias@brex.com
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFhUJIQ1LJ+gPAP8p1gRiRtn6AL35CA40xnrqz7qgrg1
+
+[commit]
+	gpgsign = true
+
+[gpg]
+	format = ssh
+
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+
+[core]
+	hooksPath = /Users/ddias/.githooks
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+# delta tunables live in the stow-managed delta package.
+[include]
+	path = ~/.config/delta/config

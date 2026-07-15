@@ -23,6 +23,7 @@ CLI_PACKAGES=(
   ffmpeg
   fzf
   fzf-tab
+  git-delta
   gitleaks
   lazygit
   neovim
