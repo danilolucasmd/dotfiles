@@ -1,0 +1,5 @@
+# lazygit configuration.
+# Only prompt 1Password (the SSH agent) on explicit fetch/pull/push — disable
+# the background auto-fetch lazygit otherwise runs on open and every 60s.
+git:
+  autoFetch: false
