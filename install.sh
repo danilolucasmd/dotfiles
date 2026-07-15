@@ -23,9 +23,9 @@ CLI_PACKAGES=(
   ffmpeg
   fzf
   fzf-tab
-  git-delta
   gitleaks
   lazygit
+  modem-dev/tap/hunk
   neovim
   node
   nvm

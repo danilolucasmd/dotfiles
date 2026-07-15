@@ -14,11 +14,10 @@
 
 [core]
 	hooksPath = /Users/ddias/.githooks
-	pager = delta
+	pager = hunk pager
 
-[interactive]
-	diffFilter = delta --color-only
+[merge]
+	conflictStyle = zdiff3
 
-# delta tunables live in the stow-managed delta package.
-[include]
-	path = ~/.config/delta/config
+[diff]
+	colorMoved = default
