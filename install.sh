@@ -170,17 +170,58 @@ sudo pacman -S --needed --noconfirm \
 # and the rtl8188gu-dkms-git driver (in the AUR list below)
 # provides the kernel module. dkms + linux-headers are
 # required to build that module against the running kernel.
+# NetworkManager (next section) drives the dongle via
+# wpa_supplicant, so no separate wifi backend is enabled here.
 
 echo "==> Installing wifi dongle support (RTL8188GU)"
 
 sudo pacman -S --needed --noconfirm \
   usb_modeswitch \
   dkms \
-  linux-headers \
-  iwd
+  linux-headers
 
-# iwd is the wifi backend that wifitui (AUR list) drives.
-sudo systemctl enable iwd
+############################################################
+# NETWORKING (NetworkManager) + PROTON VPN                 #
+############################################################
+
+# Proton VPN's Linux app only ships a NetworkManager backend,
+# so NetworkManager must own networking. We enable it and mask
+# systemd-networkd (set up by archinstall) so the two don't
+# fight over interfaces. networkd is socket-activated, so its
+# sockets are masked too or it comes back to life. The switch
+# takes effect on the reboot at the end of this script, so the
+# rest of the install keeps its current network.
+
+echo "==> Installing NetworkManager + Proton VPN"
+
+sudo pacman -S --needed --noconfirm \
+  networkmanager \
+  wpa_supplicant \
+  network-manager-applet \
+  networkmanager-openvpn \
+  gnome-keyring \
+  proton-vpn-gtk-app
+
+sudo systemctl enable NetworkManager
+
+sudo systemctl mask \
+  systemd-networkd.service \
+  systemd-networkd.socket \
+  systemd-networkd-varlink.socket \
+  systemd-networkd-varlink-metrics.socket \
+  systemd-networkd-resolve-hook.socket
+
+# Auto-unlock the GNOME keyring at login so Proton VPN can store
+# its session/credentials (via libsecret) without a separate
+# prompt. pam_gnome_keyring is optional, so a missing module
+# never blocks login.
+if ! grep -q pam_gnome_keyring /etc/pam.d/sddm; then
+  echo "==> Enabling GNOME keyring auto-unlock in SDDM PAM"
+  echo 'auth       optional     pam_gnome_keyring.so' |
+    sudo tee -a /etc/pam.d/sddm >/dev/null
+  echo 'session    optional     pam_gnome_keyring.so auto_start' |
+    sudo tee -a /etc/pam.d/sddm >/dev/null
+fi
 
 ############################################################
 # AUR PACKAGES                                             #
@@ -203,7 +244,6 @@ yay -S --needed --noconfirm \
   brave-bin \
   orca-slicer-bin \
   bluetui \
-  wifitui \
   wiremix \
   btop \
   localsend-bin

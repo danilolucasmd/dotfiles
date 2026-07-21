@@ -54,7 +54,17 @@ After installation:
 
 ---
 
-## 4. General Notes
+## 4. Proton VPN
+
+After installation:
+
+- Open the Proton VPN app and sign in
+- `install.sh` enables NetworkManager and masks `systemd-networkd`;
+  the app cannot connect if `systemd-networkd` is running instead
+
+---
+
+## 5. General Notes
 
 - install.sh is safe to re-run
 - System-level dotfiles live in dotfiles/system/
