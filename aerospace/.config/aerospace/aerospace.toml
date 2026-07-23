@@ -111,6 +111,11 @@ on-mode-changed = []
     # leaves the dock instead of lingering.
     alt-t = 'exec-and-forget open -na Ghostty.app'
 
+    # Toggle macOS Notification Center by "clicking" the menu-bar clock,
+    # which is owned by the Control Center process. Requires AeroSpace to
+    # have Accessibility permission (System Settings > Privacy & Security).
+    alt-n = '''exec-and-forget osascript -e 'tell application "System Events" to tell process "Control Center" to perform action "AXPress" of (first menu bar item of menu bar 1 whose description is "Clock")' '''
+
     # See: https://nikitabobko.github.io/AeroSpace/commands#close
     alt-w = 'close'
 

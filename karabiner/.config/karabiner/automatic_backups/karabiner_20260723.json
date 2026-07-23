@@ -4,11 +4,81 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "Caps Lock to Escape/Control + HJKL Arrows",
-                        "enabled": false,
+                        "description": "Map Ctrl + Shift + V to Ctrl + V",
                         "manipulators": [
                             {
-                                "description": "Caps Lock to Control (held) and Escape (tapped). HJKL to Arrows while Control is held.",
+                                "from": {
+                                    "key_code": "v",
+                                    "modifiers": {
+                                        "mandatory": ["left_control", "left_shift"],
+                                        "optional": ["any"]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "v",
+                                        "modifiers": ["left_control"]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Lock screen with Option + Escape (sends Control+Cmd+Q)",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "escape",
+                                    "modifiers": { "mandatory": ["option"] }
+                                },
+                                "to": [{ "key_code": "q", "modifiers": ["left_control", "left_command"] }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Map Cmd+, to Control+, and Cmd+. to Control+.",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "comma",
+                                    "modifiers": { "mandatory": ["left_command"] }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "comma",
+                                        "modifiers": ["left_control"]
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "period",
+                                    "modifiers": { "mandatory": ["left_command"] }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "period",
+                                        "modifiers": ["left_control"]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Internal Keyboard Only: Caps Lock: Esc/Ctrl | Physical L-Ctrl: fn1 (Hyper)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "Caps Lock to Control (held) and Escape (tapped)",
                                 "from": {
                                     "key_code": "caps_lock",
                                     "modifiers": { "optional": ["any"] }
@@ -18,39 +88,143 @@
                                 "type": "basic"
                             },
                             {
-                                "description": "HJKL to Arrows when Control is held",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "Remap physical Left Control to fn1 (Hyper Layer)",
+                                "from": {
+                                    "key_code": "left_control",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "left_shift",
+                                        "modifiers": ["left_control", "left_option", "left_command"]
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + H to Left Arrow",
                                 "from": {
                                     "key_code": "h",
-                                    "modifiers": { "mandatory": ["left_control"] }
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
                                 },
                                 "to": [{ "key_code": "left_arrow" }],
                                 "type": "basic"
                             },
                             {
-                                "description": "HJKL to Arrows when Control is held",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + J to Down Arrow",
                                 "from": {
                                     "key_code": "j",
-                                    "modifiers": { "mandatory": ["left_control"] }
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
                                 },
                                 "to": [{ "key_code": "down_arrow" }],
                                 "type": "basic"
                             },
                             {
-                                "description": "HJKL to Arrows when Control is held",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + K to Up Arrow",
                                 "from": {
                                     "key_code": "k",
-                                    "modifiers": { "mandatory": ["left_control"] }
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
                                 },
                                 "to": [{ "key_code": "up_arrow" }],
                                 "type": "basic"
                             },
                             {
-                                "description": "HJKL to Arrows when Control is held",
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + L to Right Arrow",
                                 "from": {
                                     "key_code": "l",
-                                    "modifiers": { "mandatory": ["left_control"] }
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
                                 },
                                 "to": [{ "key_code": "right_arrow" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + P to Up Arrow",
+                                "from": {
+                                    "key_code": "p",
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                },
+                                "to": [{ "key_code": "up_arrow" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + N to Down Arrow",
+                                "from": {
+                                    "key_code": "n",
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                },
+                                "to": [{ "key_code": "down_arrow" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + D to Page Down",
+                                "from": {
+                                    "key_code": "d",
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                },
+                                "to": [{ "key_code": "page_down" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "identifiers": [{ "is_built_in_keyboard": true }],
+                                        "type": "device_if"
+                                    }
+                                ],
+                                "description": "fn1 + U to Page Up",
+                                "from": {
+                                    "key_code": "u",
+                                    "modifiers": { "mandatory": ["left_shift", "left_control", "left_option", "left_command"] }
+                                },
+                                "to": [{ "key_code": "page_up" }],
                                 "type": "basic"
                             }
                         ]
@@ -1869,6 +2043,35 @@
                                 "type": "basic"
                             }
                         ]
+                    },
+                    {
+                        "description": "Ctrl+Shift+I => Cmd+Option+I (Open DevTools) in Chrome",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.google\\.Chrome$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "i",
+                                    "modifiers": {
+                                        "mandatory": ["control", "shift"],
+                                        "optional": []
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "i",
+                                        "modifiers": ["left_command", "left_option"]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
                     }
                 ]
             },
@@ -1909,6 +2112,59 @@
                         {
                             "from": { "key_code": "left_command" },
                             "to": [{ "key_code": "left_option" }]
+                        },
+                        {
+                            "from": { "key_code": "left_option" },
+                            "to": [{ "key_code": "left_command" }]
+                        }
+                    ]
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 60205,
+                        "vendor_id": 1240
+                    },
+                    "simple_modifications": [
+                        {
+                            "from": { "key_code": "left_command" },
+                            "to": [{ "key_code": "left_option" }]
+                        },
+                        {
+                            "from": { "key_code": "left_option" },
+                            "to": [{ "key_code": "left_command" }]
+                        }
+                    ]
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "product_id": 268,
+                        "vendor_id": 9610
+                    },
+                    "simple_modifications": [
+                        {
+                            "from": { "key_code": "left_command" },
+                            "to": [{ "key_code": "left_option" }]
+                        },
+                        {
+                            "from": { "key_code": "left_option" },
+                            "to": [{ "key_code": "left_command" }]
+                        }
+                    ]
+                },
+                {
+                    "identifiers": {
+                        "is_keyboard": true,
+                        "is_pointing_device": true,
+                        "product_id": 24926,
+                        "vendor_id": 7504
+                    },
+                    "ignore": false,
+                    "simple_modifications": [
+                        {
+                            "from": { "key_code": "left_command" },
+                            "to": [{ "key_code": "right_option" }]
                         },
                         {
                             "from": { "key_code": "left_option" },

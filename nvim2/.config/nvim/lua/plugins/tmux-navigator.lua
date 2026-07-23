@@ -1,5 +1,9 @@
 return {
   "christoomey/vim-tmux-navigator",
+  init = function()
+    -- Don't wrap around to the opposite side when hitting an edge pane
+    vim.g.tmux_navigator_no_wrap = 1
+  end,
   cmd = {
     "TmuxNavigateLeft",
     "TmuxNavigateDown",

@@ -32,7 +32,12 @@
                                     "key_code": "escape",
                                     "modifiers": { "mandatory": ["option"] }
                                 },
-                                "to": [{ "key_code": "q", "modifiers": ["left_control", "left_command"] }],
+                                "to": [
+                                    {
+                                        "key_code": "q",
+                                        "modifiers": ["left_control", "left_command"]
+                                    }
+                                ],
                                 "type": "basic"
                             }
                         ]
@@ -768,6 +773,7 @@
                     },
                     {
                         "description": "Ctrl+S => Cmd+S (Save)",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
