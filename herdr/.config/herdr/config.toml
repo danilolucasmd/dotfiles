@@ -23,6 +23,14 @@ navigate_workspace_up = "k"
 navigate_workspace_down = "j"
 navigate_pane_up = "up"
 navigate_pane_down = "down"
+# Switch to tab 1-9 with Alt+<n> (direct chords), alongside the default prefix+<n>.
+# herdr requires the full 1..9 range for indexed actions, so alt+6-9 just do
+# nothing until those tabs exist.
+switch_tab = ["prefix+1..9", "alt+1..9"]
+# Workspace picker on prefix+s (was prefix+w); settings moved to prefix+.
+# (was prefix+s). prefix+w is left unbound.
+workspace_picker = "prefix+s"
+settings = "prefix+period"
 
 # Resize the focused pane's split with Alt+, and Alt+. (moves the shared split
 # boundary left / right; herdr's default step is ~12 columns per press).
