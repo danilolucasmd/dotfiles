@@ -155,6 +155,11 @@ function y() {
 # opencode
 export PATH=/home/danilolucasmd/.opencode/bin:$PATH
 
+# herdr workspace-manager plugin: which layout `prefix+shift+l` applies.
+# The plugin config has no repo mapping (on-demand only), so the `apply`
+# action resolves the layout id from this env var.
+export HERDR_WSM_LAYOUT=default
+
 # Disable auto_cd (Oh My Zsh enables it): typing a bare directory name like
 # `claude` should run the command / error, not silently cd into the folder.
 # Must come after `source $ZSH/oh-my-zsh.sh` so it overrides OMZ's setopt.
