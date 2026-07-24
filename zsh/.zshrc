@@ -164,3 +164,9 @@ export HERDR_WSM_LAYOUT=default
 # `claude` should run the command / error, not silently cd into the folder.
 # Must come after `source $ZSH/oh-my-zsh.sh` so it overrides OMZ's setopt.
 unsetopt auto_cd
+
+# Ctrl+L: do nothing (don't clear the screen). Bound to an empty widget so the
+# keypress is swallowed silently instead of running zsh's clear-screen.
+function _noop() { }
+zle -N _noop
+bindkey '^L' _noop
