@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/razajamil/herdr-plugin-workspace-manager/main/schema.json
+#
+# herdr-plugin-workspace-manager — workspace template config.
+#
+# ON-DEMAND setup: there is intentionally no `workspaces:` mapping below, so the
+# plugin's event hooks (worktree.created / workspace.created / workspace.focused)
+# never match and NOTHING is auto-applied when you create a new workspace.
+#
+# Instead, apply the layout by hand with the plugin's built-in keybinding:
+#
+#     prefix+shift+l        (i.e. ctrl+b  then  shift+l)
+#
+# That runs the `apply` action with no layout id, so the plugin resolves the
+# layout from the HERDR_WSM_LAYOUT env var. We export HERDR_WSM_LAYOUT=default
+# in ~/.zshrc (dotfiles/zsh/.zshrc), which points it at the "default" layout
+# defined here.
+#
+# To template a *specific* repo automatically on new worktrees instead, add a
+# `workspaces:` block, e.g.:
+#     workspaces:
+#       - repo: ~/Code/codetype
+#         defaultLayout: default
+#
+# split: vertical -> side by side (herdr --direction right)
+#        horizontal -> stacked top/bottom (herdr --direction down)
+
+layouts:
+  - id: default
+    tabs:
+      - title: code
+        panes:
+          - title: agent
+            command: claude
+          - title: editor
+            command: nvim
+            split: vertical
+      - title: git
+        panes:
+          - title: lazygit
+            command: lazygit
