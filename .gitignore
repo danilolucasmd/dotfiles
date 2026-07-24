@@ -1,0 +1,5 @@
+# herdr runtime state (session/tab layout, logs, sockets, locks)
+herdr/.config/herdr/session.json
+herdr/.config/herdr/*.log
+herdr/.config/herdr/*.lock
+herdr/.config/herdr/*.sock
