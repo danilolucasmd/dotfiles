@@ -6,6 +6,19 @@
 vim.keymap.del({ "n", "i", "v" }, "<A-j>")
 vim.keymap.del({ "n", "i", "v" }, "<A-k>")
 
+-- Seamless Alt+hjkl navigation across nvim splits and tmux panes (tmux forwards
+-- these keys into nvim; see lua/util/tmux-nav.lua). Remove LazyVim's default
+-- Ctrl+hjkl window maps so ctrl is unused for navigation everywhere.
+for _, key in ipairs({ "<C-h>", "<C-j>", "<C-k>", "<C-l>" }) do
+  pcall(vim.keymap.del, "n", key)
+end
+local tnav = require("util.tmux-nav")
+for _, dir in ipairs({ "h", "j", "k", "l" }) do
+  vim.keymap.set("n", "<M-" .. dir .. ">", function()
+    tnav.navigate(dir)
+  end, { desc = "Navigate window/pane (" .. dir .. ")" })
+end
+
 -- Disable mouse
 vim.keymap.set("", "<up>", "<nop>", { noremap = true })
 vim.keymap.set("", "<down>", "<nop>", { noremap = true })
