@@ -2,29 +2,60 @@
 #
 # herdr-plugin-workspace-manager — workspace template config.
 #
-# ON-DEMAND setup: there is intentionally no `workspaces:` mapping below, so the
-# plugin's event hooks (worktree.created / workspace.created / workspace.focused)
-# never match and NOTHING is auto-applied when you create a new workspace.
+# 1. AUTOMATIC templating for credit_card. The `workspaces:` mapping below
+#    points ~/Code/credit_card at the "credit_card" layout, so whenever a NEW
+#    LINKED WORKTREE of that repo is created (worktree.created fires), the
+#    plugin applies the layout automatically. The main checkout is never
+#    templated — only linked worktrees.
 #
-# Instead, apply the layout by hand with the plugin's built-in keybinding:
+# 2. ON-DEMAND apply for anything else, via the built-in keybinding:
 #
-#     prefix+shift+l        (i.e. ctrl+b  then  shift+l)
+#        prefix+shift+l        (i.e. ctrl+b  then  shift+l)
 #
-# That runs the `apply` action with no layout id, so the plugin resolves the
-# layout from the HERDR_WSM_LAYOUT env var. We export HERDR_WSM_LAYOUT=default
-# in ~/.zshrc (dotfiles/zsh/.zshrc), which points it at the "default" layout
-# defined here.
+#    That runs `apply` with no layout id, so the plugin resolves the layout
+#    from the HERDR_WSM_LAYOUT env var. Export e.g. HERDR_WSM_LAYOUT=default in
+#    your shell rc to make that keybinding apply the "default" layout below.
 #
-# To template a *specific* repo automatically on new worktrees instead, add a
-# `workspaces:` block, e.g.:
-#     workspaces:
-#       - repo: ~/Code/codetype
-#         defaultLayout: default
-#
-# split: vertical -> side by side (herdr --direction right)
-#        horizontal -> stacked top/bottom (herdr --direction down)
+# Pane geometry:
+#   split: vertical | right  -> panes side by side
+#          horizontal | down -> panes stacked top/bottom
+#   ratio: fraction of the split the PREVIOUS pane keeps (0 < r < 1).
+#   The first pane of a tab is the root and is never split. The first tab
+#   reuses the worktree's existing (already-open) tab.
+
+workspaces:
+  - repo: ~/Code/credit_card
+    defaultLayout: credit_card
 
 layouts:
+  # Mirror of the live credit_card workspace: 4 tabs (agent / git / nvim /
+  # server) with claude in the agent tab, lazygit and nvim in their own tabs,
+  # and two shells side by side in the server tab.
+  - id: credit_card
+    tabs:
+      - title: agent
+        panes:
+          - title: shell           # left pane, keeps 65% of the width
+          - title: claude
+            command: claude
+            split: right           # side by side with the shell
+            ratio: 0.65
+      - title: git
+        panes:
+          - title: lazygit
+            command: lazygit
+      - title: nvim
+        panes:
+          - title: nvim
+            command: nvim
+      - title: server
+        panes:
+          - title: server
+          - title: server
+            split: right           # side by side, 50/50
+            ratio: 0.5
+
+  # On-demand default (applied by prefix+shift+l when HERDR_WSM_LAYOUT=default).
   - id: default
     tabs:
       - title: code
