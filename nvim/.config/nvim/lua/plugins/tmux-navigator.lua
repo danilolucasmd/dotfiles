@@ -1,5 +1,9 @@
 return {
   "christoomey/vim-tmux-navigator",
+  init = function()
+    -- Stop navigation from wrapping around when moving past an edge Vim window.
+    vim.g.tmux_navigator_no_wrap = 1
+  end,
   cmd = {
     "TmuxNavigateLeft",
     "TmuxNavigateDown",
