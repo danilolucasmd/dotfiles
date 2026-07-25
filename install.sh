@@ -235,6 +235,7 @@ yay -S --needed --noconfirm \
   ghostty \
   rtl8188gu-dkms-git \
   hunk-bin \
+  herdr-bin \
   elephant-bin \
   elephant-desktopapplications-bin \
   elephant-clipboard-bin \
@@ -273,6 +274,7 @@ echo "==> Applying user dotfiles"
 stow \
   elephant \
   ghostty \
+  herdr \
   hypr \
   mako \
   nvim \
