@@ -12,14 +12,17 @@ delivery = "system"
 accent = "#dddddd"
 show_agent_labels_on_pane_borders = false
 
-# Move pane focus with Alt+hjkl (direct chords, no prefix), alongside the
-# default prefix+hjkl. Ctrl+hjkl stays free for nvim/tmux inside panes.
+# Move pane focus with Cmd+Shift+Ctrl+Option+hjkl (direct chords, no prefix),
+# alongside the default prefix+hjkl. Karabiner remaps Cmd+hjkl -> the full hyper
+# combo (Cmd+Shift+Ctrl+Option) in Ghostty; the extra Option avoids collisions
+# with macOS system shortcuts (e.g. Cmd+Ctrl+Shift+3 = screenshot to clipboard)
+# while leaving plain Ctrl+hjkl free for nvim/tmux inside panes.
 agent_panel_sort = "spaces"
 [keys]
-focus_pane_left = ["prefix+h", "alt+h"]
-focus_pane_down = ["prefix+j", "alt+j"]
-focus_pane_up = ["prefix+k", "alt+k"]
-focus_pane_right = ["prefix+l", "alt+l"]
+focus_pane_left = ["prefix+h", "cmd+shift+ctrl+alt+h"]
+focus_pane_down = ["prefix+j", "cmd+shift+ctrl+alt+j"]
+focus_pane_up = ["prefix+k", "cmd+shift+ctrl+alt+k"]
+focus_pane_right = ["prefix+l", "cmd+shift+ctrl+alt+l"]
 # In the prefix+w navigate surface, use j/k to move between workspaces (herdr's
 # default is the arrow keys). j/k default to pane up/down there, so move pane
 # up/down onto the freed arrow keys; h/l still move pane focus left/right.
@@ -27,25 +30,42 @@ navigate_workspace_up = "k"
 navigate_workspace_down = "j"
 navigate_pane_up = "up"
 navigate_pane_down = "down"
-# Switch to tab 1-9 with Alt+<n> (direct chords), alongside the default prefix+<n>.
-# herdr requires the full 1..9 range for indexed actions, so alt+6-9 just do
-# nothing until those tabs exist.
-switch_tab = ["prefix+1..9", "alt+1..9"]
+# Switch to tab 1-9 with Cmd+<n> (direct chords), alongside the default prefix+<n>.
+# Karabiner remaps Cmd+1..9 -> the full hyper combo (Cmd+Shift+Ctrl+Option) in
+# Ghostty. herdr requires the full 1..9 range for indexed actions, so cmd+6-9 just
+# do nothing until those tabs exist.
+switch_tab = ["prefix+1..9", "cmd+shift+ctrl+alt+1..9"]
 # Workspace picker on prefix+s (was prefix+w); settings moved to prefix+.
 # (was prefix+s). prefix+w is left unbound.
 workspace_picker = "prefix+s"
 settings = "prefix+period"
 
-# Resize the focused pane's split with Alt+, and Alt+. (moves the shared split
-# boundary left / right; herdr's default step is ~12 columns per press).
+# Resize the focused pane's split with Cmd+, / Cmd+. (horizontal: moves the shared
+# split boundary left / right) and Cmd+Shift+, / Cmd+Shift+. (vertical: up / down).
+# herdr's default step is ~12 columns per press. Karabiner remaps in Ghostty:
+#   Cmd+,/.       -> Cmd+Ctrl+,/.        (horizontal)
+#   Cmd+Shift+,/. -> Cmd+Ctrl+Shift+,/.  (vertical)
+# Option is deliberately excluded: Ghostty emits nothing for Option+punctuation.
 [[keys.command]]
-key = "alt+comma"
+key = "cmd+ctrl+comma"
 type = "shell"
 command = "herdr pane resize --direction left --current"
 description = "Resize pane split left"
 
 [[keys.command]]
-key = "alt+period"
+key = "cmd+ctrl+period"
 type = "shell"
 command = "herdr pane resize --direction right --current"
 description = "Resize pane split right"
+
+[[keys.command]]
+key = "cmd+ctrl+shift+comma"
+type = "shell"
+command = "herdr pane resize --direction up --current"
+description = "Resize pane split up"
+
+[[keys.command]]
+key = "cmd+ctrl+shift+period"
+type = "shell"
+command = "herdr pane resize --direction down --current"
+description = "Resize pane split down"
