@@ -1,0 +1,64 @@
+[
+  {
+    "plugin_id": "herdr-clone-layout",
+    "name": "Clone Layout",
+    "version": "0.1.0",
+    "min_herdr_version": "0.7.0",
+    "description": "Every new workspace/worktree inherits the tab + pane-split geometry of the workspace you were just in (geometry only — panes open as bare shells).",
+    "manifest_path": "/Users/ddias/dotfiles/herdr/.config/herdr/plugins/github/herdr-clone-layout-9f047b3db640/herdr-plugin.toml",
+    "plugin_root": "/Users/ddias/dotfiles/herdr/.config/herdr/plugins/github/herdr-clone-layout-9f047b3db640",
+    "enabled": true,
+    "platforms": [
+      "linux",
+      "macos"
+    ],
+    "actions": [
+      {
+        "id": "apply",
+        "title": "Duplicate workspace layout",
+        "contexts": [
+          "workspace"
+        ],
+        "command": [
+          "sh",
+          "bin/clone-layout",
+          "apply"
+        ]
+      }
+    ],
+    "events": [
+      {
+        "on": "workspace.created",
+        "command": [
+          "sh",
+          "bin/clone-layout",
+          "event"
+        ]
+      },
+      {
+        "on": "workspace.focused",
+        "command": [
+          "sh",
+          "bin/clone-layout",
+          "event"
+        ]
+      },
+      {
+        "on": "worktree.created",
+        "command": [
+          "sh",
+          "bin/clone-layout",
+          "event"
+        ]
+      }
+    ],
+    "source": {
+      "kind": "github",
+      "owner": "danilolucasmd",
+      "repo": "herdr-clone-layout",
+      "resolved_commit": "f537c0b6fa80b32990a968f31ea7b62026b93530",
+      "managed_path": "/Users/ddias/.config/herdr/plugins/github/herdr-clone-layout-9f047b3db640",
+      "installed_unix_ms": 1785167000581
+    }
+  }
+]
