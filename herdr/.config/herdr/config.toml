@@ -7,6 +7,9 @@ auto_switch = false
 delivery = "system"
 
 [ui]
+# Accent used for highlights, borders and navigation UI — this is what colors
+# the focused pane's border (one-dark's default accent is blue).
+accent = "#dddddd"
 show_agent_labels_on_pane_borders = false
 
 # Move pane focus with Alt+hjkl (direct chords, no prefix), alongside the
