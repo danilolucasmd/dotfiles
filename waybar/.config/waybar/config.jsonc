@@ -17,6 +17,7 @@
   ],
 
   "modules-center": [
+    "custom/weather",
     "clock"
   ],
 
@@ -83,6 +84,16 @@
     "restart-interval": 3,
     "format": "",
     "tooltip": false
+  },
+
+  "custom/weather": {
+    "exec": "~/.config/waybar/scripts/weather.sh",
+    "interval": 900,
+    "signal": 10,
+    "on-click": "pkill -RTMIN+10 waybar",
+    "exec-on-event": false,
+    "return-type": "json",
+    "tooltip": true
   },
 
   "clock": {
