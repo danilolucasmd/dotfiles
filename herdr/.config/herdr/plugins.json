@@ -52,13 +52,26 @@
         ]
       }
     ],
+    "panes": [
+      {
+        "id": "choose-layout",
+        "title": "new workspace",
+        "placement": "popup",
+        "width": 66,
+        "height": 12,
+        "command": [
+          "sh",
+          "bin/clone-layout-dialog"
+        ]
+      }
+    ],
     "source": {
       "kind": "github",
       "owner": "danilolucasmd",
       "repo": "herdr-clone-layout",
-      "resolved_commit": "f537c0b6fa80b32990a968f31ea7b62026b93530",
+      "resolved_commit": "02db2604b59d897920a728ebf580f6dbd900facb",
       "managed_path": "/Users/ddias/.config/herdr/plugins/github/herdr-clone-layout-9f047b3db640",
-      "installed_unix_ms": 1785167000581
+      "installed_unix_ms": 1785342947563
     }
   }
 ]

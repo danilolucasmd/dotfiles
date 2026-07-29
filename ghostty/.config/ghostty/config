@@ -6,3 +6,10 @@ quit-after-last-window-closed = true
 
 # Close windows/tabs/splits without a confirmation prompt
 confirm-close-surface = false
+
+# Ctrl+Backspace deletes the previous word. Emit ESC+DEL (the same bytes as
+# Option+Backspace) so zsh/readline/nvim run backward-kill-word. Owned by
+# Ghostty itself instead of a Karabiner remap, which drops out after sleep/wake
+# and silently breaks the shortcut inside herdr. Karabiner's "Ctrl+Backspace =>
+# Cmd+Backspace" rule now excludes Ghostty so this binding wins.
+keybind = ctrl+backspace=text:\x1b\x7f
