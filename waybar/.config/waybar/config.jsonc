@@ -12,7 +12,6 @@
     "custom/ws4",
     "custom/ws5",
     "custom/ws-events",
-    "custom/media",
     "hyprland/window"
   ],
 
@@ -22,6 +21,7 @@
   ],
 
   "modules-right": [
+    "custom/media",
     "custom/recording",
     "custom/keyboard-layout",
     "custom/mic",
@@ -107,7 +107,6 @@
     "on-click": "playerctl play-pause",
     "on-scroll-up": "playerctl next",
     "on-scroll-down": "playerctl previous",
-    "max-length": 45,
     "tooltip": true
   },
 

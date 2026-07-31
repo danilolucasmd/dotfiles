@@ -156,6 +156,7 @@ sudo pacman -S --needed --noconfirm \
   sushi \
   gvfs-mtp \
   pika-backup \
+  video-trimmer \
   adw-gtk-theme \
   qt5ct \
   qt6ct \

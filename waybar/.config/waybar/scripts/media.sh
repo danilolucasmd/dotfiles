@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Waybar media indicator.
+# Waybar media indicator: a bare play/pause glyph in the right cluster. The
+# track itself lives in the tooltip; clicking the glyph toggles playback.
 # Shows the player that a bare `playerctl play-pause` would control, i.e. the
 # exact player that responds to the XF86AudioPlay key (see hyprland.conf).
 # Uses playerctl's default (most-recently-active) selection with --follow so it
 # updates in real time and switches automatically between e.g. YouTube/Spotify.
 
-MAXLEN=40
 SEP=$'\x1f' # unit separator: won't appear in track metadata
 
 # Escape a string for Pango markup, then for JSON.
@@ -36,14 +36,7 @@ emit() {
     *)       icon="󰐊"; class="playing" ;;
   esac
 
-  # Content name shown in the bar (fall back to player name if no title).
-  local name="$title"
-  [[ -z "$name" ]] && name="$player"
-  if (( ${#name} > MAXLEN )); then
-    name="${name:0:MAXLEN-1}…"
-  fi
-
-  # Full details in the tooltip.
+  # Everything the bar used to show now lives in the tooltip.
   local tip
   if [[ -n "$artist" && -n "$title" ]]; then
     tip="$artist — $title"
@@ -54,8 +47,8 @@ emit() {
   fi
   tip="$status ($player): $tip"
 
-  printf '{"text":"%s  %s","tooltip":"%s","class":"%s","alt":"%s"}\n' \
-    "$icon" "$(escape "$name")" "$(escape "$tip")" "$class" "$class"
+  printf '{"text":"%s","tooltip":"%s","class":"%s","alt":"%s"}\n' \
+    "$icon" "$(escape "$tip")" "$class" "$class"
 }
 
 # playerctl --follow emits the current state immediately and then on every

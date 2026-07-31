@@ -82,13 +82,6 @@ window#waybar {
 	opacity: 0;
 }
 
-/* Now playing / media indicator */
-#custom-media {
-	font-size: 12px;
-	padding: 0 10px;
-	color: #dddddd;
-}
-
 /* Weather, immediately left of the centre clock. The clock's own 16px left
    padding is the gap between them. The script also emits a .day / .night
    class if this ever wants to change colour with the sun. */
@@ -113,6 +106,7 @@ window#waybar {
 }
 
 /* Right modules */
+#custom-media,
 #custom-mic,
 #custom-bluetooth,
 #network,
@@ -120,6 +114,18 @@ window#waybar {
 #tray {
 	font-size: 16px;
 	margin-right: 16px;
+}
+
+/* Now playing: a bare glyph at the far left of the right cluster (the track is
+   in the tooltip). Dimmed while paused so the state reads at a glance now that
+   there's no text beside it. The module hides itself when nothing is playing. */
+#custom-media {
+	margin-left: 16px;
+	color: #dddddd;
+}
+
+#custom-media.paused {
+	color: #6c7086;
 }
 
 /* Bluetooth indicator */
