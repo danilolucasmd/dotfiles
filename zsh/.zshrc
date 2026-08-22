@@ -173,6 +173,21 @@ function _noop() { }
 zle -N _noop
 bindkey '^L' _noop
 
+# herdr sometimes leaves modifyOtherKeys / the kitty keyboard protocol enabled
+# in a pane after an agent TUI exits. The shell never asked for either, so keys
+# arrive as escape sequences (shift+enter -> ESC [ 27;2;13~) and zle gives up
+# partway through, self-inserting the tail as `;2;13~`. Turn both protocols off
+# before each prompt so the shell asserts its own preference. This is
+# prompt-local: TUIs re-enable what they need on startup, so shift+enter still
+# works normally inside Claude Code and friends.
+function _reset_kbd_protocol() { printf '\e[>4;0m\e[<u' }
+precmd_functions+=(_reset_kbd_protocol)
+
+# Belt-and-braces for the window between a TUI exiting and the next prompt:
+# treat a stray shift+enter as a plain Enter rather than pasting its tail.
+bindkey '^[[27;2;13~' accept-line   # modifyOtherKeys encoding
+bindkey '^[[13;2u'    accept-line   # kitty keyboard encoding
+
 # React Native / Android development toolchain
 export JAVA_HOME="$HOME/.local/share/jdks/current"
 export ANDROID_HOME="$HOME/Android/Sdk"
