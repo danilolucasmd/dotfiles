@@ -152,6 +152,13 @@ function y() {
 	rm -f -- "$tmp"
 }
 
+# Open Nautilus, detached from the terminal so it survives closing the shell.
+# `open` with no args opens Nautilus at its default location, `open .` opens the
+# current directory, `open ~/Code` opens that path.
+function open() {
+	nohup nautilus "$@" >/dev/null 2>&1 &!
+}
+
 # opencode
 export PATH=/home/danilolucasmd/.opencode/bin:$PATH
 
@@ -165,3 +172,8 @@ unsetopt auto_cd
 function _noop() { }
 zle -N _noop
 bindkey '^L' _noop
+
+# React Native / Android development toolchain
+export JAVA_HOME="$HOME/.local/share/jdks/current"
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
