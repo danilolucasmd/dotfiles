@@ -191,3 +191,30 @@ window#waybar {
 #custom-notifications.has-notifications {
 	color: #f9e2af;
 }
+
+/* Claude Code usage: the 5h session window at a glance (weekly is in the
+   tooltip). Colour tracks the worse of the two windows so a weekly spike still
+   shows; .ahead means the 5h burn is running faster than the pace that would
+   exactly last until reset. */
+#custom-agent-usage {
+	font-size: 12px;
+	margin-right: 16px;
+	color: #dddddd;
+}
+
+#custom-agent-usage.ahead {
+	color: #fab387;
+}
+
+#custom-agent-usage.warning {
+	color: #f9e2af;
+}
+
+#custom-agent-usage.critical {
+	color: #f38ba8;
+}
+
+/* Cache not refreshed in a while — the numbers are a floor, not the truth. */
+#custom-agent-usage.stale {
+	color: #6c7086;
+}

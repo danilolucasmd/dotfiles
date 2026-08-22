@@ -31,6 +31,7 @@
     "network",
     "battery",
     "tray",
+    "custom/agent-usage",
     "custom/updates",
     "custom/notifications"
   ],
@@ -148,6 +149,17 @@
     "interval": 1,
     "return-type": "json",
     "on-click": "~/.config/sounds/scripts/toggle-mic.sh",
+    "tooltip": true
+  },
+
+  "custom/agent-usage": {
+    "exec": "~/.config/waybar/scripts/agent-usage.sh",
+    "interval": 15,
+    "signal": 11,
+    "on-click": "pkill -RTMIN+11 waybar",
+    "on-click-right": "xdg-open https://claude.ai/settings/usage",
+    "exec-on-event": false,
+    "return-type": "json",
     "tooltip": true
   },
 
