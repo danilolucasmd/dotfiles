@@ -28,6 +28,9 @@ PanelWindow {
 
 	signal dismissed
 	signal refreshRequested
+	// Anything the panel itself did not claim, for content that has keys of its
+	// own (the calendar walks months with the arrows).
+	signal keyPressed(var event)
 
 	visible: open
 	// One panel, on whichever monitor has focus, rather than one per screen:
@@ -84,6 +87,8 @@ PanelWindow {
 			Keys.onPressed: event => {
 				if (event.key === Qt.Key_R)
 					root.refreshRequested();
+				else
+					root.keyPressed(event);
 			}
 
 			ColumnLayout {

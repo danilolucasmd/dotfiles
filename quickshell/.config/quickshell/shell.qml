@@ -15,16 +15,25 @@ ShellRoot {
 	// usage one without the bar being involved at all.
 	AgentUsagePanel {}
 	WeatherPanel {}
+	CalendarPanel {}
 
-	// `qs ipc call agentUsage toggle`, which is what super+A runs. Hyprland
-	// binds are the only sensible place for a global shortcut here — the
-	// wlr global-shortcuts protocol would need a portal Hyprland does not
+	// `qs ipc call <panel> toggle`, which is what super+A and super+C run.
+	// Hyprland binds are the only sensible place for a global shortcut here —
+	// the wlr global-shortcuts protocol would need a portal Hyprland does not
 	// wire up to its own keybind config.
 	IpcHandler {
 		target: "agentUsage"
 
 		function toggle(): void {
 			AgentUsageState.toggle();
+		}
+	}
+
+	IpcHandler {
+		target: "calendar"
+
+		function toggle(): void {
+			CalendarState.toggle();
 		}
 	}
 }

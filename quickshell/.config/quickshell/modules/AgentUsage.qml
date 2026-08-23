@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Io
 import qs
 import qs.components
 
@@ -17,14 +16,6 @@ BarItem {
 			AgentUsageState.refresh();
 		else
 			AgentUsageState.toggle();
-	}
-
-	onRightClicked: browser.running = true
-
-	Process {
-		id: browser
-
-		command: ["xdg-open", "https://claude.ai/settings/usage"]
 	}
 
 	BarText {
