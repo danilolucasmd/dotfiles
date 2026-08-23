@@ -35,9 +35,10 @@ RowLayout {
 			readonly property bool fullscreen: ws?.hasFullscreen ?? false
 
 			// waybar box geometry: min-width 15 + 2px padding + 1px border on
-			// each side, and 5px vertical margin off a 30px bar.
+			// each side. Slightly taller than waybar's 20px, still leaving 4px
+			// of margin above and below on the 30px bar.
 			implicitWidth: 21
-			implicitHeight: 20
+			implicitHeight: 23
 			Layout.alignment: Qt.AlignVCenter
 
 			// The fill was clipped to the content box, so it stops 3px short of
