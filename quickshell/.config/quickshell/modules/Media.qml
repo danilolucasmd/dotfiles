@@ -28,7 +28,6 @@ BarItem {
 	readonly property bool playing: player?.playbackState === MprisPlaybackState.Playing
 
 	active: player !== null
-	leftMargin: Theme.gap
 	rightMargin: Theme.gap
 
 	tooltip: {

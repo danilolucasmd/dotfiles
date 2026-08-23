@@ -42,8 +42,8 @@ Item {
 		id: mouse
 
 		anchors.fill: parent
-		hoverEnabled: true
 		acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+		cursorShape: Qt.PointingHandCursor
 
 		onClicked: event => {
 			if (event.button === Qt.RightButton)
@@ -60,9 +60,16 @@ Item {
 		}
 	}
 
+	// Hover is a handler rather than the MouseArea's own hoverEnabled: a
+	// hovered MouseArea swallows the event, and the bar as a whole watches for
+	// the pointer leaving it. Handlers are non-blocking, so both see it.
+	HoverHandler {
+		id: hover
+	}
+
 	Tooltip {
 		owner: root
 		text: root.tooltip
-		shown: mouse.containsMouse
+		shown: hover.hovered
 	}
 }

@@ -47,6 +47,15 @@ RowLayout {
 				menu: entry.modelData.menu
 				anchor.item: entry
 				anchor.rect.y: entry.height
+
+				// The menu opens below the bar, so the pointer has to leave the
+				// bar to reach it. Tell the bar to hold the extras open while
+				// it is up, or the icon that opened it folds away mid-reach.
+				onVisibleChanged: BarState.openMenus += visible ? 1 : -1
+				Component.onDestruction: {
+					if (visible)
+						BarState.openMenus -= 1;
+				}
 			}
 		}
 	}

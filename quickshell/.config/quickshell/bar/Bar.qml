@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs
+import qs.components
 import qs.modules
 
 // One bar per screen. waybar's three groups become three anchored rows: the
@@ -25,7 +26,36 @@ Variants {
 		color: Theme.bg
 
 		Item {
+			id: content
+
 			anchors.fill: parent
+
+			// Moving the pointer off the bar tidies the extras away again.
+			// A HoverHandler rather than a MouseArea: it reports the bar as
+			// hovered even while the pointer sits on a module's own MouseArea,
+			// and it never takes a click off one.
+			HoverHandler {
+				id: barHover
+			}
+
+			readonly property bool keepExtras: barHover.hovered || BarState.openMenus > 0
+
+			onKeepExtrasChanged: {
+				if (keepExtras)
+					collapse.stop();
+				else
+					collapse.restart();
+			}
+
+			// Leaving the bar folds the extras away, but not instantly: a hand
+			// on its way to a tray icon dips off the bar all the time. Coming
+			// back restarts the countdown from scratch.
+			Timer {
+				id: collapse
+
+				interval: 1000
+				onTriggered: BarState.extrasVisible = false
+			}
 
 			RowLayout {
 				anchors.left: parent.left
@@ -52,15 +82,58 @@ Variants {
 				anchors.verticalCenter: parent.verticalCenter
 				spacing: 0
 
+				ExtrasToggle {}
+
+				// Folded away behind the chevron: the modules worth having but
+				// not worth a permanent seat — the tray especially, which grows
+				// with whatever happens to be running.
+				//
+				// The group is a window onto a right-aligned row, so animating
+				// the window's width slides the modules out from behind the
+				// always-visible ones instead of popping them into place. The
+				// cluster is anchored right, so the chevron glides left along
+				// with them and nothing to the right of them moves at all.
+				Item {
+					id: extras
+
+					property real openWidth: BarState.extrasVisible ? row.implicitWidth : 0
+
+					Behavior on openWidth {
+						NumberAnimation {
+							duration: 200
+							easing.type: Easing.OutCubic
+						}
+					}
+
+					Layout.preferredWidth: openWidth
+					Layout.preferredHeight: Theme.barHeight
+					clip: true
+
+					RowLayout {
+						id: row
+
+						anchors.right: parent.right
+						width: implicitWidth
+						height: parent.height
+						spacing: 0
+
+						Recording {}
+						Network {}
+						Battery {}
+						Tray {}
+
+						Divider {
+							Layout.rightMargin: Theme.gap
+						}
+					}
+				}
+
+				// Always on screen, in the order they're glanced at.
 				Media {}
-				Recording {}
 				KeyboardLayout {}
 				Mic {}
 				Volume {}
 				Bluetooth {}
-				Network {}
-				Battery {}
-				Tray {}
 				AgentUsage {}
 				Updates {}
 				Notifications {}

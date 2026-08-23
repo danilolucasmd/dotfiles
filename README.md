@@ -84,6 +84,18 @@ Four scripts survive in `quickshell/.config/quickshell/scripts/` because they do
 work no service exposes: weather, package updates, screen-recording state and
 Claude Code usage.
 
+The right cluster is split in two. Media, keyboard layout, microphone, volume,
+bluetooth, Claude usage, updates and notifications are always on screen; the
+recording indicator, network, battery and the tray fold away behind a chevron
+that stays the leftmost thing in the cluster. Clicking it slides them out
+rightward from the chevron, with a hairline marking where they end and the
+always-visible modules begin; those never shift.
+
+Moving the pointer off the bar folds them away after a second, and coming
+back restarts that countdown — a hand on its way to a tray icon dips off the bar
+constantly. An open tray menu holds them regardless, since reaching one means
+leaving the bar.
+
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
 one that ships light symbolic icons for a dark bar.
