@@ -18,7 +18,7 @@
 # generated launchers give those windows classes built from the same host
 # (brave-web.whatsapp.com__-Default), so matching on that beats both.
 #
-# Three passes, in order of how much the match can be trusted:
+# Four passes, in order of how much the match can be trusted:
 #
 #   host   The body names an origin and a window's class carries it. This is a
 #          web app: nothing else can be that window.
@@ -28,6 +28,12 @@
 #          "kdeconnect". desktop_entry names the app's .desktop file, which
 #          usually matches the class; app_name is a human label, so it ranks
 #          below.
+#   path   No window is the app, because the app was a script that wrote a file
+#          and exited -- hyprshot's "Image saved in /home/.../shot.png". What
+#          the notification is really pointing at is the file, so open the
+#          folder with it selected. Ranked under class so an app that has a
+#          window still gets its window, and over title so a screenshot does
+#          not go looking for a terminal that happens to say "Pictures".
 #   title  Nothing identified the app — the sender is a bare `notify-send`,
 #          which is what herdr uses. All that is left is the text: score
 #          windows by the words their titles share with the notification.
@@ -55,7 +61,25 @@ has_default="${5:-0}"
 # hostname counts — anything with a space in it is prose.
 host=$(printf '%s' "$body" | head -n1 | grep -oE '^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$' || true)
 
-read -r strong weak < <(hyprctl clients -j 2>/dev/null | jq -r \
+# The first absolute path in the text that is a file we can actually open.
+# Existing is the whole test: it is what stops prose about a path that has since
+# been moved -- or a lone "/" between two words -- from sending the file manager
+# somewhere useless, and it costs nothing when there is no path at all. Markup
+# is stripped first (hyprshot italicises the path) and a path with a space in it
+# is not found, which is the price of finding one in a sentence.
+path=""
+while read -r cand; do
+  cand="${cand#file://}"
+  [ "${cand#\~/}" != "$cand" ] && cand="$HOME/${cand#\~/}"
+  # A path at the end of a sentence keeps the full stop.
+  [ -e "$cand" ] || cand="${cand%[.,;:)]}"
+  if [ -e "$cand" ]; then
+    path="$cand"
+    break
+  fi
+done < <(printf '%s %s' "$body" "$summary" | sed 's/<[^>]*>/ /g' | tr ' \t\n' '\n\n\n' | grep -E '^(file://|~?/.)' || true)
+
+read -r byhost byclass bytitle < <(hyprctl clients -j 2>/dev/null | jq -r \
   --arg entry "$entry" --arg app "$app" --arg host "$host" --arg text "$summary $body" '
   def norm: (. // "") | ascii_downcase | gsub("[^a-z0-9]"; "");
   def leaf: (. // "") | sub("\\.desktop$"; "") | split(".") | last // "";
@@ -92,17 +116,38 @@ read -r strong weak < <(hyprctl clients -j 2>/dev/null | jq -r \
   | (map(select($h != "" and (.cls | contains($h)))) | sort_by(.hist) | .[0].addr) as $byhost
   | (map(select(.cscore > 0)) | sort_by(-.cscore, .hist) | .[0].addr) as $byclass
   | (map(select(.tscore > 0)) | sort_by(-.tscore, .hist) | .[0].addr) as $bytitle
-  # A title match only gets a say when nothing identified the app at all.
-  | [ ($byhost // (if $byclass == null then $bytitle else null end) // (if $h == "" then $byclass else null end) // "-"),
-      ($byclass // "-") ]
+  | [ ($byhost // "-"), ($byclass // "-"), ($bytitle // "-") ]
   | @tsv')
 
-[ "$strong" = "-" ] && strong=""
-[ "$weak" = "-" ] && weak=""
+[ "$byhost" = "-" ] && byhost=""
+[ "$byclass" = "-" ] && byclass=""
+[ "$bytitle" = "-" ] && bytitle=""
 
-addr="$strong"
+addr=""
+if [ -n "$byhost" ]; then
+  addr="$byhost"
+elif [ -n "$byclass" ]; then
+  # A host that matched nothing is deliberately not fallen back on here; see
+  # above.
+  [ -z "$host" ] && addr="$byclass"
+elif [ -n "$path" ]; then
+  # Nothing identified the app, but it named a file. Nautilus is what this
+  # system opens a directory with; -s opens the folder *around* a file with it
+  # selected, which is not what a path that is already a folder wants. Detached,
+  # because opening a folder is not something to wait on.
+  if [ -d "$path" ]; then
+    setsid -f nautilus "$path" >/dev/null 2>&1
+  else
+    setsid -f nautilus -s "$path" >/dev/null 2>&1
+  fi
+  exit 0
+else
+  # A title match only gets a say when nothing identified the app at all.
+  addr="$bytitle"
+fi
+
 # Nothing to fall back to, so a browser window is better than no window.
-[ -z "$addr" ] && [ "$has_default" != "1" ] && addr="$weak"
+[ -z "$addr" ] && [ "$has_default" != "1" ] && addr="$byclass"
 [ -z "$addr" ] && exit 1
 
 hyprctl dispatch focuswindow "address:$addr" >/dev/null
