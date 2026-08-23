@@ -10,10 +10,11 @@ import qs.modules
 ShellRoot {
 	Bar {}
 
-	// Not part of the bar: it opens on the focused monitor, which is not
-	// necessarily the one whose bar was clicked, and super+A can summon it
-	// without the bar being involved at all.
+	// Not part of the bar: a panel opens on the focused monitor, which is not
+	// necessarily the one whose bar was clicked, and super+A can summon the
+	// usage one without the bar being involved at all.
 	AgentUsagePanel {}
+	WeatherPanel {}
 
 	// `qs ipc call agentUsage toggle`, which is what super+A runs. Hyprland
 	// binds are the only sensible place for a global shortcut here — the

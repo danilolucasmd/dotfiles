@@ -9,10 +9,13 @@
 # endpoint geolocates by IP, which reports the Proton VPN exit node instead of
 # São Paulo whenever the VPN is up.
 #
-# On a failed fetch the last good reading is reused and marked stale in the
-# tooltip, so a brief drop in connectivity doesn't blank the module. Only if
-# there has never been a successful fetch does it print empty text, which
-# makes the module hide itself (same trick as recording.sh / updates.sh).
+# Prints `text` for the bar glyph plus the fields the click-open panel lays out;
+# there is no prose here any more, the panel does its own phrasing.
+#
+# On a failed fetch the last good reading is reused and flagged stale, so a
+# brief drop in connectivity doesn't blank the module. Only if there has never
+# been a successful fetch does it print empty text, which makes the module hide
+# itself (same trick as recording.sh / updates.sh).
 
 set -uo pipefail
 
@@ -30,10 +33,10 @@ resp=$(curl -sS --max-time 10 "$url" 2>/dev/null)
 # captive-portal redirect is still HTTP 200, so test for the field itself.
 if printf '%s' "$resp" | jq -e '.current.temperature_2m != null' >/dev/null 2>&1; then
 	printf '%s' "$resp" >"$cache"
-	stale=""
+	stale=0
 elif [ -s "$cache" ]; then
 	resp=$(cat "$cache")
-	stale=" (stale — no connection)"
+	stale=1
 else
 	printf '{"text":""}\n'
 	exit 0
@@ -66,13 +69,15 @@ case "$code" in
 *) icon="󰖐" desc="Unknown (WMO $code)" ;;
 esac
 
-[ "$is_day" = 1 ] && class="day" || class="night"
-
-tooltip=$(printf '%s — Pinheiros, São Paulo\nFeels like %.0f°C · humidity %.0f%%\nUpdated %s%s' \
-	"$desc" "$feels" "$hum" "${when#*T}" "$stale")
-
 jq -nc \
 	--arg text "$(printf '%s %.0f°' "$icon" "$temp")" \
-	--arg tt "$tooltip" \
-	--arg class "$class" \
-	'{text:$text, tooltip:$tt, class:$class}'
+	--arg icon "$icon" \
+	--arg desc "$desc" \
+	--arg place "Pinheiros, São Paulo" \
+	--arg temp "$(printf '%.0f' "$temp")" \
+	--arg feels "$(printf '%.0f' "$feels")" \
+	--arg humidity "$(printf '%.0f' "$hum")" \
+	--arg updated "${when#*T}" \
+	--argjson stale "$stale" \
+	'{text:$text, icon:$icon, desc:$desc, place:$place, temp:$temp,
+	  feels:$feels, humidity:$humidity, updated:$updated, stale:($stale == 1)}'

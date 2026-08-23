@@ -1,9 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Hyprland
-import Quickshell.Wayland
 import qs
+import qs.components
 
 // The Claude Code usage panel, opened by clicking the bar module or by super+A.
 //
@@ -12,129 +10,72 @@ import qs
 // matters here is really a comparison — how much of the window you have burned
 // against how much of it has elapsed — and that wants a meter with the pace
 // marked on it, not a sentence.
-//
-// One window, on whichever monitor has focus, rather than one per screen: it is
-// summoned by a keybind as often as by a click, and a keybind has no screen of
-// its own to open on.
-PanelWindow {
+Panel {
 	id: root
 
-	// Breathing room inside the card, on all four sides.
-	readonly property int pad: 14
+	open: AgentUsageState.panelOpen
+	onDismissed: AgentUsageState.close()
+	onRefreshRequested: AgentUsageState.refresh()
 
-	visible: AgentUsageState.panelOpen
-	screen: Hyprland.focusedMonitor?.screen ?? null
-
-	// Overlay, so it is not buried by a fullscreen window. exclusiveZone 0
-	// keeps it from reserving space of its own while still being placed under
-	// the bar's own zone rather than behind it.
-	WlrLayershell.layer: WlrLayer.Overlay
-	WlrLayershell.namespace: "quickshell:agent-usage"
-	// OnDemand rather than Exclusive: the focus grab below hands it the
-	// keyboard while it is up, and taking the keyboard outright would mean a
-	// panel left open silently swallowing everything typed at the terminal.
-	WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-
-	anchors.top: true
+	// The module sits in the bar's right cluster, so the panel drops from the
+	// same corner rather than from the middle of the screen.
 	anchors.right: true
-	margins.top: 8
 	margins.right: 8
-	exclusiveZone: 0
-	color: "transparent"
 
-	implicitWidth: card.implicitWidth
-	implicitHeight: card.implicitHeight
+	RowLayout {
+		Layout.fillWidth: true
+		spacing: 8
 
-	// Clicking anywhere outside dismisses, and the keyboard comes here while it
-	// is up so Escape and R land. Without the grab the panel would be a window
-	// you had to remember to close.
-	HyprlandFocusGrab {
-		windows: [root]
-		active: root.visible
-		onCleared: AgentUsageState.close()
-	}
-
-	Rectangle {
-		id: card
-
-		implicitWidth: 360
-		implicitHeight: layout.implicitHeight + root.pad * 2
-
-		radius: 10
-		color: Theme.tooltipBg
-		border.width: 1
-		border.color: Theme.tooltipBorder
-
-		focus: true
-		Keys.onEscapePressed: AgentUsageState.close()
-		Keys.onPressed: event => {
-			if (event.key === Qt.Key_R)
-				AgentUsageState.refresh();
+		BarText {
+			text: "Claude Code"
+			font.pixelSize: 13
+			font.weight: Font.DemiBold
 		}
 
-		ColumnLayout {
-			id: layout
+		Item {
+			Layout.fillWidth: true
+		}
 
-			anchors.fill: parent
-			anchors.margins: root.pad
-			spacing: 14
+		BarText {
+			text: AgentUsageState.data.source ?? ""
+		}
+	}
 
-			RowLayout {
-				Layout.fillWidth: true
-				spacing: 8
+	Repeater {
+		model: AgentUsageState.windows
 
-				Label {
-					text: "Claude Code"
-					font.pixelSize: 13
-					font.weight: Font.DemiBold
-				}
+		delegate: Meter {}
+	}
 
-				Item {
-					Layout.fillWidth: true
-				}
+	BarText {
+		Layout.fillWidth: true
+		visible: !AgentUsageState.available
 
-				Label {
-					text: AgentUsageState.data.source ?? ""
-				}
+		text: "No usage reading yet. Start a Claude Code session, or sign in again."
+		wrapMode: Text.Wrap
+	}
+
+	RowLayout {
+		Layout.fillWidth: true
+		spacing: 8
+
+		BarText {
+			text: {
+				const d = AgentUsageState.data;
+				if (!AgentUsageState.available)
+					return "";
+				const prefix = d.stale ? "stale, last read " : "updated ";
+				return prefix + root.ago(d.ageSeconds ?? 0);
 			}
+			color: AgentUsageState.data.stale ? Theme.yellow : Theme.fg
+		}
 
-			Repeater {
-				model: AgentUsageState.windows
+		Item {
+			Layout.fillWidth: true
+		}
 
-				delegate: Meter {}
-			}
-
-			Label {
-				Layout.fillWidth: true
-				visible: !AgentUsageState.available
-
-				text: "No usage reading yet. Start a Claude Code session, or sign in again."
-				wrapMode: Text.Wrap
-			}
-
-			RowLayout {
-				Layout.fillWidth: true
-				spacing: 8
-
-				Label {
-					text: {
-						const d = AgentUsageState.data;
-						if (!AgentUsageState.available)
-							return "";
-						const prefix = d.stale ? "stale, last read " : "updated ";
-						return prefix + root.ago(d.ageSeconds ?? 0);
-					}
-					color: AgentUsageState.data.stale ? Theme.yellow : Theme.fg
-				}
-
-				Item {
-					Layout.fillWidth: true
-				}
-
-				Label {
-					text: "r refresh · esc close"
-				}
-			}
+		BarText {
+			text: "r refresh · esc close"
 		}
 	}
 
@@ -162,14 +103,6 @@ PanelWindow {
 		return Theme.green;
 	}
 
-	component Label: Text {
-		color: Theme.fg
-		font.family: Theme.fontFamily
-		font.pixelSize: Theme.fontText
-		textFormat: Text.PlainText
-		renderType: Text.NativeRendering
-	}
-
 	// One rate-limit window: what has been spent, against how much of the
 	// window has gone by.
 	component Meter: ColumnLayout {
@@ -191,13 +124,13 @@ PanelWindow {
 			Layout.fillWidth: true
 			spacing: 6
 
-			Label {
+			BarText {
 				text: meter.modelData.label
 				font.pixelSize: 13
 				font.weight: Font.DemiBold
 			}
 
-			Label {
+			BarText {
 				text: meter.modelData.span
 			}
 
@@ -205,7 +138,7 @@ PanelWindow {
 				Layout.fillWidth: true
 			}
 
-			Label {
+			BarText {
 				text: `${meter.modelData.pct}%`
 				color: meter.accent
 				font.pixelSize: 15
@@ -257,7 +190,7 @@ PanelWindow {
 			Layout.fillWidth: true
 			spacing: 8
 
-			Label {
+			BarText {
 				Layout.fillWidth: true
 
 				text: {
@@ -275,7 +208,7 @@ PanelWindow {
 				elide: Text.ElideRight
 			}
 
-			Label {
+			BarText {
 				text: meter.modelData.resetsIn
 			}
 		}

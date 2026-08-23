@@ -15,7 +15,17 @@ BarItem {
 	readonly property bool intl: keymap.toLowerCase().includes("intl")
 
 	rightMargin: Theme.gap
-	tooltip: intl ? "US International (dead keys)" : "US"
+
+	// Same flip alt+space does, and deliberately through Hyprland rather than
+	// around it: kb-layout-per-app.py is listening for `activelayout`, so a
+	// click is remembered for the focused window's class like any other toggle.
+	onClicked: flip.running = true
+
+	Process {
+		id: flip
+
+		command: ["hyprctl", "switchxkblayout", "all", "next"]
+	}
 
 	// The event only fires on a change, so seed from the current state.
 	Process {

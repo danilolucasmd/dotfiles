@@ -10,7 +10,6 @@ BarItem {
 	id: root
 
 	rightMargin: Theme.gap
-	tooltip: BarState.extrasVisible ? "Hide extras" : "Show extras"
 
 	onClicked: BarState.extrasVisible = !BarState.extrasVisible
 

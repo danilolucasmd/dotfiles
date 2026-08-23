@@ -16,7 +16,6 @@ BarItem {
 	readonly property int volume: Math.round((sink?.audio?.volume ?? 0) * 100)
 
 	rightMargin: 10
-	tooltip: muted ? "Muted" : `Volume ${volume}%`
 
 	PwObjectTracker {
 		objects: [root.sink]

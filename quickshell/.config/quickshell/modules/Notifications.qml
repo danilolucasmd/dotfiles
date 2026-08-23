@@ -32,23 +32,8 @@ BarItem {
 
 	rightMargin: Theme.gap
 
-	// Notification bodies arrive with markup and hard newlines in them, so each
-	// entry is flattened to a single line — a tooltip is a glance, not a reader.
-	function flatten(s: string): string {
-		return (s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-	}
-
-	tooltip: {
-		if (count === 0)
-			return "No past notifications";
-		// Newest first, same 12-line cap the old tooltip used.
-		return entries.slice(-12).reverse().map(n => {
-			let body = flatten(n.body);
-			if (body.length > 80)
-				body = `${body.slice(0, 80)}…`;
-			return `• ${flatten(n.summary)}${body ? ` — ${body}` : ""}`;
-		}).join("\n");
-	}
+	// No hover tooltip: it listed the same history the menu shows, but flattened
+	// to one line an entry and gone the moment you looked away from it.
 
 	onClicked: menu.running = true
 

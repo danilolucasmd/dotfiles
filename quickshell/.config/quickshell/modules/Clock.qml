@@ -7,6 +7,9 @@ import qs.components
 BarItem {
 	leftMargin: 8
 	rightMargin: 16
+	// The bar has room for "Sat 22 Aug" and no more, so the one thing hovering
+	// adds is the date written out in full.
+	tooltip: Qt.formatDateTime(clock.date, "dddd, d MMMM yyyy")
 
 	SystemClock {
 		id: clock

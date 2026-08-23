@@ -12,7 +12,6 @@ BarItem {
 	readonly property bool muted: source?.audio?.muted ?? false
 
 	rightMargin: Theme.gap
-	tooltip: muted ? "Microphone muted" : "Microphone live"
 
 	// Volume/mute state is only tracked for nodes something is holding on to.
 	PwObjectTracker {
