@@ -167,8 +167,8 @@ Panel {
 		}
 	}
 
-	// One past notification. Two lines: what it said, then who said it and
-	// when — the walker menu had to fit all of that on one.
+	// One past notification. Two lines: who it is from and when, then what it
+	// said — the walker menu had to fit all of that on one.
 	component Entry: Rectangle {
 		id: entry
 
@@ -179,9 +179,9 @@ Panel {
 		// Notifications with no summary put everything in the body; the first
 		// line still has to say something.
 		readonly property string title: modelData.summary || flat
-		// Bodies arrive with newlines in them — WhatsApp puts the sender, a
+		// Bodies arrive with newlines in them — WhatsApp puts the origin, a
 		// blank line, then the message — and this line is one line.
-		readonly property string flat: NotificationsState.plain(modelData.body)
+		readonly property string flat: NotificationsState.content(modelData)
 
 		width: ListView.view ? ListView.view.width : 0
 		implicitHeight: lines.implicitHeight + 12
@@ -260,11 +260,16 @@ Panel {
 				}
 			}
 
+			// What it said, and nothing else — `Brave · web.whatsapp.com` in
+			// front of a message is three ways of saying the row above it.
+			// The app's name is worth the line only when there is no message
+			// to put there, either because the body is empty or because it
+			// went into the title for want of a summary.
 			BarText {
 				Layout.fillWidth: true
 				visible: text !== ""
 
-				text: entry.modelData.summary ? [entry.modelData.app, entry.flat].filter(s => s !== "").join(" · ") : entry.modelData.app
+				text: entry.modelData.summary && entry.flat ? entry.flat : entry.modelData.app
 				color: Theme.dim
 				elide: Text.ElideRight
 			}
