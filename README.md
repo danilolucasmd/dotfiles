@@ -157,11 +157,27 @@ entries, and survives reboots. The old mako store at
 
 ---
 
-## 7. General Notes
+## 7. Nautilus Video Previews (NVIDIA)
+
+Fully automated by `install.sh` — nothing to do by hand. Noted here because the
+failure is baffling if the override ever goes missing.
+
+Pressing <kbd>Space</kbd> on a video in Nautilus opens **sushi**, whose GL video
+sink (`gtkglsink`) is broken on NVIDIA: it either errors with "Failed to
+initialize OpenGL with Gtk" or renders a solid dark green rectangle. The `dbus`
+stow package ships a D-Bus activation override setting
+`SUSHI_USE_GST_GTKSINK=1`, which forces the working software sink.
+
+Full write-up, including how to verify it: `dbus/README.md`.
+
+---
+
+## 8. General Notes
 
 - install.sh is safe to re-run
 - System-level dotfiles live in dotfiles/system/
 - User dotfiles are applied via standard stow
+- `dbus` is stowed with `--no-folding`, everything else with plain stow
 - All non-deterministic or GUI-based steps are documented here on purpose
 
 If something breaks after a system update, this file is the single source of

@@ -289,6 +289,16 @@ stow \
   yazi \
   zsh
 
+# dbus is stowed separately with --no-folding so that
+# ~/.local/share/dbus-1/services stays a real directory. Other apps drop
+# service files in there, and letting stow fold it into a single symlink
+# would send those files into this repo.
+#
+# It carries one file: a D-Bus activation override for sushi (Nautilus'
+# spacebar quick preview) that sets SUSHI_USE_GST_GTKSINK=1, because
+# GStreamer's gtkglsink is broken on NVIDIA. See dbus/README.md.
+stow --no-folding dbus
+
 ############################################################
 # ZSH + on-my-zsh                                          #
 ############################################################
