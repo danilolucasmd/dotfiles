@@ -103,8 +103,7 @@ sudo pacman -S --needed --noconfirm \
   polkit-gnome \
   quickshell \
   breeze-icons \
-  waybar \
-  mako
+  waybar
 
 ############################################################
 # DISPLAY MANAGER (SDDM)                                   #
@@ -279,7 +278,6 @@ stow \
   ghostty \
   herdr \
   hypr \
-  mako \
   nvim \
   sounds \
   steam \

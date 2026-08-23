@@ -16,16 +16,20 @@ ShellRoot {
 	AgentUsagePanel {}
 	WeatherPanel {}
 	CalendarPanel {}
+	NotificationsPanel {}
 
 	AudioDevicesPanel {}
 	AudioDevicesPanel {
 		inputs: true
 	}
 
-	// Not a panel: a readout that shows itself when the volume moves.
+	// Neither is a panel: both show themselves rather than being opened, and
+	// neither may take the keyboard.
 	VolumeOsd {}
+	NotificationPopups {}
 
-	// `qs ipc call <panel> toggle`, which is what super+A and super+C run.
+	// `qs ipc call <panel> toggle`, which is what super+A, super+C and super+N
+	// run.
 	// Hyprland binds are the only sensible place for a global shortcut here —
 	// the wlr global-shortcuts protocol would need a portal Hyprland does not
 	// wire up to its own keybind config.
@@ -48,6 +52,14 @@ ShellRoot {
 
 		function outputs(): void {
 			AudioState.toggleOutputs();
+		}
+	}
+
+	IpcHandler {
+		target: "notifications"
+
+		function toggle(): void {
+			NotificationsState.toggle();
 		}
 	}
 
