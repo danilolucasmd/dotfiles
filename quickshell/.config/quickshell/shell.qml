@@ -17,6 +17,9 @@ ShellRoot {
 	WeatherPanel {}
 	CalendarPanel {}
 
+	// Not a panel: a readout that shows itself when the volume moves.
+	VolumeOsd {}
+
 	// `qs ipc call <panel> toggle`, which is what super+A and super+C run.
 	// Hyprland binds are the only sensible place for a global shortcut here —
 	// the wlr global-shortcuts protocol would need a portal Hyprland does not
