@@ -1,6 +1,9 @@
 #!/bin/bash
 # Quickshell module: Claude Code rate-limit usage (5h session window + 7d window).
-# Prints one line of JSON, consumed by the module's JsonScript.
+# Prints one line of JSON, consumed by the module's JsonScript: `text`/`class`
+# for the bar glyph, plus a `windows` array the popup panel draws its meters
+# from. The panel replaced the old hover tooltip, so no prose is built here any
+# more -- every number goes out raw and QML decides how to phrase it.
 # Empty text => the module hides itself (same trick as recording.sh).
 #
 # Three sources, newest wins:
@@ -108,17 +111,17 @@ read_flat() { # $1=file with top-level five_hour/seven_day
     | @tsv' "$1" 2>/dev/null
 }
 
-fields=""; best_at=0
-consider() {
+fields=""; best_at=0; source=""
+consider() { # $1=tsv row  $2=name of the source it came from
   local at
   [ -n "$1" ] || return
   at=$(cut -f5 <<<"$1")
   [ "$at" -gt "$best_at" ] 2>/dev/null || return
-  fields=$1; best_at=$at
+  fields=$1; best_at=$at; source=$2
 }
 
-consider "$(read_flat "$sl_cache")"
-consider "$(read_flat "$cache")"
+consider "$(read_flat "$sl_cache")" "statusLine feed"
+consider "$(read_flat "$cache")" "usage endpoint"
 [ -r "$state" ] && consider "$(jq -r '
   .cachedUsageUtilization as $c
   | ($c.utilization // empty) as $u
@@ -126,7 +129,7 @@ consider "$(read_flat "$cache")"
   | [ ($u.five_hour.utilization // -1), ($u.five_hour.resets_at // ""),
       ($u.seven_day.utilization // -1), ($u.seven_day.resets_at // ""),
       (($c.fetchedAtMs // 0) / 1000 | floor) ]
-  | @tsv' "$state" 2>/dev/null)"
+  | @tsv' "$state" 2>/dev/null)" "Claude Code cache"
 
 [ -n "$fields" ] || hide
 IFS=$'\t' read -r five_pct five_reset seven_pct seven_reset captured_at <<<"$fields"
@@ -177,28 +180,25 @@ elif [ "$five_pace" -ge 0 ] && [ "$five_pct" -gt "$five_pace" ]; then class=ahea
 else                                   class=normal
 fi
 
-# Only the 5h session window is shown — it is the one that actually bites.
-# The weekly window lives in the tooltip, but still drives the colour.
+# Only the 5h session window is shown on the bar — it is the one that actually
+# bites. The weekly window lives in the panel, but still drives the colour.
 text="󰚩 ${five_pct}%"
 [ "$five_pct" -lt 0 ] && text="󰚩 7d ${seven_pct}%"
 
-pace_note() { # $1=used  $2=pace
-  [ "$2" -lt 0 ] && return
-  if [ "$1" -gt "$2" ]; then printf ' (ahead of pace, %d%% elapsed)' "$2"
-  else                       printf ' (on pace, %d%% elapsed)' "$2"
-  fi
+# One object per window the reading actually carried. Everything is a raw
+# number or a preformatted countdown; the panel does the phrasing.
+window() { # $1=label  $2=span  $3=used%  $4=pace%  $5=countdown
+  [ "$3" -ge 0 ] || return
+  jq -nc --arg label "$1" --arg span "$2" \
+    --argjson pct "$3" --argjson pace "$4" --arg resetsIn "$5" \
+    '{label:$label, span:$span, pct:$pct, pace:$pace, resetsIn:$resetsIn}'
 }
 
-tooltip="Claude Code usage"
-[ "$five_pct"  -ge 0 ] && tooltip+=$'\n'"Session (5h): ${five_pct}% used$(pace_note "$five_pct" "$five_pace"), resets in ${five_left}"
-[ "$seven_pct" -ge 0 ] && tooltip+=$'\n'"Weekly (7d): ${seven_pct}% used$(pace_note "$seven_pct" "$seven_pace"), resets in ${seven_left}"
-if [ "$stale" -eq 1 ]; then
-  tooltip+=$'\n\n'"Stale: last refreshed $((age_min / 60))h ago."
-elif [ "$age_min" -lt 1 ]; then
-  tooltip+=$'\n\n'"Updated $(( now - captured_at ))s ago."
-else
-  tooltip+=$'\n\n'"Updated ${age_min}m ago."
-fi
+windows=$( { window "Session" "5h" "$five_pct"  "$five_pace"  "$five_left"
+             window "Weekly"  "7d" "$seven_pct" "$seven_pace" "$seven_left"; } | jq -sc . )
 
-jq -nc --arg text "$text" --arg tt "$tooltip" --arg class "$class" \
-  '{text:$text, tooltip:$tt, class:$class}'
+jq -nc --arg text "$text" --arg class "$class" --arg source "$source" \
+  --argjson age "$((now - captured_at))" --argjson stale "$stale" \
+  --argjson windows "$windows" \
+  '{text:$text, class:$class, source:$source, ageSeconds:$age,
+    stale:($stale == 1), windows:$windows}'

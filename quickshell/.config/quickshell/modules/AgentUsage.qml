@@ -1,33 +1,25 @@
+import QtQuick
 import Quickshell.Io
 import qs
 import qs.components
 
-// Claude Code rate-limit usage: the 5h session window on the bar, the weekly
-// window in the tooltip. The script stays — it reconciles three sources of
-// truth and backs off a rate-limited endpoint, none of which Quickshell has
-// an opinion about.
-//
-// What did change: the statusLine feed used to wake the module with
-// `pkill -RTMIN+11 waybar`. Here the module watches that cache file instead,
-// so the freshest source pushes an update with no signal plumbing.
+// Claude Code rate-limit usage: the 5h session window as a percentage on the
+// bar, everything else a click away in AgentUsagePanel. The reading itself
+// lives in AgentUsageState, which the panel and the super+A binding share.
 BarItem {
-	id: root
-
-	readonly property var d: usage.data
-
-	active: (d.text ?? "") !== ""
-	tooltip: d.tooltip ?? ""
+	active: AgentUsageState.available
 	rightMargin: Theme.gap
 
-	onClicked: usage.refresh()
-	onRightClicked: browser.running = true
-
-	JsonScript {
-		id: usage
-
-		command: [`${Paths.scripts}/agent-usage.sh`]
-		intervalMs: 15000
+	// No tooltip: hovering used to be the only way to see the weekly window and
+	// the pace, and the panel says all of that properly.
+	onClicked: event => {
+		if (event.button === Qt.MiddleButton)
+			AgentUsageState.refresh();
+		else
+			AgentUsageState.toggle();
 	}
+
+	onRightClicked: browser.running = true
 
 	Process {
 		id: browser
@@ -35,18 +27,11 @@ BarItem {
 		command: ["xdg-open", "https://claude.ai/settings/usage"]
 	}
 
-	FileView {
-		path: `${Paths.cache}/quickshell/agent-usage-statusline.json`
-		watchChanges: true
-		printErrors: false
-		onFileChanged: usage.refresh()
-	}
-
 	BarText {
-		text: root.d.text ?? ""
+		text: AgentUsageState.data.text ?? ""
 
 		color: {
-			switch (root.d["class"] ?? "") {
+			switch (AgentUsageState.data["class"] ?? "") {
 			case "stale":
 				return Theme.dim;
 			case "critical":

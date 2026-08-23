@@ -18,6 +18,10 @@ Singleton {
 	readonly property color tooltipBg: "#2a2a2a"
 	readonly property color tooltipBorder: "#3f3f3f"
 
+	// The unfilled part of a meter in the usage panel: readable against the
+	// tooltip surface it sits on without competing with the fill.
+	readonly property color track: "#3f3f3f"
+
 	readonly property string fontFamily: "JetBrainsMono Nerd Font"
 
 	readonly property int barHeight: 30
