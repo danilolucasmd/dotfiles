@@ -9,5 +9,5 @@ Rectangle {
 
 	implicitWidth: 1
 	implicitHeight: 14
-	color: Theme.dim
+	color: Theme.line
 }
