@@ -1,24 +1,19 @@
 import Quickshell.Io
-import Quickshell.Services.Pipewire
 import qs
 import qs.components
 
 // Microphone mute state, straight off the default PipeWire source rather than
-// polling `pactl` once a second.
+// polling `pactl` once a second. The state lives in AudioState, which the input
+// picker shares.
 BarItem {
-	id: root
-
-	readonly property PwNode source: Pipewire.defaultAudioSource
-	readonly property bool muted: source?.audio?.muted ?? false
-
 	rightMargin: Theme.gap
 
-	// Volume/mute state is only tracked for nodes something is holding on to.
-	PwObjectTracker {
-		objects: [root.source]
-	}
-
-	onClicked: toggle.running = true
+	// Left-click opens the input picker, where every microphone can be muted
+	// individually or all at once. The old click — mute the default source —
+	// moved to the right button, where it keeps the script's mic-on/mic-off
+	// sounds and matches the XF86AudioMute bind.
+	onClicked: AudioState.toggleInputs()
+	onRightClicked: toggle.running = true
 
 	Process {
 		id: toggle
@@ -27,8 +22,8 @@ BarItem {
 	}
 
 	BarText {
-		text: root.muted ? "󰍭" : "󰍬"
-		color: root.muted ? Theme.red : Theme.fg
+		text: AudioState.sourceMuted ? "󰍭" : "󰍬"
+		color: AudioState.sourceMuted ? Theme.red : Theme.fg
 		font.pixelSize: Theme.fontIcon
 	}
 }

@@ -17,6 +17,11 @@ ShellRoot {
 	WeatherPanel {}
 	CalendarPanel {}
 
+	AudioDevicesPanel {}
+	AudioDevicesPanel {
+		inputs: true
+	}
+
 	// Not a panel: a readout that shows itself when the volume moves.
 	VolumeOsd {}
 
@@ -29,6 +34,20 @@ ShellRoot {
 
 		function toggle(): void {
 			AgentUsageState.toggle();
+		}
+	}
+
+	// One target, two panels: `qs ipc call audio inputs` / `… outputs`, which
+	// is what super+I and super+O run.
+	IpcHandler {
+		target: "audio"
+
+		function inputs(): void {
+			AudioState.toggleInputs();
+		}
+
+		function outputs(): void {
+			AudioState.toggleOutputs();
 		}
 	}
 

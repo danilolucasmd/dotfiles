@@ -116,20 +116,35 @@ Panel {
 		}
 	}
 
-	RowLayout {
+	ColumnLayout {
 		Layout.fillWidth: true
-		spacing: 8
+		spacing: 6
 
-		BarText {
-			text: Qt.formatDateTime(root.today, "dddd, d MMMM")
-		}
-
-		Item {
+		RowLayout {
 			Layout.fillWidth: true
+			spacing: 8
+
+			BarText {
+				text: Qt.formatDateTime(root.today, "dddd, d MMMM")
+			}
+
+			Item {
+				Layout.fillWidth: true
+			}
+
+			BarText {
+				text: "esc close"
+			}
 		}
 
+		// Named after the vim keys rather than the arrows, the same way the
+		// audio pickers are: both sets work everywhere, and one label for the
+		// pair keeps the panels reading alike.
 		BarText {
-			text: root.offset === 0 ? "← → month · esc close" : "r today · esc close"
+			Layout.fillWidth: true
+
+			text: root.offset === 0 ? "h/l month" : "h/l month · r today"
+			elide: Text.ElideRight
 		}
 	}
 
@@ -142,7 +157,7 @@ Panel {
 		signal triggered
 
 		font.pixelSize: 16
-		color: area.containsMouse ? Theme.fg : Theme.dim
+		color: area.containsMouse ? Theme.blue : Theme.fg
 
 		MouseArea {
 			id: area

@@ -4,19 +4,32 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 
-// The default sink, and whether the volume OSD is up.
+// Everything the bar knows about audio: the default sink and source, the list
+// of devices behind each of them, and which of the three transient windows
+// (the volume OSD, the output picker, the input picker) is up.
 //
-// A singleton because the volume is now read in two places — the bar module and
-// the OSD — and because the OSD has to appear for changes the bar had no part
-// in: the XF86AudioRaiseVolume/LowerVolume binds run `wpctl`, and the only
-// thing that hears about those is PipeWire itself.
+// A singleton because the reading is drawn in several places at once, and
+// because the OSD has to appear for changes the bar had no part in: the
+// XF86AudioRaiseVolume/LowerVolume binds run `wpctl`, and the only thing that
+// hears about those is PipeWire itself.
 Singleton {
 	id: root
 
 	readonly property PwNode sink: Pipewire.defaultAudioSink
 	readonly property bool muted: sink?.audio?.muted ?? false
 	readonly property int volume: Math.round((sink?.audio?.volume ?? 0) * 100)
-	readonly property string deviceName: sink?.description || sink?.nickname || sink?.name || "Output"
+	readonly property string deviceName: label(sink)
+
+	readonly property PwNode source: Pipewire.defaultAudioSource
+	readonly property bool sourceMuted: source?.audio?.muted ?? false
+
+	// The pickable devices. `isStream` drops the applications playing and
+	// recording — those are nodes too — and a node with no audio interface is
+	// something like a MIDI bridge, which cannot be a default anything.
+	readonly property var sinks: nodeList(true)
+	readonly property var sources: nodeList(false)
+
+	readonly property bool allSourcesMuted: sources.length > 0 && sources.every(n => n.audio?.muted ?? false)
 
 	// Shared by the bar module and the OSD so the two never disagree about
 	// which speaker is drawn.
@@ -31,6 +44,8 @@ Singleton {
 	}
 
 	property bool osdShown: false
+	property bool outputsOpen: false
+	property bool inputsOpen: false
 
 	// The first reading arrives a moment after launch, and a sink switch brings
 	// a whole new set of numbers with it. Neither is something the user did, so
@@ -50,13 +65,25 @@ Singleton {
 		arm.restart();
 	}
 
-	// Volume/mute state is only tracked for nodes something is holding on to.
+	// Volume/mute state is only tracked for nodes something is holding on to,
+	// and the pickers draw the mute state of every device, not just the
+	// default one.
 	PwObjectTracker {
-		objects: [root.sink]
+		objects: [...root.sinks, ...root.sources]
 	}
 
-	// Unguarded, unlike the change handlers above: a click on the bar module is
-	// the user asking for the OSD outright.
+	function nodeList(wantSinks: bool): var {
+		return Pipewire.nodes.values.filter(n => n.isSink === wantSinks && !n.isStream && n.audio).sort((a, b) => label(a).localeCompare(label(b)));
+	}
+
+	// PipeWire names a node three ways and any of them can be empty; bluez
+	// devices in particular often carry only the raw node name.
+	function label(node: var): string {
+		return node ? (node.description || node.nickname || node.name || "Unknown device") : "";
+	}
+
+	// Unguarded, unlike the change handlers above: a click is the user asking
+	// for the OSD outright.
 	function show(): void {
 		osdShown = true;
 		hide.restart();
@@ -74,6 +101,42 @@ Singleton {
 	function toggleMute(): void {
 		if (sink?.audio)
 			sink.audio.muted = !sink.audio.muted;
+	}
+
+	// Writing `preferred…` is what actually moves the default: PipeWire keeps
+	// it as metadata, and `defaultAudioSink`/`Source` are the read-only result.
+	function setDefault(node: var, isInput: bool): void {
+		if (isInput)
+			Pipewire.preferredDefaultAudioSource = node;
+		else
+			Pipewire.preferredDefaultAudioSink = node;
+	}
+
+	function toggleNodeMute(node: var): void {
+		if (node?.audio)
+			node.audio.muted = !node.audio.muted;
+	}
+
+	// One switch for the lot: mute everything unless everything is already
+	// muted, in which case bring it all back.
+	function toggleAllSources(): void {
+		const mute = !allSourcesMuted;
+		for (const node of sources) {
+			if (node.audio)
+				node.audio.muted = mute;
+		}
+	}
+
+	// The two pickers sit on top of each other, so opening one puts the other
+	// away.
+	function toggleOutputs(): void {
+		inputsOpen = false;
+		outputsOpen = !outputsOpen;
+	}
+
+	function toggleInputs(): void {
+		outputsOpen = false;
+		inputsOpen = !inputsOpen;
 	}
 
 	Timer {
