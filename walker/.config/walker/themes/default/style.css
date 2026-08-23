@@ -16,8 +16,7 @@
      recessed #1f1f1f   (Theme.bg — the bar)
      border   #3f3f3f   (Theme.tooltipBorder)
      fg       #dddddd   (Theme.fg)
-     dim      #ffffff80  (Theme.dim, spelled #80ffffff in QML — Qt reads
-                          8-digit hex as #AARRGGBB, CSS as #RRGGBBAA)
+     dim      #888888   (Theme.dim)
      red      #f38ba8   (Theme.red)
    Radius: 10 outer (Panel.radius, Hyprland decoration.rounding),
             8 inner (Tooltip.radius). */
@@ -54,7 +53,7 @@
 }
 
 .input placeholder {
-	color: #ffffff80;
+	color: #888888;
 	opacity: 1;
 }
 
@@ -82,7 +81,7 @@ row:selected .item-box {
 
 .item-subtext {
 	font-size: 11px;
-	color: #ffffff80;
+	color: #888888;
 	opacity: 1;
 }
 
@@ -99,7 +98,7 @@ row:selected .item-box {
 .preview-box,
 .placeholder,
 .elephant-hint {
-	color: #ffffff80;
+	color: #888888;
 }
 
 .preview {
@@ -113,7 +112,7 @@ row:selected .item-box {
 	border-top: 1px solid #3f3f3f;
 	padding-top: 10px;
 	font-size: 11px;
-	color: #ffffff80;
+	color: #888888;
 }
 
 .keybind-label {
@@ -124,7 +123,7 @@ row:selected .item-box {
 }
 
 .keybind-bind {
-	color: #ffffff80;
+	color: #888888;
 	opacity: 1;
 }
 
