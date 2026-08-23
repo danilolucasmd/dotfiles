@@ -59,19 +59,25 @@ Panel {
 		Layout.fillWidth: true
 		spacing: 8
 
+		// This shares its line with the key hint, and the two together only
+		// just fit the card: the old "stale, last read 9h ago" ran a pixel over,
+		// at which point the layout squeezed both texts below their implicit
+		// width and cut them off mid-word. So the stale wording is kept as short
+		// as the fresh one — the colour is already carrying the warning — and
+		// this takes the slack itself, so any future copy elides here rather
+		// than shoving the hint off the card.
 		BarText {
+			Layout.fillWidth: true
+
 			text: {
 				const d = AgentUsageState.data;
 				if (!AgentUsageState.available)
 					return "";
-				const prefix = d.stale ? "stale, last read " : "updated ";
+				const prefix = d.stale ? "stale · " : "updated ";
 				return prefix + root.ago(d.ageSeconds ?? 0);
 			}
 			color: AgentUsageState.data.stale ? Theme.yellow : Theme.fg
-		}
-
-		Item {
-			Layout.fillWidth: true
+			elide: Text.ElideRight
 		}
 
 		BarText {
