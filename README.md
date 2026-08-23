@@ -64,7 +64,33 @@ After installation:
 
 ---
 
-## 5. General Notes
+## 5. Status Bar
+
+The bar is [quickshell](https://quickshell.org) (`quickshell/.config/quickshell`),
+launched by `exec-once = qs` in `hyprland.conf`.
+
+It replaced waybar. The waybar config is still in the repo and still stowed, so
+swapping back is a one-line change to that `exec-once` plus restoring the
+`$mainMod, N` binding to `~/.config/waybar/scripts/notifications-menu.sh`.
+Nothing else in the repo depends on which one is running.
+
+Most modules that were shell scripts under waybar are now native: workspaces,
+keyboard layout, media, volume, microphone, bluetooth, network, battery, tray
+and the notification badge all read Hyprland / PipeWire / BlueZ /
+NetworkManager / UPower / MPRIS directly, so the polling loops, the Hyprland
+event daemon and every `pkill -RTMIN+N waybar` signal are gone.
+
+Four scripts survive in `quickshell/.config/quickshell/scripts/` because they do
+work no service exposes: weather, package updates, screen-recording state and
+Claude Code usage.
+
+`env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
+icons — Qt has no icon theme configured on this system, and breeze-dark is the
+one that ships light symbolic icons for a dark bar.
+
+---
+
+## 6. General Notes
 
 - install.sh is safe to re-run
 - System-level dotfiles live in dotfiles/system/

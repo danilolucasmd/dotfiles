@@ -82,7 +82,7 @@ if ! command -v yay >/dev/null 2>&1; then
 fi
 
 ############################################################
-# HYPRLAND + WAYLAND STACK + WAYBAR                        #
+# HYPRLAND + WAYLAND STACK + QUICKSHELL                    #
 ############################################################
 
 echo "==> Installing Hyprland and Wayland stack"
@@ -101,6 +101,8 @@ sudo pacman -S --needed --noconfirm \
   slurp \
   polkit \
   polkit-gnome \
+  quickshell \
+  breeze-icons \
   waybar \
   mako
 
@@ -282,6 +284,7 @@ stow \
   sounds \
   steam \
   tmux \
+  quickshell \
   walker \
   wallpapers \
   waybar \
@@ -343,7 +346,8 @@ sudo pacman -S --needed --noconfirm \
 echo "==> Fixing executable permissions"
 
 chmod +x \
-  "$HOME/.config/waybar/scripts/mic.sh" \
+  "$HOME"/.config/quickshell/scripts/*.sh \
+  "$HOME"/.config/waybar/scripts/*.sh \
   "$HOME/.config/sounds/scripts/toggle-mic.sh" \
   "$HOME/.config/scripts/screen-record.sh"
 
