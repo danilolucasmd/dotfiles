@@ -33,10 +33,18 @@ Use the following options when prompted:
 - Mirror region: Brazil
 - Repositories: default
 
+Leave multilib off. Every package `install.sh` pulls from the official repos
+lives in `core` or `extra`; nothing needs the 32-bit tree.
+
 ### Disk Configuration
 - Disk layout: Best-effort default partition layout
-- Disk encryption: Enabled
+- Disk encryption: your call
 - Filesystem: **btrfs**, with the default subvolume layout
+
+Encryption is a preference, not a requirement — `install.sh` behaves the same
+either way. Worth knowing before you pick: GRUB unlocking LUKS means a
+passphrase prompt at boot, handled by GRUB's slow PBKDF2 pass before the kernel
+loads.
 
 `install.sh` sets up snapper, snap-pac and grub-btrfs on top of this, so every
 pacman transaction is snapshotted and bootable from the GRUB menu. Picking ext4
@@ -69,11 +77,31 @@ systemd-boot (archinstall's default) has no equivalent.
 ### Applications
 - Applications: None
 
+### Audio
+- Audio: None
+
+`install.sh` installs PipeWire (with `pipewire-pulse`, `pipewire-alsa` and
+`wireplumber`), so letting archinstall pick an audio server only risks a second
+one fighting it.
+
 ### Network Configuration
-- Network configuration: Copy ISO network configuration
+- Network configuration: **Use NetworkManager**
+
+Not "Copy ISO network configuration". That sets up systemd-networkd, which
+`install.sh` then masks — service and sockets both — because Proton VPN's Linux
+app only ships a NetworkManager backend and the two cannot share an interface.
+Choosing NetworkManager here means they agree from the start and nothing has to
+change hands at the final reboot.
+
+Prefer wired ethernet for the install itself. The wifi dongle needs a DKMS
+module that `install.sh` builds, so it cannot carry the network before then, and
+the run wants a steady connection for the AUR builds and clones.
 
 ### Additional Packages
-- Additional packages: None
+- Additional packages: `git`
+
+Only to clone this repo below. Everything else the script needs —
+`base-devel`, `stow`, `sddm`, PipeWire — it installs itself.
 
 ### Timezone
 - Timezone: America/Sao_Paulo
@@ -99,7 +127,6 @@ After logging in:
 
 ```bash
 sudo pacman -Syu
-sudo pacman -S --needed git
 git clone -b arch https://github.com/danilolucasmd/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 chmod +x install.sh
