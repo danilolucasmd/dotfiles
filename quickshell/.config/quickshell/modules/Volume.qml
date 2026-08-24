@@ -11,10 +11,10 @@ import qs.components
 BarItem {
 	rightMargin: Theme.gap
 
-	// Left-click picks the output device; the OSD still appears on its own
-	// whenever the volume actually moves, which is what it is for. Mute is on
-	// the right button — muting on a stray left click is a thing you then have
-	// to notice and undo.
+	// Left-click opens the device panel on its output section; the OSD still
+	// appears on its own whenever the volume actually moves, which is what it
+	// is for. Mute is on the right button — muting on a stray left click is a
+	// thing you then have to notice and undo.
 	onClicked: AudioState.toggleOutputs()
 	onRightClicked: AudioState.toggleMute()
 

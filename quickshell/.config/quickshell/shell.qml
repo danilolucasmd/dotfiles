@@ -20,9 +20,6 @@ ShellRoot {
 	MediaPanel {}
 
 	AudioDevicesPanel {}
-	AudioDevicesPanel {
-		inputs: true
-	}
 	NetworkPanel {}
 	KeyboardLayoutPanel {}
 	BatteryPanel {}
@@ -46,8 +43,9 @@ ShellRoot {
 		}
 	}
 
-	// One target, two panels: `qs ipc call audio inputs` / `… outputs`, which
-	// is what super+I and super+O run.
+	// One target, one panel, two ways in: `qs ipc call audio inputs` / `…
+	// outputs` open it with the cursor in that section, which is what super+I
+	// and super+O run.
 	IpcHandler {
 		target: "audio"
 

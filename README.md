@@ -103,11 +103,11 @@ launched by `exec-once = qs` in `hyprland.conf`.
 
 It replaced waybar, which has since been deleted from the repo along with its
 config and its stow entry. Every module that was a polling shell script under
-waybar is now native — workspaces, keyboard layout, media, volume, microphone,
-bluetooth, network, battery, tray and the notification badge read Hyprland /
-PipeWire / BlueZ / NetworkManager / UPower / MPRIS directly — so the polling
-loops, the Hyprland event daemon and every `pkill -RTMIN+N waybar` signal are
-gone with it.
+waybar is now native — workspaces, keyboard layout, media, volume, bluetooth,
+network, battery, tray and the notification badge read Hyprland / PipeWire /
+BlueZ / NetworkManager / UPower / MPRIS directly — so the polling loops, the
+Hyprland event daemon and every `pkill -RTMIN+N waybar` signal are gone with
+it.
 
 `playerctl` and `upower` are installed explicitly for this reason: they used to
 arrive as waybar dependencies, and the media keys and the battery module need
@@ -121,12 +121,12 @@ Claude Code usage, network counters, backlight-to-monitor discovery, and
 matching a notification against the window list to find the app that sent it. `updates.sh` shells out to
 `checkupdates`, which is why `pacman-contrib` is in the package list.
 
-The right cluster is split in two. Media, keyboard layout, microphone, volume,
-network, bluetooth, battery, display, Claude usage, updates and notifications
-are always on screen; the recording indicator and the tray fold away behind a chevron
-that stays the leftmost thing in the cluster. Clicking it slides them out
-rightward from the chevron, with a hairline marking where they end and the
-always-visible modules begin; those never shift.
+The right cluster is split in two. Media, keyboard layout, volume, network,
+bluetooth, battery, display, Claude usage, updates and notifications are always
+on screen; the recording indicator and the tray fold away behind a chevron that
+stays the leftmost thing in the cluster. Clicking it slides them out rightward
+from the chevron, with a hairline marking where they end and the always-visible
+modules begin; those never shift.
 
 Moving the pointer off the bar folds them away after a second, and coming
 back restarts that countdown — a hand on its way to a tray icon dips off the bar

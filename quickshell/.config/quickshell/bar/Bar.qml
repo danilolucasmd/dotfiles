@@ -140,7 +140,6 @@ Variants {
 				// Always on screen, in the order they're glanced at.
 				Media {}
 				KeyboardLayout {}
-				Mic {}
 				Volume {}
 				Network {}
 				Bluetooth {}
