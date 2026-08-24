@@ -85,14 +85,26 @@ Panel {
 		}
 	}
 
-	// "42s" / "7m" / "3h" — deliberately coarse, because the number this dates
-	// only ever moves in whole percent.
+	// "42s" / "7m" / "3h" / "5d" / "2w" — deliberately coarse, because the number
+	// this dates only ever moves in whole percent. It rolls all the way up to
+	// years: a reading with no timestamp at all dates itself to the epoch, and
+	// "496536h ago" is a worse way to say that than "56y ago". Each unit floors
+	// rather than rounds, so an age just under a boundary cannot render as the
+	// full next unit ("24h ago", "7d ago").
 	function ago(seconds: int): string {
-		if (seconds < 60)
-			return `${seconds}s ago`;
-		if (seconds < 3600)
-			return `${Math.round(seconds / 60)}m ago`;
-		return `${Math.round(seconds / 3600)}h ago`;
+		const units = [
+			[60, 1, "s"],
+			[3600, 60, "m"],
+			[86400, 3600, "h"],
+			[604800, 86400, "d"],
+			[2592000, 604800, "w"],
+			[31536000, 2592000, "mo"],
+			[Infinity, 31536000, "y"],
+		];
+		for (const [limit, size, suffix] of units)
+			if (seconds < limit)
+				return `${Math.floor(seconds / size)}${suffix} ago`;
+		return "";
 	}
 
 	// The same thresholds the bar glyph uses, applied per window rather than to

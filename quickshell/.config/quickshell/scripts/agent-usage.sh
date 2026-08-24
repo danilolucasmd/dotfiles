@@ -100,6 +100,13 @@ fi
 # Every source reduced to the same 5 fields; the most recently captured wins.
 # Sources 1 and 3 carry the windows at the top level and are timestamped by file
 # mtime; Claude Code's cache nests them and timestamps itself in ms.
+#
+# The fields are joined on US (0x1f), not tab: `resets_at` is null on a window
+# sitting at 0%, and bash `read` folds runs of *whitespace* IFS characters into
+# one separator, so a tab-joined row silently loses the empty field and shifts
+# every later value left — which is how a fresh reading ended up dated to the
+# epoch. A non-whitespace IFS keeps empty fields.
+sep=$'\037'
 read_flat() { # $1=file with top-level five_hour/seven_day
   local at
   [ -f "$1" ] || return
@@ -108,14 +115,14 @@ read_flat() { # $1=file with top-level five_hour/seven_day
     select(.five_hour != null or .seven_day != null)
     | [ (.five_hour.utilization // -1), (.five_hour.resets_at // ""),
         (.seven_day.utilization // -1), (.seven_day.resets_at // ""), $at ]
-    | @tsv' "$1" 2>/dev/null
+    | map(tostring) | join("\u001f")' "$1" 2>/dev/null
 }
 
 fields=""; best_at=0; source=""
 consider() { # $1=tsv row  $2=name of the source it came from
   local at
   [ -n "$1" ] || return
-  at=$(cut -f5 <<<"$1")
+  at=$(cut -d"$sep" -f5 <<<"$1")
   [ "$at" -gt "$best_at" ] 2>/dev/null || return
   fields=$1; best_at=$at; source=$2
 }
@@ -129,10 +136,10 @@ consider "$(read_flat "$cache")" "usage endpoint"
   | [ ($u.five_hour.utilization // -1), ($u.five_hour.resets_at // ""),
       ($u.seven_day.utilization // -1), ($u.seven_day.resets_at // ""),
       (($c.fetchedAtMs // 0) / 1000 | floor) ]
-  | @tsv' "$state" 2>/dev/null)" "Claude Code cache"
+  | map(tostring) | join("\u001f")' "$state" 2>/dev/null)" "Claude Code cache"
 
 [ -n "$fields" ] || hide
-IFS=$'\t' read -r five_pct five_reset seven_pct seven_reset captured_at <<<"$fields"
+IFS=$sep read -r five_pct five_reset seven_pct seven_reset captured_at <<<"$fields"
 five_pct=${five_pct%%.*}; seven_pct=${seven_pct%%.*}
 
 # "43m" / "16h 2m" / "2d 4h" — how long the window has left.
@@ -153,6 +160,10 @@ countdown() { # $1=iso8601 timestamp
 # against the pace that would exactly exhaust the allowance at reset time.
 elapsed_pct() { # $1=iso8601 reset  $2=window length in seconds
   local until start
+  # An empty reset means the window is idle and has no anchor. `date -d ""`
+  # happily answers with midnight today rather than failing, so it has to be
+  # rejected here or the pace comes back as a nonsense several hundred percent.
+  [ -n "$1" ] || { printf -- '-1'; return; }
   until=$(date -d "$1" +%s 2>/dev/null) || { printf -- '-1'; return; }
   start=$((until - $2))
   printf '%d' $(( (now - start) * 100 / $2 ))
