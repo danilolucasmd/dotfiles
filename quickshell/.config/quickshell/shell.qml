@@ -17,6 +17,7 @@ ShellRoot {
 	WeatherPanel {}
 	CalendarPanel {}
 	NotificationsPanel {}
+	MediaPanel {}
 
 	AudioDevicesPanel {}
 	AudioDevicesPanel {
@@ -60,6 +61,14 @@ ShellRoot {
 
 		function toggle(): void {
 			NotificationsState.toggle();
+		}
+	}
+
+	IpcHandler {
+		target: "media"
+
+		function toggle(): void {
+			MediaState.toggle();
 		}
 	}
 

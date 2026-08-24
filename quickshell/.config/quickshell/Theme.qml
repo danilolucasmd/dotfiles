@@ -30,6 +30,12 @@ Singleton {
 	// surface; over the bar it lands at #6d6d6d.
 	readonly property color line: "#59ffffff"
 
+	// A control a row cannot offer — the skip glyphs on a video that reports no
+	// next track. Lighter than the card and the highlighted row it has to read
+	// against (#2a2a2a and #3f3f3f both), darker than `dim`, which is doing
+	// secondary *text* right beside it.
+	readonly property color disabled: "#5a5a5a"
+
 	// The unfilled part of a meter in the usage panel: readable against the
 	// tooltip surface it sits on without competing with the fill.
 	readonly property color track: "#3f3f3f"
