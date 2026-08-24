@@ -7,3 +7,8 @@ line_numbers = true
 wrap_lines = false
 agent_notes = false
 transparent_background = false
+
+[keybindings]
+# 0.19 moved half-page scrolling to bare d/u; keep the ctrl variants too.
+"hunk.review.halfPageDown" = ["ctrl+d", "d"]
+"hunk.review.halfPageUp" = ["ctrl+u", "u"]
