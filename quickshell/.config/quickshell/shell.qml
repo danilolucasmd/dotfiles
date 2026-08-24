@@ -26,6 +26,7 @@ ShellRoot {
 	NetworkPanel {}
 	KeyboardLayoutPanel {}
 	BatteryPanel {}
+	DisplayPanel {}
 
 	// Neither is a panel: both show themselves rather than being opened, and
 	// neither may take the keyboard.
@@ -107,6 +108,16 @@ ShellRoot {
 
 		function toggle(): void {
 			BatteryState.toggle();
+		}
+	}
+
+	// No screen to pass: a keybind has none, so the panel opens pointed at the
+	// focused monitor. Clicking the bar module names the screen its bar is on.
+	IpcHandler {
+		target: "display"
+
+		function toggle(): void {
+			DisplayState.toggle("");
 		}
 	}
 

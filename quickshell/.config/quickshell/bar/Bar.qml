@@ -145,6 +145,13 @@ Variants {
 				Network {}
 				Bluetooth {}
 				Battery {}
+				// The only module here that is about the screen it is drawn on
+				// rather than about the machine, so it is told which one that
+				// is: its wheel dims that monitor, and clicking it opens the
+				// panel already pointed at it.
+				Display {
+					screenName: modelData.name
+				}
 				AgentUsage {}
 				Updates {}
 				Notifications {}

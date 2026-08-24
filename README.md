@@ -115,15 +115,15 @@ them regardless. `power-profiles-daemon` is there for the battery panel's
 profile switch — quickshell talks to it over D-Bus, and the panel hides that
 section entirely when the daemon is not running.
 
-Six scripts survive in `quickshell/.config/quickshell/scripts/` because they do
-work no service exposes: weather, package updates, screen-recording state,
-Claude Code usage, network counters, and matching a notification against the
-window list to find the app that sent it. `updates.sh` shells out to
+Seven scripts survive in `quickshell/.config/quickshell/scripts/` because they
+do work no service exposes: weather, package updates, screen-recording state,
+Claude Code usage, network counters, backlight-to-monitor discovery, and
+matching a notification against the window list to find the app that sent it. `updates.sh` shells out to
 `checkupdates`, which is why `pacman-contrib` is in the package list.
 
 The right cluster is split in two. Media, keyboard layout, microphone, volume,
-network, bluetooth, battery, Claude usage, updates and notifications are always
-on screen; the recording indicator and the tray fold away behind a chevron
+network, bluetooth, battery, display, Claude usage, updates and notifications
+are always on screen; the recording indicator and the tray fold away behind a chevron
 that stays the leftmost thing in the cluster. Clicking it slides them out
 rightward from the chevron, with a hairline marking where they end and the
 always-visible modules begin; those never shift.
@@ -142,6 +142,34 @@ one that is not saved prompts for the password in the panel and reports a
 refusal there. Everything but the counters comes from NetworkManager over D-Bus;
 `network-stats.sh` reads `/proc/net/dev`, `ip route` and a three-packet ping,
 and only runs while the panel is open.
+
+The display module is the one thing in the bar that is about the screen it is
+drawn on rather than about the machine, so each screen's bar gets its own: the
+wheel over the glyph dims that monitor, and clicking it opens the display panel
+already pointed at it. `super+D` opens the same panel on the focused monitor,
+having no screen of its own to name.
+
+The panel carries brightness, refresh rate, scale and rotation, with tabs across
+the top when more than one monitor is plugged in. Brightness is `brightnessctl`
+on the same `-e4 -n2` curve the `XF86MonBrightness` keys use, so the slider and
+the keys are the same percentage rather than two scales for one backlight; the
+level itself is read straight out of sysfs, which delivers a change
+notification, so the keys move the slider with nothing polling for it.
+`backlights.sh` is what pairs a backlight with a screen — `brightnessctl -l`
+names the devices but not which monitor they light, and sysfs hangs each one off
+its connector's own node. A monitor with no backlight, which is every external
+one without DDC/CI, gets no slider and says so.
+
+The other three come from `hyprctl monitors -j`, which carries the transform,
+the refresh rate and the mode list that Quickshell's own `Hyprland.monitors`
+leaves empty. Rates are collapsed to the nearest whole hertz — 119.88, 119.98
+and 120.00 are one button — and a scale that would not divide the mode into
+whole logical pixels is greyed out rather than offered and refused. All three go
+out as a `hyprctl keyword monitor` rule and are therefore runtime only: a
+`hyprctl reload` or the next login puts `hyprland.conf`'s `monitor =` lines back
+in charge, which the panel's footer says outright. Those lines say `highrr`, so
+every monitor comes up at the fastest mode it offers rather than the one it
+advertises — the VG279QR advertises 60Hz and does 120.
 
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
