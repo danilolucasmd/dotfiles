@@ -113,6 +113,7 @@ Both details matter:
 - **`~/dotfiles`** — `install.sh` refuses to run from anywhere else, and both
   `hyprland.conf` and the SDDM theme refer to that path directly.
 
-Expect the first run to take a while: it builds AUR packages and the NVIDIA DKMS
-modules. Anything that fails on its own is reported and skipped, and the script
-lists what it skipped at the end — check that list before rebooting.
+Expect the first run to take a while: it builds AUR packages, including a DKMS
+kernel module for the wifi dongle. Anything that fails on its own is reported
+and skipped, and the script lists what it skipped at the end — check that list
+before rebooting.

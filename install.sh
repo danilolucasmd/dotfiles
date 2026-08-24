@@ -236,8 +236,7 @@ sudo pacman -S --needed --noconfirm \
   adw-gtk-theme \
   qt5ct \
   qt6ct \
-  kdeconnect \
-  steam
+  kdeconnect
 
 ############################################################
 # BTRFS SNAPSHOTS                                          #
@@ -545,22 +544,6 @@ if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
   git clone https://github.com/zsh-users/zsh-syntax-highlighting \
     "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 fi
-
-############################################################
-# Nvidia drivers                                           #
-############################################################
-
-# nvidia-open-dkms, not nvidia-dkms: NVIDIA dropped the proprietary kernel
-# modules for Turing and newer, and Arch retired the old package with it. The
-# name still resolves through `provides`, but spelling it out keeps the choice
-# visible.
-sudo pacman -S --needed --noconfirm \
-  nvidia-open-dkms \
-  nvidia-utils \
-  lib32-nvidia-utils \
-  libva-nvidia-driver \
-  egl-wayland \
-  nvidia-settings
 
 ############################################################
 # SERVICES                                                 #
