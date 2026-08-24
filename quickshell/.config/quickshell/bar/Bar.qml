@@ -69,12 +69,23 @@ Variants {
 			}
 
 			RowLayout {
+				id: centre
+
 				anchors.horizontalCenter: parent.horizontalCenter
 				anchors.verticalCenter: parent.verticalCenter
 				spacing: 0
 
 				Weather {}
 				Clock {}
+			}
+
+			// The recording dot sits beside the clock but not *in* the centre
+			// group: anchored to its right edge rather than laid out in the
+			// row, so it comes and goes without the date and time sliding over
+			// to make room for it.
+			Recording {
+				anchors.left: centre.right
+				anchors.verticalCenter: parent.verticalCenter
 			}
 
 			RowLayout {
@@ -117,7 +128,6 @@ Variants {
 						height: parent.height
 						spacing: 0
 
-						Recording {}
 						Network {}
 						Battery {}
 						Tray {}

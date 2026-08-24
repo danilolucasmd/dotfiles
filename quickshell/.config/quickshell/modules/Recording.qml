@@ -1,7 +1,9 @@
 import qs
 import qs.components
 
-// Visible only while wf-recorder is running.
+// Visible only while wf-recorder is running. Bar.qml parks it just off the
+// right edge of the centre group, so the clock's own 16px margin is the gap
+// it sits in and the module needs no margin of its own.
 BarItem {
 	id: root
 
@@ -9,7 +11,6 @@ BarItem {
 
 	active: (d.text ?? "") !== ""
 	tooltip: d.tooltip ?? ""
-	rightMargin: Theme.gap
 
 	JsonScript {
 		id: recording
