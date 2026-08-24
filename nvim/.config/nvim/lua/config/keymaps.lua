@@ -6,10 +6,10 @@
 vim.keymap.del({ "n", "i", "v" }, "<A-j>")
 vim.keymap.del({ "n", "i", "v" }, "<A-k>")
 
--- Seamless Ctrl+hjkl navigation across nvim splits and tmux panes (tmux forwards
--- these keys into nvim; see lua/util/tmux-nav.lua). Overrides LazyVim's default
--- Ctrl+hjkl window maps with the tmux-aware versions.
-local tnav = require("util.tmux-nav")
+-- Seamless Ctrl+hjkl navigation across nvim splits and herdr panes (herdr leaves
+-- Ctrl+hjkl unbound for exactly this; see lua/util/herdr-nav.lua). Overrides
+-- LazyVim's default Ctrl+hjkl window maps with the herdr-aware versions.
+local tnav = require("util.herdr-nav")
 for _, dir in ipairs({ "h", "j", "k", "l" }) do
   vim.keymap.set("n", "<C-" .. dir .. ">", function()
     tnav.navigate(dir)

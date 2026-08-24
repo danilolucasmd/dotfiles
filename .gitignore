@@ -3,3 +3,14 @@ herdr/.config/herdr/session.json
 herdr/.config/herdr/*.log
 herdr/.config/herdr/*.lock
 herdr/.config/herdr/*.sock
+
+# Python bytecode from the hypr helper scripts
+__pycache__/
+*.pyc
+
+# hunk runtime state (last-seen CLI version, rewritten on every run)
+hunk/.config/hunk/state.json
+
+# Claude Code session checkpoints written into the repo root. Was only in
+# .git/info/exclude, which is local to one clone and does not travel.
+/.claude/RESUME.md

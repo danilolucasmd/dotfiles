@@ -6,6 +6,10 @@ geometry=$(slurp) || exit 0
 
 dateTime=$(date +%m-%d-%Y-%H:%M:%S)
 file="$HOME/Videos/$dateTime.mp4"
+
+# install.sh creates this, but a recording should never fail because the
+# directory went missing.
+mkdir -p "$HOME/Videos"
 wf-recorder -g "$geometry" --bframes max_b_frames -f "$file"
 
 # Deliberately the same shape as hyprshot's "Screenshot saved": summary, and a

@@ -71,7 +71,7 @@ ZSH_THEME="robbyrussell"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 # Note: fzf-tab must come after zsh-autosuggestions (it wraps the
-# completion widget) and is what renders completions in the tmux popup.
+# completion widget).
 # zsh-syntax-highlighting MUST be loaded last.
 plugins=(git zsh-autosuggestions fzf-tab zsh-syntax-highlighting)
 
@@ -120,13 +120,11 @@ alias lock=hyprlock
 alias suspend="systemctl suspend"
 alias logout="hyprctl dispatch exit"
 alias copy="wl-copy --trim-newline"
-## Fix
-alias bar="nohup waybar >/dev/null 2>&1 &"
 
 # Set up fzf key bindings and fuzzy completion
 source <(fzf --zsh)
 
-# fzf-tab: render TAB completions in a floating tmux popup
+# fzf-tab: fuzzy TAB completions
 ## Let fzf-tab take over zsh's menu so it can capture the prefix
 zstyle ':completion:*' menu no
 ## Group support + filename colorizing in the completion list
@@ -136,10 +134,10 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*:git-checkout:*' sort false
 ## Preview directory contents when completing `cd`
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color=auto $realpath'
-## Render the completion menu in a tmux popup (falls back to inline fzf
-## when not inside tmux)
-zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
-zstyle ':fzf-tab:*' popup-min-size 50 8
+## Render the completion menu inline. ftb-tmux-popup was the floating-popup
+## variant; herdr is the multiplexer now and has no equivalent, and the popup
+## renderer hangs outside tmux rather than falling back.
+zstyle ':fzf-tab:*' fzf-min-height 8
 
 # Yazi setup
 export EDITOR="nvim"
@@ -159,8 +157,13 @@ function open() {
 	nohup nautilus "$@" >/dev/null 2>&1 &!
 }
 
+# Anything installed outside pacman lands here: the Claude Code CLI, uv and
+# the tools it installs (buds), cargo shims. Set here rather than relying on
+# ~/.profile, which is written by those installers and is not in the dotfiles.
+export PATH="$HOME/.local/bin:$PATH"
+
 # opencode
-export PATH=/home/danilolucasmd/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
 
 # Disable auto_cd (Oh My Zsh enables it): typing a bare directory name like
 # `claude` should run the command / error, not silently cd into the folder.

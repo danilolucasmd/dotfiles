@@ -1,9 +1,8 @@
--- Move focus to the tmux pane on the right (where the Claude Code CLI runs).
--- Replaces vim-tmux-navigator's TmuxNavigateRight, which we removed. Falls back
--- to a plain window move when nvim isn't running inside tmux.
+-- Move focus to the herdr pane on the right (where the Claude Code CLI runs).
+-- Falls back to a plain window move when nvim isn't running inside herdr.
 local function focus_claude_pane()
-  if vim.env.TMUX then
-    vim.fn.system("tmux select-pane -R")
+  if vim.env.HERDR_ENV == "1" then
+    vim.fn.system({ "herdr", "pane", "focus", "--current", "--direction", "right" })
   else
     vim.cmd("wincmd l")
   end

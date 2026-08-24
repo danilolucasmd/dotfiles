@@ -24,14 +24,53 @@ command -v sudo >/dev/null || {
   exit 1
 }
 
+# Everything below assumes the repo is checked out here: hyprland.conf, the
+# stow invocations and the sddm theme permissions all refer to it by path.
+DOTFILES="$HOME/dotfiles"
+[[ -d "$DOTFILES" ]] || {
+  echo "Expected the repo at $DOTFILES, but it is not there."
+  exit 1
+}
+
+# Steps that are worth attempting but must never take the whole install down
+# with them -- a dead AUR package, a network blip mid-clone. Each one reports
+# and the script carries on; the summary at the end lists what was skipped.
+FAILED=()
+try() {
+  local what="$1"
+  shift
+  if ! "$@"; then
+    echo "!! skipped: $what"
+    FAILED+=("$what")
+  fi
+}
+
+# stow refuses to replace a real file, and several of these apps write their
+# own config the first time they run -- Claude Code's settings.json, hunk's
+# config.toml. Ask stow what it would collide with and move those aside so the
+# repo's copy wins, keeping the original next to it as .pre-stow.
+resolve_stow_conflicts() {
+  local target
+  while read -r target; do
+    [[ -n "$target" && -f "$HOME/$target" && ! -L "$HOME/$target" ]] || continue
+    mv "$HOME/$target" "$HOME/$target.pre-stow"
+    echo "==> Moved existing ~/$target aside as ~/$target.pre-stow"
+  done < <(stow -n -v 2 "$@" 2>&1 |
+    sed -n 's/^  \* cannot stow .* over existing target \(.*\) since.*/\1/p')
+}
+
 ############################################################
 # DIRECTORY STRUCTURE                                      #
 ############################################################
 
+# Videos is where screen-record.sh writes; Code is where the repos live and
+# what the Nautilus sidebar points at.
 echo "==> Creating directories"
 mkdir -p \
   "$HOME/Downloads" \
-  "$HOME/Pictures/Screenshots"
+  "$HOME/Pictures/Screenshots" \
+  "$HOME/Videos" \
+  "$HOME/Code"
 
 ############################################################
 # DEBLOAT DEFAULT PACKAGES                                 #
@@ -48,15 +87,23 @@ sudo pacman -Rns --noconfirm \
 # CORE SYSTEM TOOLS                                        #
 ############################################################
 
+# Only the nerd font actually referenced by the configs (ghostty, quickshell
+# and hyprlock all ask for "JetBrainsMono Nerd Font") plus the symbol-only
+# faces the bar glyphs come from. The `nerd-fonts` group is 69 packages and
+# several GB for fonts nothing here names.
 echo "==> Installing core tools"
 sudo pacman -Syu --needed --noconfirm \
   base-devel \
   git \
+  openssh \
   sudo \
   curl \
+  python \
   fcitx5 \
   fastfetch \
-  nerd-fonts \
+  ttf-jetbrains-mono-nerd \
+  ttf-nerd-fonts-symbols \
+  ttf-nerd-fonts-symbols-mono \
   stow
 
 ############################################################
@@ -82,6 +129,18 @@ if ! command -v yay >/dev/null 2>&1; then
 fi
 
 ############################################################
+# AUR SIGNING KEYS                                         #
+############################################################
+
+# The 1password PKGBUILD pins validpgpkeys, so makepkg refuses to build until
+# the key is in the user keyring. --noconfirm cannot answer the import prompt,
+# so an unimported key fails the build and, without this, took the rest of the
+# install down with it.
+echo "==> Importing AUR signing keys"
+try "1Password signing key" gpg --keyserver keyserver.ubuntu.com \
+  --recv-keys 3FEF9748469ADBE15DA7CA80AC2D62742012EA22
+
+############################################################
 # HYPRLAND + WAYLAND STACK + QUICKSHELL                    #
 ############################################################
 
@@ -93,48 +152,60 @@ sudo pacman -S --needed --noconfirm \
   xorg-xwayland \
   xdg-desktop-portal \
   xdg-desktop-portal-hyprland \
+  xdg-desktop-portal-gtk \
+  xdg-utils \
   qt5-wayland \
   qt6-wayland \
   pipewire \
+  pipewire-pulse \
+  pipewire-alsa \
+  pipewire-jack \
   wireplumber \
+  libpulse \
+  playerctl \
+  brightnessctl \
+  upower \
   grim \
   slurp \
   polkit \
-  polkit-gnome \
+  polkit-kde-agent \
   quickshell \
-  breeze-icons \
-  waybar
+  breeze-icons
 
 ############################################################
 # DISPLAY MANAGER (SDDM)                                   #
 ############################################################
 
+# The sddm theme is stowed out of this repo rather than copied, so the sddm
+# user has to be able to traverse every directory down to it -- including
+# $HOME, which archinstall creates as 700.
 echo "==> Installing and enabling SDDM"
 
-sudo chmod o+x /home
-sudo chmod o+x /home/danilolucasmd
-sudo chmod o+x ~/dotfiles
-sudo chmod o+x ~/dotfiles/sddm
-sudo chmod o+x ~/dotfiles/sddm/usr
-sudo chmod o+x ~/dotfiles/sddm/usr/share
-sudo chmod o+x ~/dotfiles/sddm/usr/share/sddm
-sudo chmod o+x ~/dotfiles/sddm/usr/share/sddm/themes
-sudo chmod o+x ~/dotfiles/sddm/usr/share/sddm/themes/minimal-input
-
 sudo pacman -S --needed --noconfirm sddm
+
+sudo chmod o+x /home "$HOME"
+theme_path="$DOTFILES"
+for segment in sddm usr share sddm themes minimal-input; do
+  theme_path="$theme_path/$segment"
+  sudo chmod o+x "$theme_path"
+done
+
 sudo systemctl enable sddm
 
 ############################################################
 # CORE / DEV / CLI PACKAGES                                #
 ############################################################
 
+# bluez/bluez-utils back both the quickshell Bluetooth module and bluetui, and
+# nothing else here depends on them. pacman-contrib is what provides
+# `checkupdates`, which the bar's updates module shells out to.
 echo "==> Installing pacman packages"
 
 sudo pacman -S --needed --noconfirm \
   stow \
-  tmux \
   neovim \
   lazygit \
+  github-cli \
   fzf \
   ripgrep \
   fd \
@@ -143,11 +214,15 @@ sudo pacman -S --needed --noconfirm \
   unzip \
   yazi \
   ffmpeg \
-  p7zip \
+  7zip \
   jq \
   poppler \
   zoxide \
+  uv \
   imagemagick \
+  pacman-contrib \
+  bluez \
+  bluez-utils \
   hyprpaper \
   hyprlock \
   hypridle \
@@ -161,7 +236,39 @@ sudo pacman -S --needed --noconfirm \
   adw-gtk-theme \
   qt5ct \
   qt6ct \
-  kdeconnect
+  kdeconnect \
+  steam
+
+############################################################
+# BTRFS SNAPSHOTS                                          #
+############################################################
+
+# The disk layout from archinstall.md is btrfs with GRUB, so snapshots are
+# available: snapper takes them, snap-pac fires one around every pacman
+# transaction, and grub-btrfs puts them in the boot menu so a bad upgrade is
+# recoverable without the ISO.
+if [[ "$(findmnt -no FSTYPE /)" == "btrfs" ]]; then
+  echo "==> Installing btrfs snapshot tooling"
+
+  sudo pacman -S --needed --noconfirm \
+    btrfs-progs \
+    snapper \
+    snap-pac \
+    grub-btrfs \
+    btrfs-assistant \
+    inotify-tools
+
+  # create-config fails if the config already exists, which is the re-run case.
+  [[ -f /etc/snapper/configs/root ]] ||
+    try "snapper root config" sudo snapper -c root create-config /
+  [[ -f /etc/snapper/configs/home ]] ||
+    try "snapper home config" sudo snapper -c home create-config /home
+
+  sudo systemctl enable snapper-timeline.timer snapper-cleanup.timer
+  sudo systemctl enable grub-btrfsd.service
+else
+  echo "==> Root is not btrfs, skipping snapshot tooling"
+fi
 
 ############################################################
 # WIFI DONGLE (Realtek RTL8188GU)                          #
@@ -226,30 +333,62 @@ if ! grep -q pam_gnome_keyring /etc/pam.d/sddm; then
 fi
 
 ############################################################
+# DOCKER                                                   #
+############################################################
+
+echo "==> Installing Docker"
+
+sudo pacman -S --needed --noconfirm \
+  docker \
+  docker-buildx
+
+sudo systemctl enable docker.service
+# Takes effect at the next login, which the reboot at the end covers.
+sudo usermod -aG docker "$USER"
+
+############################################################
 # AUR PACKAGES                                             #
 ############################################################
 
+# One package at a time: the AUR moves, and a single dead or unbuildable
+# target used to abort the whole script -- taking the dotfiles, the shell and
+# the graphics drivers down with it. Now a casualty is reported and skipped.
 echo "==> Installing AUR packages"
 
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
-yay -S --needed --noconfirm \
-  ghostty \
-  rtl8188gu-dkms-git \
-  hunk-bin \
-  herdr-bin \
-  elephant-bin \
-  elephant-desktopapplications-bin \
-  elephant-clipboard-bin \
-  walker-bin \
-  ttf-joypixels \
-  1password \
-  brave-bin \
-  orca-slicer-bin \
-  bluetui \
-  wiremix \
-  btop \
-  localsend-bin
+aur_packages=(
+  ghostty
+  rtl8188gu-dkms-git
+  hunk-bin
+  herdr-bin
+  elephant-bin
+  elephant-desktopapplications-bin
+  elephant-clipboard-bin
+  elephant-symbols-bin # super+E emoji picker (elephant/symbols.toml)
+  elephant-calc-bin    # `calc` is in walker's default provider list
+  walker-bin
+  gh-dash-bin
+  ttf-joypixels
+  1password
+  brave-bin
+  orca-slicer-bin
+  bluetui
+  wifitui
+  wiremix
+  btop
+  docker-desktop
+)
+
+for pkg in "${aur_packages[@]}"; do
+  try "AUR: $pkg" yay -S --needed --noconfirm "$pkg"
+done
+
+# docker-desktop ships a user unit; enabling it here rather than checking the
+# .wants symlink into the repo keeps systemd's bookkeeping out of the dotfiles.
+if pacman -Q docker-desktop >/dev/null 2>&1; then
+  systemctl --user enable docker-desktop.service
+fi
 
 ############################################################
 # NODE SETUP                                               #
@@ -261,11 +400,36 @@ sudo pacman -S --needed --noconfirm nodejs npm
 sudo npm install -g tree-sitter-cli
 
 ############################################################
+# TOOLS INSTALLED OUTSIDE PACMAN                           #
+############################################################
+
+# Claude Code has no Arch package; its installer drops a versioned binary in
+# ~/.local/share/claude and links it into ~/.local/bin, which .zshrc puts on
+# PATH. The bar's agent-usage module reads the state this writes.
+if ! command -v claude >/dev/null 2>&1 && [[ ! -x "$HOME/.local/bin/claude" ]]; then
+  echo "==> Installing Claude Code"
+  try "Claude Code" bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
+fi
+
+# buds-tui is our own project, installed editable from a checkout. The
+# quickshell Bluetooth module opens it (`ghostty -e ~/.local/bin/buds`) for
+# earbud battery levels. Cloned over HTTPS because the 1Password SSH agent is
+# not signed in yet at this point in a fresh install.
+if [[ ! -x "$HOME/.local/bin/buds" ]]; then
+  echo "==> Installing buds-tui"
+  [[ -d "$HOME/Code/buds-tui" ]] ||
+    try "clone buds-tui" git clone https://github.com/danilolucasmd/buds-tui.git \
+      "$HOME/Code/buds-tui"
+  [[ -d "$HOME/Code/buds-tui" ]] &&
+    try "buds-tui" uv tool install --editable "$HOME/Code/buds-tui"
+fi
+
+############################################################
 # SYSTEM DOTFILES                                          #
 ############################################################
 
 echo "==> Applying system dotfiles"
-cd "$HOME/dotfiles"
+cd "$DOTFILES"
 sudo stow -t / sddm
 
 ############################################################
@@ -273,31 +437,43 @@ sudo stow -t / sddm
 ############################################################
 
 echo "==> Applying user dotfiles"
+resolve_stow_conflicts \
+  elephant ghostty git herdr hunk hypr lazygit nvim scripts sounds \
+  quickshell walker wallpapers yazi zsh
 stow \
   elephant \
   ghostty \
+  git \
   herdr \
+  hunk \
   hypr \
+  lazygit \
   nvim \
+  scripts \
   sounds \
-  steam \
-  tmux \
   quickshell \
   walker \
   wallpapers \
-  waybar \
   yazi \
   zsh
 
-# dbus is stowed separately with --no-folding so that
-# ~/.local/share/dbus-1/services stays a real directory. Other apps drop
-# service files in there, and letting stow fold it into a single symlink
-# would send those files into this repo.
+# dbus and claude are stowed with --no-folding so that ~/.local/share/dbus-1/services
+# and ~/.claude stay real directories. Other apps drop files in both -- Claude Code
+# alone keeps its credentials, history and caches in ~/.claude -- and letting stow
+# fold either into a single symlink would send all of that into this repo.
 #
-# It carries one file: a D-Bus activation override for sushi (Nautilus'
+# dbus carries one file: a D-Bus activation override for sushi (Nautilus'
 # spacebar quick preview) that sets SUSHI_USE_GST_GTKSINK=1, because
 # GStreamer's gtkglsink is broken on NVIDIA. See dbus/README.md.
 stow --no-folding dbus
+
+resolve_stow_conflicts --no-folding claude
+stow --no-folding claude
+
+# herdr writes ~/.claude/hooks/herdr-agent-state.sh and owns it -- the file says
+# so in its header, and herdr overwrites it on every update. The hook entry that
+# calls it is in the settings.json above; this puts the script itself in place.
+try "herdr Claude integration" herdr integration install claude
 
 ############################################################
 # ZSH + on-my-zsh                                          #
@@ -340,32 +516,49 @@ fi
 # Nvidia drivers                                           #
 ############################################################
 
+# nvidia-open-dkms, not nvidia-dkms: NVIDIA dropped the proprietary kernel
+# modules for Turing and newer, and Arch retired the old package with it. The
+# name still resolves through `provides`, but spelling it out keeps the choice
+# visible.
 sudo pacman -S --needed --noconfirm \
-  nvidia-dkms \
+  nvidia-open-dkms \
   nvidia-utils \
   lib32-nvidia-utils \
+  libva-nvidia-driver \
   egl-wayland \
   nvidia-settings
 
 ############################################################
-# FILE PERMISSIONS                                         #
+# SERVICES                                                 #
 ############################################################
 
-echo "==> Fixing executable permissions"
-
-chmod +x \
-  "$HOME"/.config/quickshell/scripts/*.sh \
-  "$HOME"/.config/waybar/scripts/*.sh \
-  "$HOME/.config/sounds/scripts/toggle-mic.sh" \
-  "$HOME/.config/scripts/screen-record.sh"
+echo "==> Enabling services"
+sudo systemctl enable bluetooth.service
 
 ############################################################
 # DEFAULT APPLICATIONS                                     #
 ############################################################
 
+# Nautilus owns directories. This used to name `ghostty.desktop`, which does
+# not exist -- ghostty ships com.mitchellh.ghostty.desktop -- and xdg-mime
+# writes whatever it is given without checking, so the bad entry sat in
+# mimeapps.list doing nothing but shadowing the real handler.
 echo "==> Setting default applications"
-xdg-mime default ghostty.desktop inode/directory
-chsh -s /bin/zsh
+xdg-mime default org.gnome.Nautilus.desktop inode/directory
+
+if [[ "$SHELL" != *zsh ]]; then
+  chsh -s /usr/bin/zsh
+fi
+
+############################################################
+# GTK CEDILLA FIX                                          #
+############################################################
+
+# Makes ' + c produce ç rather than ć on the us-intl layout. Patches files
+# owned by gtk2/gtk3 and libx11, so it has to run again after those packages
+# are upgraded. See post-install.sh.
+echo "==> Applying GTK cedilla fix"
+try "cedilla fix" "$DOTFILES/post-install.sh"
 
 ############################################################
 # BRAVE WEB APPS                                           #
@@ -374,7 +567,7 @@ chsh -s /bin/zsh
 # Generate toolbar-free Brave web-app launchers (--app=URL)
 # from webapps/apps.conf. See webapps/README.md.
 echo "==> Generating Brave web app launchers"
-"$HOME/dotfiles/webapps/generate.sh"
+try "Brave web apps" "$DOTFILES/webapps/generate.sh"
 
 ############################################################
 # SANITY CHECKS                                            #
@@ -395,7 +588,11 @@ ls /usr/share/wayland-sessions/hyprland.desktop >/dev/null || {
 ############################################################
 
 echo "========================================================"
-echo " Setup complete."
+if ((${#FAILED[@]})); then
+  echo " Setup complete, but these steps were skipped:"
+  printf '   - %s\n' "${FAILED[@]}"
+  echo
+fi
 echo " Reboot and log into the Hyprland session."
 echo " Review README.md for remaining manual steps."
 echo "========================================================"

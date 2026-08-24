@@ -163,7 +163,6 @@ files = [
   { action = "opendir", label = "open dir", bind = "ctrl Return" },
   { action = "copypath", label = "copy path", bind = "ctrl shift c" },
   { action = "copyfile", label = "copy file", bind = "ctrl c" },
-  { action = "localsend", label = "localsend", bind = "ctrl l" },
   { action = "refresh_index", label = "reload", bind = "ctrl r", after = "AsyncReload" },
 ]
 
@@ -214,7 +213,6 @@ clipboard = [
   { action = "pause", bind = "ctrl p" },
   { action = "unpause", bind = "ctrl p" },
   { action = "edit", bind = "ctrl o" },
-  { action = "localsend", bind = "ctrl l" },
 ]
 
 bookmarks = [

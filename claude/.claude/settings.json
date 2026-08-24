@@ -1,11 +1,26 @@
 {
-	"hooks": {
-		"Notification": [
-			{
-				"hooks": [
-					{ "type": "command", "command": "~/.claude/hooks/tmux-notify.sh" }
-				]
-			}
-		]
-	}
+  "model": "opus",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/herdr-agent-state.sh session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "effortLevel": "high",
+  "theme": "dark",
+  "preferredNotifChannel": "ghostty",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.config/quickshell/scripts/agent-usage-statusline.sh"
+  }
 }
