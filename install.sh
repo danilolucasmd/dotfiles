@@ -165,12 +165,19 @@ sudo pacman -S --needed --noconfirm \
   playerctl \
   brightnessctl \
   upower \
+  power-profiles-daemon \
   grim \
   slurp \
   polkit \
   polkit-kde-agent \
   quickshell \
   breeze-icons
+
+# power-profiles-daemon is D-Bus activated, but the quickshell battery panel
+# asks systemd whether it is active before offering the profile buttons -- an
+# activatable-but-never-started daemon would leave them showing a profile
+# nothing had chosen. Enabling it settles that.
+sudo systemctl enable power-profiles-daemon.service
 
 ############################################################
 # DISPLAY MANAGER (SDDM)                                   #

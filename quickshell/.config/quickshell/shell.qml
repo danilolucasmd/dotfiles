@@ -24,14 +24,15 @@ ShellRoot {
 		inputs: true
 	}
 	KeyboardLayoutPanel {}
+	BatteryPanel {}
 
 	// Neither is a panel: both show themselves rather than being opened, and
 	// neither may take the keyboard.
 	VolumeOsd {}
 	NotificationPopups {}
 
-	// `qs ipc call <panel> toggle`, which is what super+A, super+C and super+N
-	// run.
+	// `qs ipc call <panel> toggle`, which is what super+A, super+B, super+C and
+	// super+N run.
 	// Hyprland binds are the only sensible place for a global shortcut here —
 	// the wlr global-shortcuts protocol would need a portal Hyprland does not
 	// wire up to its own keybind config.
@@ -97,6 +98,14 @@ ShellRoot {
 
 		function toggle(): void {
 			CalendarState.toggle();
+		}
+	}
+
+	IpcHandler {
+		target: "battery"
+
+		function toggle(): void {
+			BatteryState.toggle();
 		}
 	}
 }

@@ -129,7 +129,6 @@ Variants {
 						spacing: 0
 
 						Network {}
-						Battery {}
 						Tray {}
 
 						Divider {
@@ -144,6 +143,7 @@ Variants {
 				Mic {}
 				Volume {}
 				Bluetooth {}
+				Battery {}
 				AgentUsage {}
 				Updates {}
 				Notifications {}

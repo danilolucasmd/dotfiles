@@ -1,55 +1,63 @@
-import Quickshell.Services.UPower
+import QtQuick
 import qs
 import qs.components
 
-// UPower's display device, rather than waybar's own sysfs polling.
+// Charge on the bar, everything else a click away in BatteryPanel. The reading
+// lives in BatteryState, which the panel and the super+B binding share.
 //
-// One deliberate change: the waybar config never declared `states`, so the
-// .warning / .critical rules in style.css could never fire. The thresholds
-// those rules clearly intended (30% / 15%) are wired up here.
+// It sat behind the extras chevron while it was a glyph with a hover tooltip.
+// A laptop's charge is not an occasional question, so it has a permanent seat
+// now, and it is shaped like the volume module beside it: glyph at icon size,
+// number at text size, rather than the whole string set at 16px the way the
+// tucked-away version was.
 BarItem {
 	id: root
 
-	readonly property var battery: UPower.displayDevice
-	readonly property bool present: battery?.isLaptopBattery ?? false
-	readonly property int percent: Math.round((battery?.percentage ?? 0) * 100)
-	readonly property bool charging: battery?.state === UPowerDeviceState.Charging || battery?.state === UPowerDeviceState.FullyCharged
+	readonly property int percent: BatteryState.percent
+	readonly property bool charging: BatteryState.charging
+
+	// waybar never declared `states`, so the .warning / .critical rules in its
+	// style.css could not fire. The thresholds they clearly intended are these.
+	readonly property bool low: !charging && percent <= 30
+	readonly property bool critical: !charging && percent <= 15
 
 	readonly property var icons: ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
 
-	active: present
+	active: BatteryState.present
 	rightMargin: Theme.gap
 
-	tooltip: {
-		if (!present)
-			return "";
-		const left = battery.timeToEmpty;
-		const full = battery.timeToFull;
-		if (charging && full > 0)
-			return `${percent}% — ${Math.floor(full / 3600)}h ${Math.round(full % 3600 / 60)}m to full`;
-		if (!charging && left > 0)
-			return `${percent}% — ${Math.floor(left / 3600)}h ${Math.round(left % 3600 / 60)}m remaining`;
-		return `${percent}%`;
-	}
+	// No tooltip. The old one was the whole UI here -- a percentage and a time
+	// remaining, on a hover you had to hold still for -- and the panel says all
+	// of that properly, per pack, with the health and the profile besides.
+	onClicked: BatteryState.toggle()
 
-	BarText {
-		font.pixelSize: Theme.fontIcon
+	Row {
+		spacing: 8
 
-		text: {
-			if (root.charging)
-				return `󰂄 ${root.percent}%`;
-			const i = Math.min(9, Math.max(0, Math.floor(root.percent / 10)));
-			return `${root.icons[i]} ${root.percent}%`;
+		BarText {
+			anchors.verticalCenter: parent.verticalCenter
+
+			text: {
+				if (root.charging)
+					return "󰂄";
+				const i = Math.min(9, Math.max(0, Math.floor(root.percent / 10)));
+				return root.icons[i];
+			}
+			// `fg` while charging rather than green: the glyph has already
+			// changed shape to say the cable is in, and the bar reserves colour
+			// for the thing you need to act on.
+			color: root.critical ? Theme.red : root.low ? Theme.yellow : Theme.fg
+			font.pixelSize: Theme.fontIcon
 		}
 
-		color: {
-			if (root.charging)
-				return Theme.green;
-			if (root.percent <= 15)
-				return Theme.red;
-			if (root.percent <= 30)
-				return Theme.yellow;
-			return Theme.fg;
+		BarText {
+			anchors.verticalCenter: parent.verticalCenter
+
+			// Reserved the way the volume module reserves its own, so the label
+			// stops twitching as the number crosses 9% / 99%.
+			width: Math.max(34, implicitWidth)
+			text: `${root.percent}%`
+			color: root.critical ? Theme.red : root.low ? Theme.yellow : Theme.fg
 		}
 	}
 }

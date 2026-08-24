@@ -111,7 +111,9 @@ gone with it.
 
 `playerctl` and `upower` are installed explicitly for this reason: they used to
 arrive as waybar dependencies, and the media keys and the battery module need
-them regardless.
+them regardless. `power-profiles-daemon` is there for the battery panel's
+profile switch — quickshell talks to it over D-Bus, and the panel hides that
+section entirely when the daemon is not running.
 
 Five scripts survive in `quickshell/.config/quickshell/scripts/` because they do
 work no service exposes: weather, package updates, screen-recording state,
@@ -120,8 +122,8 @@ the app that sent it. `updates.sh` shells out to `checkupdates`, which is why
 `pacman-contrib` is in the package list.
 
 The right cluster is split in two. Media, keyboard layout, microphone, volume,
-bluetooth, Claude usage, updates and notifications are always on screen; the
-recording indicator, network, battery and the tray fold away behind a chevron
+bluetooth, battery, Claude usage, updates and notifications are always on
+screen; the recording indicator, network and the tray fold away behind a chevron
 that stays the leftmost thing in the cluster. Clicking it slides them out
 rightward from the chevron, with a hairline marking where they end and the
 always-visible modules begin; those never shift.
