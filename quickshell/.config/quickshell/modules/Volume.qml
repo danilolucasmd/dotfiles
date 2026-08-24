@@ -9,7 +9,7 @@ import qs.components
 //
 // Scrolling adjusts the volume, which waybar's pulseaudio module did for free.
 BarItem {
-	rightMargin: 10
+	rightMargin: Theme.gap
 
 	// Left-click picks the output device; the OSD still appears on its own
 	// whenever the volume actually moves, which is what it is for. Mute is on
@@ -34,9 +34,11 @@ BarItem {
 		BarText {
 			anchors.verticalCenter: parent.verticalCenter
 
-			// waybar reserved 30px here so the label stops twitching as the
-			// number crosses 9% / 99%.
-			width: Math.max(30, implicitWidth)
+			// waybar reserved 30px here against the label twitching as the
+			// number crosses 9% / 99%. Dropped for the reason given in Battery:
+			// it padded the gap to the module beside it. The cost lands harder
+			// here than there, because the wheel crosses those boundaries often
+			// -- the modules to the left step a character's width when it does.
 			text: `${AudioState.volume}%`
 		}
 	}

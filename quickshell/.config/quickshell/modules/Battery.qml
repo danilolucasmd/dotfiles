@@ -53,9 +53,14 @@ BarItem {
 		BarText {
 			anchors.verticalCenter: parent.verticalCenter
 
-			// Reserved the way the volume module reserves its own, so the label
-			// stops twitching as the number crosses 9% / 99%.
-			width: Math.max(34, implicitWidth)
+			// No reserved width. There was one, against the label twitching as
+			// the number crosses 9% / 99%, but a reserve is padding: it sits
+			// between this module's last glyph and the next one, on top of the
+			// margin that is meant to be the whole gap, and it is only ever the
+			// right size at 100%. What it bought, the cluster being anchored
+			// right, was the modules to the *left* of this one holding still
+			// across a 99 -> 100 step -- once a charge. A gap that is wrong the
+			// rest of the time is the worse trade.
 			text: `${root.percent}%`
 			color: root.critical ? Theme.red : root.low ? Theme.yellow : Theme.fg
 		}
