@@ -96,8 +96,9 @@ Variants {
 				ExtrasToggle {}
 
 				// Folded away behind the chevron: the modules worth having but
-				// not worth a permanent seat — the tray especially, which grows
-				// with whatever happens to be running.
+				// not worth a permanent seat. Only the tray now, which is the
+				// one that grows with whatever happens to be running — network
+				// moved out to a seat of its own when it got a panel.
 				//
 				// The group is a window onto a right-aligned row, so animating
 				// the window's width slides the modules out from behind the
@@ -128,7 +129,6 @@ Variants {
 						height: parent.height
 						spacing: 0
 
-						Network {}
 						Tray {}
 
 						Divider {
@@ -142,6 +142,7 @@ Variants {
 				KeyboardLayout {}
 				Mic {}
 				Volume {}
+				Network {}
 				Bluetooth {}
 				Battery {}
 				AgentUsage {}

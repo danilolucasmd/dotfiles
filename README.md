@@ -115,15 +115,15 @@ them regardless. `power-profiles-daemon` is there for the battery panel's
 profile switch — quickshell talks to it over D-Bus, and the panel hides that
 section entirely when the daemon is not running.
 
-Five scripts survive in `quickshell/.config/quickshell/scripts/` because they do
+Six scripts survive in `quickshell/.config/quickshell/scripts/` because they do
 work no service exposes: weather, package updates, screen-recording state,
-Claude Code usage, and matching a notification against the window list to find
-the app that sent it. `updates.sh` shells out to `checkupdates`, which is why
-`pacman-contrib` is in the package list.
+Claude Code usage, network counters, and matching a notification against the
+window list to find the app that sent it. `updates.sh` shells out to
+`checkupdates`, which is why `pacman-contrib` is in the package list.
 
 The right cluster is split in two. Media, keyboard layout, microphone, volume,
-bluetooth, battery, Claude usage, updates and notifications are always on
-screen; the recording indicator, network and the tray fold away behind a chevron
+network, bluetooth, battery, Claude usage, updates and notifications are always
+on screen; the recording indicator and the tray fold away behind a chevron
 that stays the leftmost thing in the cluster. Clicking it slides them out
 rightward from the chevron, with a hairline marking where they end and the
 always-visible modules begin; those never shift.
@@ -132,6 +132,16 @@ Moving the pointer off the bar folds them away after a second, and coming
 back restarts that countdown — a hand on its way to a tray icon dips off the bar
 constantly. An open tray menu holds them regardless, since reaching one means
 leaving the bar.
+
+The network module is one glyph — an Ethernet port, or the Wi-Fi wedge at the
+strength it is seeing, with Ethernet winning when both links are up. Clicking it
+(or `super+shift+W`) opens a panel with both links, whatever the active one is
+doing right now — ping, packet loss, throughput, since-boot totals, address,
+gateway, resolvers — and the Wi-Fi networks in range, saved ones first. Joining
+one that is not saved prompts for the password in the panel and reports a
+refusal there. Everything but the counters comes from NetworkManager over D-Bus;
+`network-stats.sh` reads `/proc/net/dev`, `ip route` and a three-packet ping,
+and only runs while the panel is open.
 
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the

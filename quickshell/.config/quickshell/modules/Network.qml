@@ -1,54 +1,47 @@
-import Quickshell.Networking
 import qs
 import qs.components
 
-// Wi-Fi signal strength / wired / disconnected.
+// Which link is carrying traffic, and how well.
 //
-// waybar read this from sysfs itself; Quickshell talks to NetworkManager,
-// which is the backend this machine runs (systemd-networkd is masked, for
-// Proton VPN's sake).
+// waybar read this from sysfs itself; Quickshell talks to NetworkManager, which
+// is the backend this machine runs. The reading lives in NetworkState, which
+// the panel shares.
+//
+// One glyph rather than the old `󰤨 85%`: the percentage was the only number in
+// the always-visible cluster that nothing else could have told you, and now the
+// panel prints it along with everything else. The bars carry it well enough for
+// a glance.
 BarItem {
 	id: root
-
-	readonly property var devices: Networking.devices?.values ?? []
-
-	readonly property var wifi: devices.find(d => d.type === DeviceType.Wifi && d.connected) ?? null
-	readonly property var wired: devices.find(d => d.type === DeviceType.Wired && d.connected) ?? null
-
-	// The network the Wi-Fi device is actually associated with.
-	readonly property var wifiNetwork: {
-		if (!wifi)
-			return null;
-		const nets = wifi.networks?.values ?? [];
-		return nets.find(n => n.connected) ?? null;
-	}
-
-	// NetworkManager reports strength as a percentage; be tolerant of a
-	// backend that hands back a 0..1 fraction instead.
-	readonly property int signal: {
-		const s = wifiNetwork?.signalStrength ?? 0;
-		return Math.round(s <= 1 ? s * 100 : s);
-	}
 
 	rightMargin: Theme.gap
 
 	tooltip: {
-		if (wifi)
-			return `${wifiNetwork?.name ?? wifi.name} — ${signal}%`;
-		if (wired)
-			return `Wired (${wired.name})`;
-		return "Disconnected";
+		const lines = [];
+		if (NetworkState.wiredUp)
+			lines.push(`Ethernet — ${NetworkState.wiredDevice.name}`);
+		if (NetworkState.wifiUp)
+			lines.push(`Wi-Fi — ${NetworkState.wifiNetwork?.name ?? NetworkState.wifiDevice.name} (${NetworkState.signal}%)`);
+		if (lines.length === 0)
+			return NetworkState.wifiBlocked ? "Wi-Fi blocked by hardware switch" : NetworkState.wifiEnabled ? "Disconnected" : "Wi-Fi off";
+		if (NetworkState.limited)
+			lines.push("No internet access");
+		return lines.join("\n");
 	}
 
-	BarText {
-		font.pixelSize: Theme.fontIcon
+	onClicked: NetworkState.toggle()
+	// The switch the panel puts under the pointer anyway, for when the panel is
+	// not what you wanted — turning the radio off and on again is most of what
+	// anyone does to Wi-Fi.
+	onRightClicked: NetworkState.toggleWifi()
 
-		text: {
-			if (root.wifi)
-				return `󰤨 ${root.signal}%`;
-			if (root.wired)
-				return "󰈀";
-			return "󰤭";
-		}
+	BarText {
+		text: NetworkState.icon
+		// Connected is the ordinary state and reads as ordinary text. Amber is
+		// associated-but-going-nowhere, which looks identical from the glyph
+		// alone and is the one worth catching. Dim is nothing connected, the
+		// same way the Bluetooth and notification glyphs go quiet.
+		color: NetworkState.limited ? Theme.yellow : NetworkState.online ? Theme.fg : Theme.dim
+		font.pixelSize: Theme.fontIcon
 	}
 }

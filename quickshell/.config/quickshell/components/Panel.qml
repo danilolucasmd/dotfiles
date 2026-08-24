@@ -30,6 +30,11 @@ PanelWindow {
 
 	default property alias content: layout.data
 
+	// For content that has to take the keyboard: hand it back here when done.
+	function takeFocus(): void {
+		card.forceActiveFocus();
+	}
+
 	signal dismissed
 	signal refreshRequested
 	// Anything the panel itself did not claim, for content that has keys of its
@@ -40,6 +45,14 @@ PanelWindow {
 	signal keyReleased(var event)
 
 	visible: open
+	// Reopening always puts the keyboard back on the card. Content that takes
+	// it for itself -- the network panel's password field -- would otherwise
+	// leave the panel deaf to its own keys, Escape included, from the moment it
+	// was first typed into.
+	onVisibleChanged: {
+		if (visible)
+			takeFocus();
+	}
 	// One panel, on whichever monitor has focus, rather than one per screen:
 	// they are as likely to be summoned by a keybind, which has no screen of
 	// its own, as by a click on a particular bar.

@@ -23,6 +23,7 @@ ShellRoot {
 	AudioDevicesPanel {
 		inputs: true
 	}
+	NetworkPanel {}
 	KeyboardLayoutPanel {}
 	BatteryPanel {}
 
@@ -106,6 +107,14 @@ ShellRoot {
 
 		function toggle(): void {
 			BatteryState.toggle();
+		}
+	}
+
+	IpcHandler {
+		target: "network"
+
+		function toggle(): void {
+			NetworkState.toggle();
 		}
 	}
 }
