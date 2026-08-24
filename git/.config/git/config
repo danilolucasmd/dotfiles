@@ -1,6 +1,7 @@
 [user]
     email = danilolucasmd@gmail.com
     name = Danilo de Lucas
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPkbzJgFyiqSr9RRXlmsk+JT0VBP1zBcV4122w+Sp7j9
 [core]
     editor = nvim
     pager = hunk pager
@@ -12,3 +13,9 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !/usr/bin/gh auth git-credential
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /opt/1Password/op-ssh-sign
+[commit]
+	gpgsign = true

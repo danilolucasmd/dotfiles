@@ -53,11 +53,17 @@ def external() -> str:
 def apply() -> None:
     ext = external()
     if ext:
-        hyprctl("keyword", "monitor", f"{ext},highrr,0x0,1")
+        # Both rules in one --batch request, so they land in the same event
+        # loop iteration. Sent as two requests, the first one moves the
+        # external onto 0x0 while the panel is still a real monitor sitting
+        # there, and Hyprland's layout check -- which runs once at the end of
+        # every iteration -- catches that intermediate state and pops the
+        # "monitor layout is set up incorrectly" warning about eDP-1, even
+        # though the mirror a moment later makes the overlap moot.
         hyprctl(
-            "keyword",
-            "monitor",
-            f"{LAPTOP},preferred,0x0,{LAPTOP_MIRROR_SCALE},mirror,{ext}",
+            "--batch",
+            f"keyword monitor {ext},highrr,0x0,1;"
+            f"keyword monitor {LAPTOP},preferred,0x0,{LAPTOP_MIRROR_SCALE},mirror,{ext}",
         )
     else:
         hyprctl("keyword", "monitor", f"{LAPTOP},preferred,0x0,{LAPTOP_SOLO_SCALE}")
@@ -81,7 +87,12 @@ def main() -> int:
             event, _, _payload = line.rstrip("\n").partition(">>")
             # monitoraddedv2/monitorremovedv2 carry the same events with richer
             # payloads; matching the short names would double every hotplug.
-            if event in ("monitoradded", "monitorremoved"):
+            #
+            # configreloaded matters as much as the hotplugs: `hyprctl reload`
+            # re-applies hyprland.conf, which only knows the baseline rules, so
+            # any reload silently drops the mirror and puts the external back to
+            # its default refresh rate until we set it again.
+            if event in ("monitoradded", "monitorremoved", "configreloaded"):
                 apply()
 
     return 0

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
+  // fastfetch finds the terminal by walking up the process tree, skipping
+  // shells and the only two multiplexers it knows -- tmux and zellij. herdr is
+  // neither, so the walk stops on it and the Terminal line reads "herdr"
+  // instead of the terminal actually drawing the pixels. There is no config
+  // hook to teach it a third multiplexer, so the line is taken from
+  // $TERM_PROGRAM, which ghostty sets and herdr passes through untouched.
+  // $TERM is the fallback for a bare tty, where $TERM_PROGRAM is unset.
+  //
+  // Replacing one module means listing them all: in this config the array *is*
+  // the structure. This is `fastfetch --print-structure` for 2.67.1 with
+  // "terminal" swapped out, so a later fastfetch that adds a module to its
+  // defaults will not show it here until it is added below.
+  //
+  // "terminalfont" stays in the list but prints nothing, and did so before
+  // this file existed: it resolves a font from the detected terminal, and it
+  // cannot find one for herdr either.
+  "modules": [
+    "title",
+    "separator",
+    "os",
+    "host",
+    "kernel",
+    "uptime",
+    "packages",
+    "shell",
+    "display",
+    "de",
+    "wm",
+    "wmtheme",
+    "theme",
+    "icons",
+    "font",
+    "cursor",
+    {
+      "type": "command",
+      "key": "Terminal",
+      "text": "if [ -n \"$TERM_PROGRAM\" ]; then printf '%s %s' \"$TERM_PROGRAM\" \"$TERM_PROGRAM_VERSION\"; else printf '%s' \"${TERM:-unknown}\"; fi"
+    },
+    "terminalfont",
+    "cpu",
+    "gpu",
+    "memory",
+    "swap",
+    "disk",
+    "localip",
+    "battery",
+    "poweradapter",
+    "locale",
+    "break",
+    "colors"
+  ]
+}

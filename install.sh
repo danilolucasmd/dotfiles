@@ -458,10 +458,11 @@ sudo stow -t / sddm
 
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
-  elephant ghostty git hunk hypr lazygit nvim scripts sounds \
+  elephant fastfetch ghostty git hunk hypr lazygit nvim scripts sounds \
   quickshell walker wallpapers yazi zsh
 stow \
   elephant \
+  fastfetch \
   ghostty \
   git \
   hunk \
