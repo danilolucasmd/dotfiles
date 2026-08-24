@@ -179,6 +179,20 @@ sudo pacman -S --needed --noconfirm \
 # nothing had chosen. Enabling it settles that.
 sudo systemctl enable power-profiles-daemon.service
 
+# Hand the lid to Hyprland. Closing it can mean lock, blank, suspend, or
+# nothing at all depending on the external monitor and the power adapter --
+# a decision only the compositor has the facts for, and logind would beat it
+# to the suspend. See hypr/.config/hypr/scripts/lid.sh.
+echo "==> Handing lid-switch handling to Hyprland"
+sudo mkdir -p /etc/systemd/logind.conf.d
+sudo tee /etc/systemd/logind.conf.d/10-lid.conf >/dev/null <<'LID'
+# Managed by dotfiles/install.sh -- see ~/.config/hypr/scripts/lid.sh
+[Login]
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+LID
+
 ############################################################
 # DISPLAY MANAGER (SDDM)                                   #
 ############################################################
