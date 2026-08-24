@@ -411,17 +411,38 @@ if ! command -v claude >/dev/null 2>&1 && [[ ! -x "$HOME/.local/bin/claude" ]]; 
   try "Claude Code" bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
 fi
 
-# buds-tui is our own project, installed editable from a checkout. The
-# quickshell Bluetooth module opens it (`ghostty -e ~/.local/bin/buds`) for
-# earbud battery levels. Cloned over HTTPS because the 1Password SSH agent is
-# not signed in yet at this point in a fresh install.
+# The three blocks below install our own projects the way a stranger would --
+# from GitHub over HTTPS, not from ~/Code. A fresh machine has no checkouts yet
+# and the 1Password SSH agent is not signed in at this point, so nothing here
+# can be an editable install. Swapping one for a working copy later is a single
+# command, noted in each block.
+
+# buds-tui: the quickshell Bluetooth module opens it (`ghostty -e
+# ~/.local/bin/buds`) for earbud battery levels. For development, clone it and
+# `uv tool install --force --python /usr/bin/python3 --editable ~/Code/buds-tui`.
+#
+# --python is not optional: without it uv builds the tool against a standalone
+# interpreter that has no Bluetooth sockets, and buds cannot reach the earbuds.
 if [[ ! -x "$HOME/.local/bin/buds" ]]; then
   echo "==> Installing buds-tui"
-  [[ -d "$HOME/Code/buds-tui" ]] ||
-    try "clone buds-tui" git clone https://github.com/danilolucasmd/buds-tui.git \
-      "$HOME/Code/buds-tui"
-  [[ -d "$HOME/Code/buds-tui" ]] &&
-    try "buds-tui" uv tool install --editable "$HOME/Code/buds-tui"
+  try "buds-tui" uv tool install --python /usr/bin/python3 \
+    git+https://github.com/danilolucasmd/buds-tui.git
+fi
+
+# pkg: one set of verbs over pacman, yay and flatpak. Its installer takes the
+# prebuilt binary from the latest GitHub release and puts it in ~/.local/bin,
+# falling back to a cargo build -- there is no rust toolchain here, so that
+# fallback reports and skips rather than succeeding. For development, clone it
+# and `cargo install --path ~/Code/pkg --root ~/.local` (rust required).
+#
+# PKG_NO_MODIFY_PATH because .zshrc is a stow symlink into this repo: left to
+# itself the installer appends its own PATH line straight into the dotfiles.
+# ~/.local/bin is already exported there.
+if [[ ! -x "$HOME/.local/bin/pkg" ]]; then
+  echo "==> Installing pkg"
+  try "pkg" bash -c 'set -o pipefail
+    curl -fsSL https://raw.githubusercontent.com/danilolucasmd/pkg/main/install.sh |
+      PKG_NO_MODIFY_PATH=1 sh'
 fi
 
 ############################################################
@@ -438,13 +459,12 @@ sudo stow -t / sddm
 
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
-  elephant ghostty git herdr hunk hypr lazygit nvim scripts sounds \
+  elephant ghostty git hunk hypr lazygit nvim scripts sounds \
   quickshell walker wallpapers yazi zsh
 stow \
   elephant \
   ghostty \
   git \
-  herdr \
   hunk \
   hypr \
   lazygit \
@@ -457,10 +477,13 @@ stow \
   yazi \
   zsh
 
-# dbus and claude are stowed with --no-folding so that ~/.local/share/dbus-1/services
-# and ~/.claude stay real directories. Other apps drop files in both -- Claude Code
-# alone keeps its credentials, history and caches in ~/.claude -- and letting stow
-# fold either into a single symlink would send all of that into this repo.
+# dbus, claude and herdr are stowed with --no-folding so that
+# ~/.local/share/dbus-1/services, ~/.claude and ~/.config/herdr stay real
+# directories. Each of them is written into by something other than this repo --
+# Claude Code keeps its credentials, history and caches in ~/.claude, and herdr
+# keeps its session layout, logs, sockets and installed plugins (clone-layout,
+# below) in ~/.config/herdr -- and letting stow fold any of them into a single
+# symlink would send all of that into this repo.
 #
 # dbus carries one file: a D-Bus activation override for sushi (Nautilus'
 # spacebar quick preview) that sets SUSHI_USE_GST_GTKSINK=1, because
@@ -470,10 +493,21 @@ stow --no-folding dbus
 resolve_stow_conflicts --no-folding claude
 stow --no-folding claude
 
+resolve_stow_conflicts --no-folding herdr
+stow --no-folding herdr
+
 # herdr writes ~/.claude/hooks/herdr-agent-state.sh and owns it -- the file says
 # so in its header, and herdr overwrites it on every update. The hook entry that
 # calls it is in the settings.json above; this puts the script itself in place.
 try "herdr Claude integration" herdr integration install claude
+
+# Our own herdr plugin: every new workspace or worktree opens with the tab and
+# pane geometry of the one it was created from. Fetched from GitHub into
+# ~/.config/herdr/plugins, which the --no-folding stow above keeps out of this
+# repo. Needs jq, installed with the pacman packages. For development, clone it
+# and `herdr plugin link ~/Code/herdr-clone-layout` against a running server.
+try "herdr clone-layout plugin" herdr plugin install \
+  danilolucasmd/herdr-clone-layout --yes
 
 ############################################################
 # ZSH + on-my-zsh                                          #

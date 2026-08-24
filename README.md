@@ -214,6 +214,17 @@ much, and herdr rewrites it on update — so it is deliberately not tracked here
 The `SessionStart` hook entry that calls it *is* tracked, in
 `claude/.claude/settings.json`.
 
+`herdr/.config/herdr/` is stowed with `--no-folding` for the same reason
+`~/.claude` is: herdr keeps its session layout, logs, sockets and installed
+plugins in there, and a folded `~/.config/herdr` symlink would write all of that
+into this repo. Only `config.toml` is tracked.
+
+One of those plugins is ours — [herdr-clone-layout](https://github.com/danilolucasmd/herdr-clone-layout),
+installed by `install.sh` with `herdr plugin install
+danilolucasmd/herdr-clone-layout --yes` (section 13). Every new workspace or
+worktree opens with the tab and pane geometry of the one it was created from. It
+needs `jq`, which is in the pacman list.
+
 ---
 
 ## 8. Claude Code
@@ -296,11 +307,43 @@ them.
 
 ---
 
-## 13. General Notes
+## 13. Our Own Projects
+
+Three of the tools this setup depends on are ours. `install.sh` installs all
+three **from GitHub over HTTPS**, not from `~/Code` — a fresh machine has no
+checkouts, and the 1Password SSH agent is not signed in that early in the run.
+So none of them starts out as a development install:
+
+| Project | Installed as | Point it at a clone |
+| --- | --- | --- |
+| [buds-tui](https://github.com/danilolucasmd/buds-tui) | `uv tool install --python /usr/bin/python3 git+https://…` | `uv tool install --force --python /usr/bin/python3 --editable ~/Code/buds-tui` |
+| [pkg](https://github.com/danilolucasmd/pkg) | its own installer, `curl … \| sh` | `cargo install --path ~/Code/pkg --root ~/.local` |
+| [herdr-clone-layout](https://github.com/danilolucasmd/herdr-clone-layout) | `herdr plugin install danilolucasmd/herdr-clone-layout --yes` | `herdr plugin link ~/Code/herdr-clone-layout` |
+
+Details that are easy to get wrong:
+
+- **buds-tui's `--python` is not optional.** Without it `uv` builds the tool
+  against a standalone interpreter that has no Bluetooth sockets, and `buds`
+  fails the moment it reaches for the earbuds. The quickshell Bluetooth module
+  opens it with `ghostty -e ~/.local/bin/buds`.
+- **`pkg` runs with `PKG_NO_MODIFY_PATH=1`.** Its installer offers to append a
+  `PATH` line to your shell startup file, and `.zshrc` is a stow symlink into
+  this repo — left alone it would write into the dotfiles. `~/.local/bin` is
+  already exported there.
+- **`pkg` has no prebuilt binary fallback here.** If the release download fails
+  the installer builds with cargo, and nothing in `install.sh` installs a rust
+  toolchain, so that path reports and skips instead of succeeding.
+- **`herdr plugin link` needs a running herdr server**; `herdr plugin install`
+  does not.
+
+---
+
+## 14. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`
-- `dbus` and `claude` are stowed with `--no-folding`, everything else plainly
+- `dbus`, `claude` and `herdr` are stowed with `--no-folding`, everything else
+  plainly
 - When an app has already written a config that stow wants to own, `install.sh`
   moves the original aside as `<name>.pre-stow` rather than failing
 - All non-deterministic or GUI-based steps are documented here on purpose
