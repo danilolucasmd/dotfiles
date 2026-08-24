@@ -21,7 +21,31 @@ archinstall
 
 ## 2. Archinstall Configuration
 
-Use the following options when prompted:
+Every screen at a glance. The sections below repeat each value with the reason
+behind it. Bold marks the values that are not archinstall's default, or that
+`install.sh` depends on.
+
+| Screen | Value |
+| --- | --- |
+| Installer language | English (US) |
+| Locales | default |
+| Mirror region | Brazil |
+| **Repositories** | **default** — leave multilib off |
+| Disk layout | Best-effort default partition layout |
+| Filesystem | **btrfs**, default subvolume layout |
+| Disk encryption | your call |
+| Swap | default (gives you zram) |
+| **Bootloader** | **GRUB** — not the systemd-boot default |
+| Kernel | default (`linux`) |
+| Hostname | anything |
+| Authentication | create a user, type **Superuser (wheel)**; root **Disabled** |
+| Profile | Minimal — no desktop, no greeter |
+| Applications | None |
+| Audio | None |
+| **Network configuration** | **Use NetworkManager** |
+| **Additional packages** | **git** |
+| Timezone | America/Sao_Paulo |
+| NTP | Enabled |
 
 ### Language
 - Installer language: English (US)
