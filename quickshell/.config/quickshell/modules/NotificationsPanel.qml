@@ -70,11 +70,14 @@ Panel {
 		return true;
 	}
 
-	// Go to whatever sent it. The panel closes on the way out — the thing you
-	// asked for is on another workspace, and leaving it up over there is just
-	// something else to dismiss.
+	// Go to whatever sent it. Opening one is dealing with it, so the row goes
+	// too — coming back to the panel to throw away the thing you just read is
+	// the same work twice. The panel closes on the way out as well: the thing
+	// you asked for is on another workspace, and leaving it up over there is
+	// just something else to dismiss.
 	function activate(rec: var): void {
 		NotificationsState.focusSender(rec);
+		NotificationsState.dismiss(rec);
 		NotificationsState.close();
 	}
 

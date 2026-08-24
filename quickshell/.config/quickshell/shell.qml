@@ -23,6 +23,7 @@ ShellRoot {
 	AudioDevicesPanel {
 		inputs: true
 	}
+	KeyboardLayoutPanel {}
 
 	// Neither is a panel: both show themselves rather than being opened, and
 	// neither may take the keyboard.
@@ -53,6 +54,25 @@ ShellRoot {
 
 		function outputs(): void {
 			AudioState.toggleOutputs();
+		}
+	}
+
+	// alt+space is a Hyprland bind rather than an xkb option now, so that
+	// holding alt after it can put the layout picker up: `cycle` on every
+	// press, `release` when alt comes back up.
+	IpcHandler {
+		target: "keyboard"
+
+		function toggle(): void {
+			KeyboardState.toggle();
+		}
+
+		function cycle(): void {
+			KeyboardState.cycle();
+		}
+
+		function release(): void {
+			KeyboardState.release();
 		}
 	}
 
