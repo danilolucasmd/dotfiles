@@ -168,8 +168,6 @@ export PATH="$HOME/.local/bin:$PATH"
 # ~/.cargo/env, which lives outside the dotfiles.
 export PATH="$HOME/.cargo/bin:$PATH"
 
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
 
 # Disable auto_cd (Oh My Zsh enables it): typing a bare directory name like
 # `claude` should run the command / error, not silently cd into the folder.
