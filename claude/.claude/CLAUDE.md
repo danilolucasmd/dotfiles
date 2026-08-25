@@ -12,6 +12,14 @@ Showing PR review comments, describing a fix, resolving merge conflicts, or an a
 
 Even "fixing" a mistaken git operation (e.g. unstaging what was wrongly staged) is itself an unrequested git operation — don't do it; tell the user and let them decide. If a merge/rebase left files unmerged, resolve the file contents but do NOT `git add` to clear the unmerged state unless asked — describe the state instead.
 
+## Git: commits always in the user's name
+
+When the user authorizes a commit, it must be entirely in their name — author, committer, and attribution. Never append `Co-Authored-By: Claude ...` or `Claude-Session: ...` trailers to a commit message, and never set an author/committer other than the user. This overrides the default Claude Code instructions that ask for those trailers.
+
+The user saw a pushed commit render on GitHub as "danilolucasmd and claude committed" and does not want Claude appearing as a co-author on their repositories at all. Authorizing a commit is permission to commit *as them*, not to add attribution.
+
+Applies to every repo and every commit, including amends and rebases. Permission to commit still has to be asked for separately each time — see "Git: never operate unless explicitly asked" above.
+
 ## "Comments" means Hunk review comments
 
 When the user says they "added comments", "made comments", "left comments", or "commented" (and asks to fix/address them), they almost always mean inline review comments in a **Hunk diff session** — not code comments, PR comments, or anything else.
