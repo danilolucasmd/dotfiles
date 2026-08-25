@@ -158,9 +158,15 @@ function open() {
 }
 
 # Anything installed outside pacman lands here: the Claude Code CLI, uv and
-# the tools it installs (buds), cargo shims. Set here rather than relying on
+# the tools it installs (buds), pkg. Set here rather than relying on
 # ~/.profile, which is written by those installers and is not in the dotfiles.
 export PATH="$HOME/.local/bin:$PATH"
+
+# Where `cargo install` drops binaries. rustup itself comes from pacman and its
+# shims (cargo, rustc, ...) are already in /usr/bin, so this is only about
+# crates installed from source -- and it means nothing has to source
+# ~/.cargo/env, which lives outside the dotfiles.
+export PATH="$HOME/.cargo/bin:$PATH"
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"

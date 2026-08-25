@@ -370,9 +370,17 @@ Details that are easy to get wrong:
   `PATH` line to your shell startup file, and `.zshrc` is a stow symlink into
   this repo — left alone it would write into the dotfiles. `~/.local/bin` is
   already exported there.
-- **`pkg` has no prebuilt binary fallback here.** If the release download fails
-  the installer builds with cargo, and nothing in `install.sh` installs a rust
-  toolchain, so that path reports and skips instead of succeeding.
+- **`pkg` installs from a prebuilt binary.** Its installer downloads the release
+  asset for this platform and builds from source only if that fails. Releases
+  exist from **v0.1.2** onward — `v0.1.0` and `v0.1.1` were tagged but their
+  release workflow was cancelled and published nothing, so the download 404'd
+  and the cargo fallback was the only path there was.
+- **The rust toolchain is for development, not for installing `pkg`.**
+  `install.sh` installs `rustup` (the **Rust toolchain** step) so that
+  `cargo install --path ~/Code/pkg --root ~/.local` works on a fresh machine.
+  It is not there to prop up the installer's cargo fallback: that fallback
+  clones from the same GitHub the download just failed to reach, so it only
+  helps a target with no published asset.
 - **`herdr plugin link` needs a running herdr server**; `herdr plugin install`
   does not.
 

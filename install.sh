@@ -421,6 +421,36 @@ sudo pacman -S --needed --noconfirm nodejs npm
 sudo npm install -g tree-sitter-cli
 
 ############################################################
+# RUST TOOLCHAIN                                           #
+############################################################
+
+# Not what installs pkg any more -- since v0.1.2 it ships prebuilt binaries for
+# all four linux/macOS targets and the block below downloads one. It stays
+# because this box is where pkg gets worked on: pointing it at a clone means
+# `cargo install --path ~/Code/pkg --root ~/.local` (README section 13), and
+# that needs cargo on a machine that has never had it.
+#
+# Not for the installer's cargo fallback, which sounds like a second reason and
+# is not -- it runs `cargo install --git` against the same GitHub the release
+# download just failed to reach, so it only rescues a target with no published
+# asset, and all four are published.
+#
+# rustup rather than the `rust` package so the toolchain can be updated
+# independently of the distro, and the pacman build of rustup rather than the
+# one from rustup.rs because that installer appends `. "$HOME/.cargo/env"` to
+# .zshenv, .profile, .bashrc and .bash_profile -- none of which are in this
+# repo. The pacman package puts its shims in /usr/bin, so nothing here has to
+# touch PATH.
+echo "==> Installing Rust"
+
+sudo pacman -S --needed --noconfirm rustup
+
+# The package ships the shims only. Until a default toolchain is chosen every
+# `cargo` call fails with "no default toolchain configured"; this both picks
+# stable and downloads it, and is a no-op once it is in place.
+try "rust stable toolchain" rustup default stable
+
+############################################################
 # TOOLS INSTALLED OUTSIDE PACMAN                           #
 ############################################################
 
@@ -450,11 +480,12 @@ if [[ ! -x "$HOME/.local/bin/buds" ]]; then
     git+https://github.com/danilolucasmd/buds-tui.git
 fi
 
-# pkg: one set of verbs over pacman, yay and flatpak. Its installer takes the
-# prebuilt binary from the latest GitHub release and puts it in ~/.local/bin,
-# falling back to a cargo build -- there is no rust toolchain here, so that
-# fallback reports and skips rather than succeeding. For development, clone it
-# and `cargo install --path ~/Code/pkg --root ~/.local` (rust required).
+# pkg: one set of verbs over pacman, yay and flatpak. Its installer downloads
+# the prebuilt binary for this platform from the latest GitHub release and puts
+# it in ~/.local/bin, building from source with cargo only if that fails -- the
+# rust toolchain above is what makes that fallback a fallback rather than an
+# error. For development, clone it and
+# `cargo install --path ~/Code/pkg --root ~/.local`.
 #
 # PKG_NO_MODIFY_PATH because .zshrc is a stow symlink into this repo: left to
 # itself the installer appends its own PATH line straight into the dotfiles.
