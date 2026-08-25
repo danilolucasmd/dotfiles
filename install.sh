@@ -398,6 +398,7 @@ aur_packages=(
   wiremix
   btop
   docker-desktop
+  kanata-bin
 )
 
 for pkg in "${aur_packages[@]}"; do
@@ -511,6 +512,27 @@ stow \
 # spacebar quick preview) that sets SUSHI_USE_GST_GTKSINK=1, because
 # GStreamer's gtkglsink is broken on NVIDIA. See dbus/README.md.
 stow --no-folding dbus
+
+# kanata carries two files: the keymap and a systemd user unit. --no-folding so
+# that ~/.config/systemd/user stays a real directory -- `systemctl --user
+# enable` writes its default.target.wants symlink in there, and folding would
+# put systemd's bookkeeping inside this repo.
+resolve_stow_conflicts --no-folding kanata
+stow --no-folding kanata
+
+# kanata reads the built-in keyboard from /dev/input/event* (group `input`) and
+# writes the remapped stream to /dev/uinput. logind already grants the active
+# seat's user an ACL on /dev/uinput, so `input` is the only group needed. Takes
+# effect at the next login.
+sudo usermod -aG input "$USER"
+
+# /dev/uinput only exists once the module is loaded; on a fresh boot nothing
+# else pulls it in.
+echo uinput | sudo tee /etc/modules-load.d/uinput.conf >/dev/null
+
+if pacman -Q kanata-bin >/dev/null 2>&1; then
+  systemctl --user enable kanata.service
+fi
 
 resolve_stow_conflicts --no-folding claude
 stow --no-folding claude

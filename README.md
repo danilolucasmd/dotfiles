@@ -378,7 +378,47 @@ Details that are easy to get wrong:
 
 ---
 
-## 14. General Notes
+## 14. Keyboard Remapping (kanata)
+
+`kanata` remaps the **laptop's built-in keyboard only**, porting the ergonomics
+of the Lily58 (`~/Code/lily58`) onto it. External keyboards -- the Lily58 over
+USB or BT, anything else plugged in -- are passed through untouched; the config
+grabs `AT Translated Set 2 keyboard` by name and nothing else.
+
+What it does, mirroring the ZMK keymap:
+
+| | |
+|---|---|
+| CapsLock | Ctrl on hold, Esc on tap (`&mt LCTRL ESCAPE`) |
+| Shift, double-tapped | Caps Word (`TD_LSHFT_CAPS`) |
+| Fn held | the Lily58's `lower_layer`: `hjkl` arrows, `1`-`5` -> `F1`-`F5`, `7 8 9 0 -` -> `[ ] { } =`, `\` -> `+`, `u`/`d` -> PgUp/PgDn, `n m , .` -> play-pause / mute / vol down / vol up |
+
+### The BIOS step (manual, required)
+
+The ThinkPad's real `Fn` key is consumed by the embedded controller and never
+reaches the OS -- it isn't in the keyboard's reported keycode range, so no
+remapper on any platform can see it held.
+
+**Swap Fn and Ctrl in the BIOS** (Enter/F1 at boot -> Config -> Keyboard/Mouse
+-> "Fn and Ctrl Key swap" -> Enabled). The key *labelled* Fn then emits
+`KEY_LEFTCTRL`, which kanata picks up as the layer key -- so holding the key
+marked Fn gets you the Fn layer. CapsLock covers Ctrl, so nothing is lost.
+
+To skip the BIOS trip instead, change `lctl` to `ralt` in the two `deflayer`
+blocks in `kanata/.config/kanata/kanata.kbd` and hold Right Alt. That costs you
+AltGr, which the `us,intl` secondary layout uses for accented characters.
+
+### Notes
+
+- Group membership (`input`) only takes effect at the next login.
+- `systemctl --user status kanata` to check it; `systemctl --user restart
+  kanata` after editing the keymap.
+- Tapping terms are the 200ms from the ZMK keymap. They live in the
+  `defalias` block.
+
+---
+
+## 15. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`

@@ -1,0 +1,17 @@
+[Unit]
+Description=kanata keyboard remapper (laptop keyboard)
+Documentation=https://github.com/jtroo/kanata
+# Only meaningful once there's a graphical session; the uinput ACL that lets
+# this run without root is granted by logind to the active seat's user.
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/kanata --nodelay --cfg %h/.config/kanata/kanata.kbd
+Restart=on-failure
+RestartSec=2
+# Keep the remapper responsive under load -- a laggy tapping term feels broken.
+Nice=-10
+
+[Install]
+WantedBy=default.target

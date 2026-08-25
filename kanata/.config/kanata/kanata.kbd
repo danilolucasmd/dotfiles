@@ -1,0 +1,92 @@
+;; kanata -- laptop keyboard remap
+;;
+;; Ports the ergonomics of the Lily58 (~/Code/lily58) onto the ThinkPad's
+;; built-in keyboard: CapsLock as Ctrl/Esc, double-tap Shift for Caps Word,
+;; and the Lily58's `lower_layer` (arrows, F-keys, brackets, media) under a
+;; held Fn key.
+;;
+;; Scoped to the internal keyboard only -- the Lily58 does all of this in its
+;; own firmware and must be left alone.
+
+(defcfg
+  ;; Only grab the built-in keyboard. Any external board (the Lily58 over USB
+  ;; or BT, or anything else plugged in) is passed through untouched.
+  linux-dev-names-include (
+    "AT Translated Set 2 keyboard"
+  )
+  ;; Don't exit if the device isn't there yet at boot.
+  linux-continue-if-no-devs-found yes
+
+  ;; Caps Word has to see every keypress to know when to stop capitalising,
+  ;; including keys this config never remaps.
+  process-unmapped-keys yes
+)
+
+;; The keys this config touches. Everything not listed here passes straight
+;; through.
+(defsrc
+  grv  1    2    3    4    5    6    7    8    9    0    -    =
+  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl
+)
+
+(defalias
+  ;; CapsLock: tap = Esc, hold = Ctrl.
+  ;; Lily58: `&mt LCTRL ESCAPE`. tap-hold-press matches ZMK's hold-preferred
+  ;; flavour -- pressing any other key while it's held commits to Ctrl
+  ;; immediately, so Ctrl+C never waits out the tapping term.
+  cesc (tap-hold-press 200 200 esc lctl)
+
+  ;; Left Shift: tap or hold = Shift, double-tap = Caps Word.
+  ;; Lily58: `TD_LSHFT_CAPS`. tap-dance-eager (not plain tap-dance) emits
+  ;; Shift on the first press rather than waiting for the timeout, so normal
+  ;; capitalisation has no added latency.
+  ;;
+  ;; Caps Word capitalises letters and stays active across digits, `-`/`_`,
+  ;; backspace and delete -- matching the `continue-list` override on
+  ;; `&caps_word` in the Lily58 keymap. Anything else (space, punctuation)
+  ;; ends it, as does 5s of idling.
+  scw (tap-dance-eager 200 (
+    lsft
+    (caps-word-custom 5000
+      (a b c d e f g h i j k l m n o p q r s t u v w x y z)
+      (1 2 3 4 5 6 7 8 9 0 - bspc del lsft rsft))
+  ))
+
+  ;; The Fn layer key.
+  ;;
+  ;; The ThinkPad's real Fn key is handled by the embedded controller and never
+  ;; reaches the OS -- no remapper can see it held. With Fn and Ctrl swapped in
+  ;; the BIOS, the bottom-left key *labelled* Fn is the one that emits
+  ;; KEY_LEFTCTRL, and CapsLock above covers Ctrl duty, so that key is free to
+  ;; be the layer key. Holding the key marked Fn gets you the Fn layer.
+  ;;
+  ;; Without the BIOS swap, change `lctl` in the layers below to `ralt` and hold
+  ;; Right Alt instead.
+  fn (layer-while-held fnlayer)
+)
+
+(deflayer base
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  @cesc _   _    _    _    _    _    _    _    _    _    _
+  @scw _    _    _    _    _    _    _    _    _    _    _
+  @fn
+)
+
+;; The Lily58's `lower_layer`, minus the keys that board has and this one
+;; doesn't. Everything left as `_` falls through to the base layer, matching
+;; ZMK's `&trans`.
+(deflayer fnlayer
+  ;; 1-5 -> F1-F5, and 7 8 9 0 - -> [ ] { } =
+  _    f1   f2   f3   f4   f5   _    [    ]    S-[  S-]  =    _
+  ;; u -> PageUp, \ -> +
+  _    _    _    _    _    _    pgup _    _    _    _    _    S-=
+  ;; d -> PageDown, hjkl -> arrows
+  _    _    _    pgdn _    _    left down up   rght _    _
+  ;; n -> play/pause, m -> mute, , . -> volume
+  _    _    _    _    _    _    pp   mute vold volu _    _
+  _
+)
