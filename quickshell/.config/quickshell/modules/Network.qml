@@ -15,6 +15,7 @@ BarItem {
 	id: root
 
 	rightMargin: Theme.gap
+	highlighted: NetworkState.panelOpen
 
 	tooltip: {
 		const lines = [];

@@ -8,6 +8,7 @@ import qs.components
 // so the badge is just a count of what it is holding.
 BarItem {
 	rightMargin: Theme.gap
+	highlighted: NotificationsState.panelOpen
 
 	// No hover tooltip: it listed the same history the panel shows, but
 	// flattened to one line an entry and gone the moment you looked away.

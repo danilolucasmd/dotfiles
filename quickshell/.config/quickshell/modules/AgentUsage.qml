@@ -8,6 +8,7 @@ import qs.components
 BarItem {
 	active: AgentUsageState.available
 	rightMargin: Theme.gap
+	highlighted: AgentUsageState.panelOpen
 
 	// No tooltip: hovering used to be the only way to see the weekly window and
 	// the pace, and the panel says all of that properly.

@@ -25,6 +25,7 @@ BarItem {
 
 	active: BatteryState.present
 	rightMargin: Theme.gap
+	highlighted: BatteryState.panelOpen
 
 	// No tooltip. The old one was the whole UI here -- a percentage and a time
 	// remaining, on a hover you had to hold still for -- and the panel says all

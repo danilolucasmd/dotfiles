@@ -10,6 +10,7 @@ import qs.components
 // Scrolling adjusts the volume, which waybar's pulseaudio module did for free.
 BarItem {
 	rightMargin: Theme.gap
+	highlighted: AudioState.devicesOpen
 
 	// Left-click opens the device panel on its output section; the OSD still
 	// appears on its own whenever the volume actually moves, which is what it

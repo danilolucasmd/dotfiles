@@ -7,6 +7,7 @@ import qs.components
 BarItem {
 	leftMargin: 8
 	rightMargin: 16
+	highlighted: CalendarState.panelOpen
 
 	// No tooltip: spelling out the date the bar is already showing was never
 	// worth a hover, and the click opens the month in CalendarPanel instead.

@@ -9,6 +9,7 @@ import qs.components
 // away in WeatherPanel, which replaced the hover tooltip.
 BarItem {
 	active: WeatherState.available
+	highlighted: WeatherState.panelOpen
 
 	onClicked: WeatherState.toggle()
 

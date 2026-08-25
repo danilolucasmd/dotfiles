@@ -16,6 +16,7 @@ BarItem {
 	id: root
 
 	rightMargin: Theme.gap
+	highlighted: PerformanceState.panelOpen
 
 	tooltip: {
 		if (!PerformanceState.available)

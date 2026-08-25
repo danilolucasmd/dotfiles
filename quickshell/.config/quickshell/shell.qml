@@ -95,6 +95,14 @@ ShellRoot {
 	}
 
 	IpcHandler {
+		target: "weather"
+
+		function toggle(): void {
+			WeatherState.toggle();
+		}
+	}
+
+	IpcHandler {
 		target: "calendar"
 
 		function toggle(): void {

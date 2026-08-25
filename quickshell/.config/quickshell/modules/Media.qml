@@ -15,6 +15,7 @@ BarItem {
 
 	active: player !== null
 	rightMargin: Theme.gap
+	highlighted: MediaState.panelOpen
 
 	// The tooltip that named the track is gone: the panel says all of it, with
 	// a scrubber the tooltip could never have held. Play/pause moved to the

@@ -19,6 +19,9 @@ BarItem {
 	property string screenName: ""
 
 	rightMargin: Theme.gap
+	// Only the bar on the monitor the panel is pointed at, not all of them: the
+	// panel is about one screen, and its tabs can move it to another.
+	highlighted: DisplayState.panelOpen && DisplayState.selected?.name === root.screenName
 
 	onClicked: DisplayState.toggle(root.screenName)
 
