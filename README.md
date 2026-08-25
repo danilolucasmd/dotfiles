@@ -168,8 +168,9 @@ whole logical pixels is greyed out rather than offered and refused. All three go
 out as a `hyprctl keyword monitor` rule and are therefore runtime only: a
 `hyprctl reload` or the next login puts `hyprland.conf`'s `monitor =` lines back
 in charge, which the panel's footer says outright. Those lines say `highrr`, so
-every monitor comes up at the fastest mode it offers rather than the one it
-advertises — the VG279QR advertises 60Hz and does 120.
+a monitor comes up at the fastest mode it offers rather than the one it
+advertises — the VG279QR advertises 60Hz and does 144. That one is the exception
+and is pinned to 120 by name: at 144 it does not come back from suspend.
 
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
