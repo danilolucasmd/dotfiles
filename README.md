@@ -115,15 +115,16 @@ them regardless. `power-profiles-daemon` is there for the battery panel's
 profile switch — quickshell talks to it over D-Bus, and the panel hides that
 section entirely when the daemon is not running.
 
-Seven scripts survive in `quickshell/.config/quickshell/scripts/` because they
+Eight scripts survive in `quickshell/.config/quickshell/scripts/` because they
 do work no service exposes: weather, package updates, screen-recording state,
-Claude Code usage, network counters, backlight-to-monitor discovery, and
-matching a notification against the window list to find the app that sent it. `updates.sh` shells out to
+Claude Code usage, network counters, system counters, backlight-to-monitor
+discovery, and matching a notification against the window list to find the app
+that sent it. `updates.sh` shells out to
 `checkupdates`, which is why `pacman-contrib` is in the package list.
 
 The right cluster is split in two. Media, keyboard layout, volume, network,
-bluetooth, battery, display, Claude usage, updates and notifications are always
-on screen; the recording indicator and the tray fold away behind a chevron that
+bluetooth, battery, display, performance, Claude usage, updates and
+notifications are always on screen; the recording indicator and the tray fold away behind a chevron that
 stays the leftmost thing in the cluster. Clicking it slides them out rightward
 from the chevron, with a hairline marking where they end and the always-visible
 modules begin; those never shift.
@@ -142,6 +143,39 @@ one that is not saved prompts for the password in the panel and reports a
 refusal there. Everything but the counters comes from NetworkManager over D-Bus;
 `network-stats.sh` reads `/proc/net/dev`, `ip route` and a three-packet ping,
 and only runs while the panel is open.
+
+The performance module is also one glyph, and it carries no number at all: it
+is white while nothing is wrong, amber when a subsystem is saturated or warm,
+red when something is hot or a filesystem is nearly full. Load can raise it to
+amber but never to red, because a pegged processor is a compile rather than a
+fault. Clicking it (or `super+shift+P`) opens a panel with a meter each for
+processor, graphics, memory and the root filesystem's disk, and under each the
+readings a meter cannot carry — clock, temperature, load average, power draw,
+VRAM, PCIe link, cache and swap, and the drive's read and write rates. The CPU
+meter has a strip of one bar per core beneath it, which is the only thing on the
+panel that catches a single-threaded job pinning one core of six: that reads as
+17% on the aggregate and as one full column on the strip.
+
+There is deliberately no process list — what is running is a question btop
+already answers, and this panel is for the one a glance can answer. It is not
+btop's replacement so much as the reason to open btop less often.
+
+`system-stats.sh` is what gathers it: `/proc/stat`, `/proc/meminfo`,
+`/proc/diskstats`, `/proc/loadavg`, the hwmon sensors and one `nvidia-smi`, in
+about 70ms. No `lm_sensors` dependency — the temperatures are read straight out
+of `/sys/class/hwmon`, found by the name each driver registers rather than by a
+`hwmonN` path, since that numbering is not stable across boots. The counters in
+`/proc` are cumulative since boot, so every percentage and rate on the panel is
+a difference between two readings, worked out in the shell the way the network
+panel does it rather than by sleeping inside the script. It samples every five
+seconds with the panel closed, which is what the bar glyph needs, and every
+second while it is open.
+
+One gap worth knowing about: **this board's fan speeds are not readable.** The
+Z370M AORUS has an ITE IT8686E behind an ACPI resource conflict, and the
+mainline kernel has no driver for it, so only the GPU fan — which comes from
+`nvidia-smi` — has a number. CPU and case fans would need the out-of-tree
+`it87-dkms` and `acpi_enforce_resources=lax`, neither of which is installed.
 
 The display module is the one thing in the bar that is about the screen it is
 drawn on rather than about the machine, so each screen's bar gets its own: the

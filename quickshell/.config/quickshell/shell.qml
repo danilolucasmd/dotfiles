@@ -22,6 +22,7 @@ ShellRoot {
 	AudioDevicesPanel {}
 	NetworkPanel {}
 	KeyboardLayoutPanel {}
+	PerformancePanel {}
 	BatteryPanel {}
 	DisplayPanel {}
 
@@ -124,6 +125,14 @@ ShellRoot {
 
 		function toggle(): void {
 			NetworkState.toggle();
+		}
+	}
+
+	IpcHandler {
+		target: "performance"
+
+		function toggle(): void {
+			PerformanceState.toggle();
 		}
 	}
 }

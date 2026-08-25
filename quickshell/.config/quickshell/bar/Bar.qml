@@ -151,6 +151,7 @@ Variants {
 				Display {
 					screenName: modelData.name
 				}
+				Performance {}
 				AgentUsage {}
 				Updates {}
 				Notifications {}
