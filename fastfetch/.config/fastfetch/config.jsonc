@@ -11,8 +11,8 @@
   //
   // Replacing one module means listing them all: in this config the array *is*
   // the structure. This is `fastfetch --print-structure` for 2.67.1 with
-  // "terminal" swapped out, so a later fastfetch that adds a module to its
-  // defaults will not show it here until it is added below.
+  // "terminal" swapped out and "Age" added, so a later fastfetch that adds a
+  // module to its defaults will not show it here until it is added below.
   //
   // "terminalfont" stays in the list but prints nothing, and did so before
   // this file existed: it resolves a font from the detected terminal, and it
@@ -24,6 +24,17 @@
     "host",
     "kernel",
     "uptime",
+    // There is no built-in module for how long ago this system was
+    // installed, so the age is derived from the birth time of / -- btrfs
+    // records one, and it survives everything short of a reinstall. On a
+    // filesystem that reports no birth time, the timestamp of the first
+    // line of the pacman log stands in; if neither is available the module
+    // prints nothing rather than a wrong number.
+    {
+      "type": "command",
+      "key": "Age",
+      "text": "b=$(stat -c %W /); [ \"${b:-0}\" -gt 0 ] || b=$(date -d \"$(sed -n '1s/^\\[\\([^]]*\\)\\].*/\\1/p' /var/log/pacman.log)\" +%s 2>/dev/null); [ \"${b:-0}\" -gt 0 ] || exit 0; d=$(( ($(date +%s) - b) / 86400 )); y=$((d / 365)); r=$((d % 365)); [ \"$y\" -gt 0 ] && printf '%d year%s, ' \"$y\" \"$([ \"$y\" = 1 ] || echo s)\"; printf '%d day%s' \"$r\" \"$([ \"$r\" = 1 ] || echo s)\""
+    },
     "packages",
     "shell",
     "display",
