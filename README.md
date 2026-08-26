@@ -167,6 +167,34 @@ refusal there. Everything but the counters comes from NetworkManager over D-Bus;
 `network-stats.sh` reads `/proc/net/dev`, `ip route` and a three-packet ping,
 and only runs while the panel is open.
 
+The bluetooth module is one glyph too, in three shapes: the adapter off, the
+adapter on with nothing connected, and something connected. It stays the same
+colour in all three — the shape already says which, and a glyph that also
+changed weight made the module flicker every time the earbuds went back in
+their case. Clicking it (or `super+B`) opens a panel with the adapter's
+switch, what BlueZ holds pairing keys for, and what is in range; right-clicking
+flips the adapter without opening anything. Rows carry the device's own icon —
+BlueZ derives one from the device class, so a headset does not look like a
+mouse — with its state and, where the device reports one, its battery. Enter on
+a row is the one obvious thing: drop it if it is up, bring it up if BlueZ has
+its keys, pair it if it does not. `f` forgets, `b` flips the adapter, `s` stops
+and starts the sweep.
+
+Discovery runs only while the panel is open, and `s` stops it inside that:
+sweeping takes the radio off the air to hop channels, which an A2DP stream
+sharing that radio can be heard doing. Pairing goes through BlueZ directly and
+works for devices that need no confirmation, which is most audio and most mice.
+Quickshell registers no `org.bluez.Agent1`, so a device that wants a passkey
+confirmed has nobody to confirm it; the panel says so and points at
+`bluetoothctl pair` rather than leaving the row looking unchanged.
+
+Until this panel existed, clicking the module opened buds-tui in a terminal —
+reasonable while the only Bluetooth device here was one pair of earbuds, which
+connect themselves the moment they leave the case. It stopped being reasonable
+the moment anything else needed connecting. `buds` is still installed and still
+the only thing that knows per-bud battery and ANC mode; it is a terminal
+command again rather than something the bar launches.
+
 The performance module is also one glyph, and it carries no number at all: it
 is white while nothing is wrong, amber when a subsystem is saturated or warm,
 red when something is hot or a filesystem is nearly full. Load can raise it to
@@ -457,8 +485,9 @@ Details that are easy to get wrong:
 
 - **buds-tui's `--python` is not optional.** Without it `uv` builds the tool
   against a standalone interpreter that has no Bluetooth sockets, and `buds`
-  fails the moment it reaches for the earbuds. The quickshell Bluetooth module
-  opens it with `ghostty -e ~/.local/bin/buds`.
+  fails the moment it reaches for the earbuds. It is a terminal command — the
+  quickshell Bluetooth module used to launch it and now opens its own panel
+  instead.
 - **`pkg` runs with `PKG_NO_MODIFY_PATH=1`.** Its installer offers to append a
   `PATH` line to your shell startup file, and `.zshrc` is a stow symlink into
   this repo — left alone it would write into the dotfiles. `~/.local/bin` is

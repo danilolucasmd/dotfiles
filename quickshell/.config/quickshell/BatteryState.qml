@@ -7,7 +7,7 @@ import Quickshell.Services.UPower
 // The batteries, the power profile, and whether the battery panel is up.
 //
 // A singleton for the same reason the other panels have one: the panel is a
-// window of its own rather than a child of the bar module, and super+B can
+// window of its own rather than a child of the bar module, and super+shift+B can
 // summon it without the bar being involved at all.
 //
 // UPower.displayDevice is the machine's *aggregate* -- one percentage covering

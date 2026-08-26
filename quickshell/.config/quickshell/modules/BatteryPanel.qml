@@ -4,7 +4,7 @@ import Quickshell.Services.UPower
 import qs
 import qs.components
 
-// The battery panel, opened by clicking the bar module or by super+B.
+// The battery panel, opened by clicking the bar module or by super+shift+B.
 //
 // It replaced the module's hover tooltip, which could only ever say one
 // percentage and one time estimate. This machine has two packs that wear at

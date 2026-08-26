@@ -217,8 +217,9 @@ sudo systemctl enable sddm
 # CORE / DEV / CLI PACKAGES                                #
 ############################################################
 
-# bluez/bluez-utils back both the quickshell Bluetooth module and bluetui, and
-# nothing else here depends on them. pacman-contrib is what provides
+# bluez/bluez-utils back the quickshell Bluetooth module and panel, bluetui, and
+# the `bluetoothctl pair` the panel falls back to for a device that wants a
+# passkey confirmed; nothing else here depends on them. pacman-contrib is what provides
 # `checkupdates`, which the bar's updates module shells out to.
 echo "==> Installing pacman packages"
 
@@ -468,8 +469,10 @@ fi
 # can be an editable install. Swapping one for a working copy later is a single
 # command, noted in each block.
 
-# buds-tui: the quickshell Bluetooth module opens it (`ghostty -e
-# ~/.local/bin/buds`) for earbud battery levels. For development, clone it and
+# buds-tui: `buds` in a terminal, for the earbud readings BlueZ does not carry
+# -- battery per bud, noise-cancelling mode, equaliser. The quickshell Bluetooth
+# module used to launch it on a click and opens its own panel now, so nothing in
+# the shell depends on this being installed. For development, clone it and
 # `uv tool install --force --python /usr/bin/python3 --editable ~/Code/buds-tui`.
 #
 # --python is not optional: without it uv builds the tool against a standalone

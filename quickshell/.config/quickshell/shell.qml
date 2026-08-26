@@ -21,6 +21,7 @@ ShellRoot {
 
 	AudioDevicesPanel {}
 	NetworkPanel {}
+	BluetoothPanel {}
 	KeyboardLayoutPanel {}
 	PerformancePanel {}
 	BatteryPanel {}
@@ -138,6 +139,14 @@ ShellRoot {
 
 		function toggle(): void {
 			NetworkState.toggle();
+		}
+	}
+
+	IpcHandler {
+		target: "bluetooth"
+
+		function toggle(): void {
+			BluetoothState.toggle();
 		}
 	}
 

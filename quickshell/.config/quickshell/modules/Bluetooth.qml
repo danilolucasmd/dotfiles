@@ -1,40 +1,52 @@
-import Quickshell.Bluetooth
-import Quickshell.Io
 import qs
 import qs.components
 
-// Connected Bluetooth devices. The waybar version shelled out to
-// `bluetoothctl` and tailed dbus-monitor to know when to re-read; BlueZ is a
-// first-class service here, so connection state is just a property.
+// Bluetooth on the bar, everything else a click away in BluetoothPanel. The
+// reading lives in BluetoothState, which the panel and the super+B
+// binding share.
+//
+// The click used to open buds-tui in a terminal, on the reasoning that
+// connecting the earbuds is what taking them out of the case already does, so
+// the only thing left worth clicking for was per-bud battery and ANC mode.
+// That held for exactly one device. Anything else -- a controller, a phone,
+// something being paired for the first time -- had no route in from the bar at
+// all, so the click opens the panel now like every other module here. buds is
+// still installed, and still the only thing that knows what BlueZ does not; it
+// is a terminal command again rather than something the bar launches.
 BarItem {
 	id: root
 
-	readonly property var devices: Bluetooth.defaultAdapter?.devices?.values ?? []
-	readonly property var connected: devices.filter(d => d.connected)
-
-	readonly property bool anyConnected: connected.length > 0
-
 	rightMargin: Theme.gap
-	tooltip: anyConnected ? `Connected: ${connected.map(d => d.name || d.address).join(", ")}` : "No Bluetooth device connected"
+	highlighted: BluetoothState.panelOpen
 
-	// Click opens buds-tui in a terminal rather than connecting or
-	// disconnecting: connecting the earbuds is what taking them out of the case
-	// already does, and what the click was really wanted for is the thing only
-	// that app can do — battery per bud, noise-cancelling mode, equaliser.
-	//
-	// Absolute path because the module inherits quickshell's environment, which
-	// need not have ~/.local/bin on PATH.
-	onClicked: buds.running = true
-
-	Process {
-		id: buds
-
-		command: ["ghostty", "-e", `${Paths.home}/.local/bin/buds`]
+	tooltip: {
+		if (!BluetoothState.available)
+			return "No Bluetooth adapter";
+		if (BluetoothState.blocked)
+			return "Bluetooth blocked by rfkill";
+		if (!BluetoothState.enabled)
+			return "Bluetooth off";
+		if (!BluetoothState.anyConnected)
+			return "No Bluetooth device connected";
+		return BluetoothState.connected.map(d => {
+			const battery = BluetoothState.hasBattery(d) ? ` (${BluetoothState.batteryOf(d)}%)` : "";
+			return `${BluetoothState.label(d)}${battery}`;
+		}).join("\n");
 	}
 
+	onClicked: BluetoothState.toggle()
+	// The switch the panel puts under the pointer anyway, for when the panel
+	// is not what you wanted -- the same shortcut the network module offers on
+	// its own radio.
+	onRightClicked: BluetoothState.toggleAdapter()
+
 	BarText {
-		text: root.anyConnected ? "󰂰" : "󰂱"
-		color: root.anyConnected ? Theme.blue : Theme.dim
+		text: BluetoothState.icon
+		// One colour in every state. The glyph already has three shapes to say
+		// which one it is in, and a colour that moved with them was saying the
+		// same thing twice -- at the cost of the module flickering between two
+		// weights every time the earbuds went back in their case.
+		color: Theme.fg
 		font.pixelSize: Theme.fontIcon
 	}
 }

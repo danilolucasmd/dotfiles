@@ -3,7 +3,7 @@ import qs
 import qs.components
 
 // Charge on the bar, everything else a click away in BatteryPanel. The reading
-// lives in BatteryState, which the panel and the super+B binding share.
+// lives in BatteryState, which the panel and the super+shift+B binding share.
 //
 // It sat behind the extras chevron while it was a glyph with a hover tooltip.
 // A laptop's charge is not an occasional question, so it has a permanent seat
