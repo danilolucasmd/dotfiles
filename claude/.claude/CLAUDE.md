@@ -2,6 +2,16 @@
 
 These are standing instructions across all projects.
 
+## Always respond in English
+
+Talk to the user in English, always, in every project. This holds even when the
+codebase, its comments, its commit history, the issue tracker, or the user's own
+message are in another language -- Portuguese included. Read and work in
+whatever language the project uses, but write back in English.
+
+Only the prose addressed to the user is covered. Code, comments, commit
+messages, and other artifacts keep the language of the thing they belong to.
+
 ## Git: never operate unless explicitly asked
 
 Never run ANY git operation on the user's behalf unless they explicitly ask for it in that request. This includes `git add`/staging, `git commit`, `git push`, `git restore`, `git checkout`, branch creation/switching, etc. Read-only inspection (`git status`, `git diff`, `git log`) is fine.
