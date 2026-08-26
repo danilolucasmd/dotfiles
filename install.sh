@@ -32,17 +32,49 @@ DOTFILES="$HOME/dotfiles"
   exit 1
 }
 
-# Steps that are worth attempting but must never take the whole install down
-# with them -- a dead AUR package, a network blip mid-clone. Each one reports
-# and the script carries on; the summary at the end lists what was skipped.
+# Steps that must never take the whole install down on their own -- a dead AUR
+# package, a network blip mid-clone, a repo that has not caught up yet. The run
+# stops and asks rather than deciding: skipping is nearly always right, but
+# "the graphics driver failed to build" is not something to find out after the
+# reboot, and only the person watching knows which case this is. With no
+# terminal attached (piped, CI) it skips without asking. Either way the summary
+# at the end lists everything that was skipped.
 FAILED=()
 try() {
   local what="$1"
   shift
-  if ! "$@"; then
-    echo "!! skipped: $what"
-    FAILED+=("$what")
+  "$@" && return 0
+  echo "!! failed: $what"
+  # Ask on the terminal rather than on stdin: this script is also run piped
+  # (`curl ... | bash`), where stdin is the script itself and reading from it
+  # would eat the rest of the install. Opening /dev/tty is the test -- the node
+  # exists in containers that have no controlling terminal to attach to.
+  if { exec 3</dev/tty; } 2>/dev/null; then
+    local answer=""
+    read -rp "   Skip it and continue the install? [Y/n] " answer <&3 || true
+    exec 3<&-
+    if [[ "$answer" == [nN]* ]]; then
+      echo "Aborting at your request."
+      exit 1
+    fi
   fi
+  echo "!! skipped: $what"
+  FAILED+=("$what")
+}
+
+# Every pacman install goes through here. The batch runs as one transaction,
+# because forty invocations is forty database reads and forty sudo timestamps.
+# But a batch is all-or-nothing -- one unresolvable name or one conflict and
+# pacman installs none of the forty -- so a failed batch is retried package by
+# package. That turns "the whole list failed, skip it?" into one question about
+# the one package that is actually broken, with the other thirty-nine landing.
+pac() {
+  sudo pacman -S --needed --noconfirm "$@" && return 0
+  echo "!! that pacman batch failed; retrying one package at a time"
+  local pkg
+  for pkg in "$@"; do
+    try "pacman: $pkg" sudo pacman -S --needed --noconfirm "$pkg"
+  done
 }
 
 # stow refuses to replace a real file, and several of these apps write their
@@ -84,6 +116,20 @@ sudo pacman -Rns --noconfirm \
   true
 
 ############################################################
+# MULTILIB REPOSITORY                                      #
+############################################################
+
+# archinstall leaves [multilib] commented out, and steam lives nowhere else --
+# this is why `pacman -S steam` came back "target not found" and steam got
+# pulled from the list rather than fixed. It has to happen before the first
+# -Syu so the database is there when the package list below is resolved.
+# The anchored pattern will not touch [multilib-testing] just above it.
+if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
+  echo "==> Enabling the multilib repository"
+  sudo sed -i '/^#\[multilib\]$/,/^#Include/ s/^#//' /etc/pacman.conf
+fi
+
+############################################################
 # CORE SYSTEM TOOLS                                        #
 ############################################################
 
@@ -92,7 +138,14 @@ sudo pacman -Rns --noconfirm \
 # faces the bar glyphs come from. The `nerd-fonts` group is 69 packages and
 # several GB for fonts nothing here names.
 echo "==> Installing core tools"
-sudo pacman -Syu --needed --noconfirm \
+
+# The one pacman step that is deliberately fatal and not routed through pac():
+# a full -Syu that cannot complete means the mirrors, the keyring or the disk
+# are wrong, and every package step below would fail the same way. Better to
+# stop here than to ask forty times.
+sudo pacman -Syu --noconfirm
+
+pac \
   base-devel \
   git \
   openssh \
@@ -113,7 +166,7 @@ sudo pacman -Syu --needed --noconfirm \
 if ! command -v yay >/dev/null 2>&1; then
   echo "==> Installing yay (yay-bin)"
 
-  sudo pacman -S --needed --noconfirm base-devel git
+  pac base-devel git
 
   sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
@@ -146,7 +199,7 @@ try "1Password signing key" gpg --keyserver keyserver.ubuntu.com \
 
 echo "==> Installing Hyprland and Wayland stack"
 
-sudo pacman -S --needed --noconfirm \
+pac \
   hyprland \
   wayland \
   xorg-xwayland \
@@ -202,7 +255,7 @@ LID
 # $HOME, which archinstall creates as 700.
 echo "==> Installing and enabling SDDM"
 
-sudo pacman -S --needed --noconfirm sddm
+pac sddm
 
 sudo chmod o+x /home "$HOME"
 theme_path="$DOTFILES"
@@ -223,7 +276,7 @@ sudo systemctl enable sddm
 # `checkupdates`, which the bar's updates module shells out to.
 echo "==> Installing pacman packages"
 
-sudo pacman -S --needed --noconfirm \
+pac \
   stow \
   neovim \
   lazygit \
@@ -258,7 +311,8 @@ sudo pacman -S --needed --noconfirm \
   adw-gtk-theme \
   qt5ct \
   qt6ct \
-  kdeconnect
+  kdeconnect \
+  steam
 
 ############################################################
 # BTRFS SNAPSHOTS                                          #
@@ -271,7 +325,7 @@ sudo pacman -S --needed --noconfirm \
 if [[ "$(findmnt -no FSTYPE /)" == "btrfs" ]]; then
   echo "==> Installing btrfs snapshot tooling"
 
-  sudo pacman -S --needed --noconfirm \
+  pac \
     btrfs-progs \
     snapper \
     snap-pac \
@@ -305,7 +359,7 @@ fi
 
 echo "==> Installing wifi dongle support (RTL8188GU)"
 
-sudo pacman -S --needed --noconfirm \
+pac \
   usb_modeswitch \
   dkms \
   linux-headers
@@ -324,7 +378,7 @@ sudo pacman -S --needed --noconfirm \
 
 echo "==> Installing NetworkManager + Proton VPN"
 
-sudo pacman -S --needed --noconfirm \
+pac \
   networkmanager \
   wpa_supplicant \
   network-manager-applet \
@@ -365,7 +419,7 @@ echo "==> Installing Docker"
 # docker-buildx by name aborts the transaction on a machine that already has
 # docker-desktop, and on a fresh one it wins the race and makes the later
 # docker-desktop build the casualty instead. Let docker-desktop supply them.
-sudo pacman -S --needed --noconfirm docker
+pac docker
 
 sudo systemctl enable docker.service
 # Takes effect at the next login, which the reboot at the end covers.
@@ -422,7 +476,7 @@ fi
 
 echo "==> Installing Node.js and packages"
 
-sudo pacman -S --needed --noconfirm nodejs npm
+pac nodejs npm
 sudo npm install -g tree-sitter-cli
 
 ############################################################
@@ -448,7 +502,7 @@ sudo npm install -g tree-sitter-cli
 # touch PATH.
 echo "==> Installing Rust"
 
-sudo pacman -S --needed --noconfirm rustup
+pac rustup
 
 # The package ships the shims only. Until a default toolchain is chosen every
 # `cargo` call fails with "no default toolchain configured"; this both picks
@@ -651,7 +705,7 @@ try "herdr clone-layout plugin" herdr plugin install \
 # ZSH + on-my-zsh                                          #
 ############################################################
 
-sudo pacman -S --needed --noconfirm zsh
+pac zsh
 
 export RUNZSH=no
 export CHSH=no

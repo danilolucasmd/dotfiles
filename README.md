@@ -39,8 +39,17 @@ Two things that are load-bearing:
   `hyprland.conf` and the SDDM theme refer to the path directly.
 
 `install.sh` is safe to re-run. Steps that can fail on their own — an AUR
-package that stopped building, a clone that timed out — are reported and skipped
-rather than aborting the run, and the script prints what it skipped at the end.
+package that stopped building, a package that has not landed in the repos yet, a
+clone that timed out — stop and ask whether to skip and carry on. Answering yes
+(the default) continues the install and adds the step to a list the script
+prints at the end; answering `n` aborts there, which is what you want when the
+thing that failed is a graphics driver rather than a nicety. Run with no
+terminal attached, it skips without asking.
+
+Package installs are batched into one `pacman` transaction, and a batch is
+all-or-nothing — so a failed batch is retried one package at a time, and the
+question you get is about the single package that is actually broken rather
+than the whole list.
 
 ---
 
