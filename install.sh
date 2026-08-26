@@ -359,9 +359,13 @@ fi
 
 echo "==> Installing Docker"
 
-sudo pacman -S --needed --noconfirm \
-  docker \
-  docker-buildx
+# Only the engine here. docker-buildx (and compose, debug, mcp, scout) are
+# *provided by* the docker-desktop AUR package installed further down, and
+# pacman treats provider and provided as a hard conflict -- asking for
+# docker-buildx by name aborts the transaction on a machine that already has
+# docker-desktop, and on a fresh one it wins the race and makes the later
+# docker-desktop build the casualty instead. Let docker-desktop supply them.
+sudo pacman -S --needed --noconfirm docker
 
 sudo systemctl enable docker.service
 # Takes effect at the next login, which the reboot at the end covers.
