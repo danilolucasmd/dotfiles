@@ -262,6 +262,14 @@ peach, critical red), critical ones stay up until they are dealt with, timeouts
 apps ask for are ignored in favour of ours, and track-change notifications get
 two seconds and no history entry.
 
+A popup and a row in the history panel read the same way: what the notification
+said on top, the message under it, and the app's name only when there is no
+message to put there. Neither leads with the app, because `Brave` above
+`web.whatsapp.com` above the message is three ways of saying the same thing —
+that origin line Chromium prepends is dropped from both, and matched on instead.
+The popup keeps the body's markup and line breaks and cuts it at four lines; the
+panel flattens it to one.
+
 Clicking a notification — or hitting enter on it in the panel — jumps to the app
 that sent it, through `focus-sender.sh`. The matching is better than mako's,
 because notifications say more than their app name does:

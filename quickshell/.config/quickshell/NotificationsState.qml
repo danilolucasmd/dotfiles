@@ -146,24 +146,30 @@ Singleton {
 		persist();
 	}
 
-	// What the notification actually said, as one line of plain text.
+	// What the notification actually said, as the sender wrote it — markup and
+	// line breaks intact, for the popup, which has the room for both.
 	//
 	// Chromium hands a web notification's origin over as the first line of the
 	// body — `web.whatsapp.com`, a blank line, then the message — and it is the
-	// one thing on that row nobody is reading. A bare hostname alone on the
-	// first line is specific enough to drop, and general enough to cover every
-	// site Brave sends for.
-	function content(rec: var): string {
+	// one thing in there nobody is reading. A bare hostname alone on the first
+	// line is specific enough to drop, and general enough to cover every site
+	// Brave sends for.
+	function message(rec: var): string {
 		const body = String(rec.body ?? "");
 		const cut = body.indexOf("\n");
 		if (cut !== -1 && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(body.slice(0, cut).trim())) {
-			const rest = plain(body.slice(cut + 1));
+			const rest = body.slice(cut + 1);
 			// Unless the origin was the whole body, in which case it is all
 			// there is to show.
-			if (rest !== "")
-				return rest;
+			if (plain(rest) !== "")
+				return rest.replace(/^\s+/, "");
 		}
-		return plain(body);
+		return body;
+	}
+
+	// The same thing as one line of plain text, for the panel's rows.
+	function content(rec: var): string {
+		return plain(message(rec));
 	}
 
 	// Apps are told markup is supported, and the popup renders it. The panel
