@@ -6,7 +6,9 @@ These are standing instructions across all projects.
 
 When the user asks to add something to "the global memory", "global claude memory", "claude's global memory", or any variation of that phrasing, they mean this file: `~/.claude/CLAUDE.md` (a symlink into the dotfiles repo at `claude/.claude/CLAUDE.md`). Edit it directly; do not write to the file-based memory directory or to a project's `CLAUDE.md`.
 
-If they mean the project's memory or something else, they will say so explicitly. If it is not clear which memory is meant, ask.
+If they mean the project's memory or something else, they will say so explicitly. If it is not clear which memory is meant, ask. Ask even when an existing related entry in one store makes that store look like the obvious target: inferring silently skips the check, and a guess that happens to land right is still a guess.
+
+Instructions about how to handle memory itself belong here, in this file, not in a project's memory store.
 
 ## Git: never operate unless explicitly asked
 
