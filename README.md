@@ -44,13 +44,36 @@ rather than aborting the run, and the script prints what it skipped at the end.
 
 ---
 
-## 1. Nautilus Sidebar
+## 1. Nautilus Bookmarks & Preferences
 
-Add the following directories to Nautilus' left sidebar manually:
+Fully automated by `install.sh` — nothing to do by hand. This used to be a
+manual step: add Code, Downloads and Pictures to the sidebar yourself on every
+new machine, and set the view back to a list every time. Both halves are in the
+`nautilus` stow package now.
 
-- Code
-- Downloads
-- Pictures
+The sidebar bookmarks are a plain file, `~/.config/gtk-3.0/bookmarks` — still
+the GTK 3 path, which is where GTK 4 and current Nautilus read them from — so
+they are a normal stow symlink, and the link survives Nautilus rewriting the
+file. Bookmarking a folder in the sidebar therefore shows up as a diff in this
+repo with nothing to copy back by hand, and the same list feeds the sidebar of
+every app's Open/Save dialog.
+
+The preferences cannot work that way. Nautilus keeps them in dconf, a single
+binary database shared by the whole desktop, so there is no file to symlink.
+`nautilus/dconf.ini` holds them as a keyfile instead and `install.sh` applies it
+with `dconf load /`, which merges — it writes the keys in the file and leaves
+the rest of the database alone, so it is safe to re-run and re-running it is how
+you undo a preference changed by accident. What it sets: folders open as a list
+rather than a grid of icons, and the GTK file dialogs show hidden files and sort
+by date modified, newest first.
+
+The keyfile is curated rather than dumped — only keys that actually differ from
+their GSettings schema defaults, so it reads as a list of decisions. Window
+geometry and a stale column-order list left over from an older Nautilus are
+deliberately not in it.
+
+Full write-up, including how to check whether a setting you just changed is
+worth adding: `nautilus/README.md`.
 
 ---
 

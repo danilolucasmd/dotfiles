@@ -10,6 +10,11 @@ carry a `README.md` of its own, which stow's default ignore list keeps out of
 `README.md` is the long-form documentation, kept current and written as prose.
 When a change alters something it describes, update it in the same turn.
 
+Not everything the system needs is a file. Desktop preferences live in dconf, a
+binary database that cannot be symlinked, so `nautilus/dconf.ini` keeps them as
+a curated keyfile that `install.sh` applies with `dconf load /` -- a merge, not
+a replace. Anything else that turns out to be dconf-shaped belongs there too.
+
 ## Editing here edits the running system
 
 The live config is a symlink into this repo, so there is no deploy step and no
@@ -18,9 +23,9 @@ copy to keep in sync. Two consequences worth holding onto:
 - Most packages are folded -- `~/.config/quickshell`, `~/.config/hypr` and
   `~/.config/walker` are single symlinks to the directory here -- so a **new**
   file appears live the moment it is written. The exceptions are the packages
-  stowed `--no-folding` (`panels`, `dbus`, `claude`, `herdr`, `kanata`), where
-  each file is linked individually and a new one needs `stow --no-folding <pkg>`
-  before the system can see it.
+  stowed `--no-folding` (`panels`, `dbus`, `claude`, `herdr`, `kanata`,
+  `nautilus`), where each file is linked individually and a new one needs
+  `stow --no-folding <pkg>` before the system can see it.
 - **Never run `./install.sh` to test a change.** It is a full system install:
   sudo, pacman, AUR builds, systemd units, `usermod`. Run the single command the
   change is about instead.

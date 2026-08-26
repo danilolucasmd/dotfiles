@@ -544,6 +544,26 @@ stow \
 # GStreamer's gtkglsink is broken on NVIDIA. See dbus/README.md.
 stow --no-folding dbus
 
+# nautilus carries the sidebar bookmarks, ~/.config/gtk-3.0/bookmarks, which
+# GTK 4 still reads from the gtk-3.0 path and which the Open/Save dialogs share
+# with Nautilus. --no-folding so that ~/.config/gtk-3.0 stays a real directory:
+# folding it would pull the whole GTK 3 config dir into this repo, and theme
+# tools like nwg-look write a settings.ini in there. --ignore keeps dconf.ini,
+# which is loaded below rather than symlinked, out of $HOME; it adds to stow's
+# built-in ignore list rather than replacing it, so README.md is still skipped.
+resolve_stow_conflicts --no-folding --ignore='^dconf\.ini$' nautilus
+stow --no-folding --ignore='^dconf\.ini$' nautilus
+
+# The rest of what Nautilus remembers -- list view instead of icon grid, hidden
+# files in the file dialogs -- lives in dconf, a binary database the whole
+# desktop shares, so it is the one thing here that cannot be a stow symlink.
+# `dconf load` merges: it writes the keys in the keyfile and leaves every other
+# key alone, which is what makes loading at `/` safe and re-runnable. Only keys
+# that differ from the GSettings schema defaults are in there; see
+# nautilus/README.md for how to add one. Needs a dconf the user can write, so
+# it is deliberately not sudo.
+try "nautilus/GTK preferences" dconf load / < "$DOTFILES/nautilus/dconf.ini"
+
 # panels carries the desktop entries that put every quickshell panel in the
 # walker launcher. --no-folding so that ~/.local/share/applications stays a real
 # directory -- webapps/generate.sh writes the Brave web-app launchers in there,
