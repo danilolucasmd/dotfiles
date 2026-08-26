@@ -156,7 +156,7 @@ PanelWindow {
 			BarText {
 				width: parent.width
 
-				text: card.modelData.appName
+				text: NotificationsState.displayName(card.modelData.appName)
 				color: NotificationsState.urgencyColor(card.modelData.urgency)
 				font.weight: Font.DemiBold
 				elide: Text.ElideRight

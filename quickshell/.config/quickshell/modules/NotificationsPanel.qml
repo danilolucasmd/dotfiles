@@ -242,7 +242,7 @@ Panel {
 					Layout.maximumWidth: 96
 					visible: text !== ""
 
-					text: entry.modelData.app
+					text: NotificationsState.displayName(entry.modelData.app)
 					color: NotificationsState.urgencyColor(entry.modelData.urgency)
 					elide: Text.ElideRight
 				}

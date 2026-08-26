@@ -173,6 +173,35 @@ Singleton {
 		return String(markup ?? "").replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, "\"").replace(/&apos;/g, "'").replace(/\s+/g, " ").trim();
 	}
 
+	// What to call the sender on screen.
+	//
+	// `notify-send` is the name of the tool, not of anything that sent
+	// anything, and it is what arrives whenever the sender passed no -a.
+	// Two things reach here that way: herdr's toasts (`[ui.toast] delivery =
+	// "system"`), which shell out through it with no option to name themselves,
+	// and a notify-send typed at a prompt. "Terminal" is the answer that is
+	// true of both — herdr *is* the terminal, and the other one came from one —
+	// where naming herdr outright would mislabel every notification fired by
+	// hand. Everything else installed here names itself and never lands in
+	// this case — hyprshot, fumon, uuctl, uwsm-app and our own
+	// screen-record.sh all pass -a, and anything driving libnotify directly
+	// has to. The exception is a Go tool notifying through beeep, which
+	// shells out bare; gh-dash is the one installed, and it is a terminal
+	// app, so the label happens to hold there too.
+	//
+	// The label only, deliberately. focus-sender.sh scores window *classes*
+	// against this same app name, and a herdr notification has to fall all the
+	// way through to its title pass to find the right ghostty window when
+	// several projects are open. A name that matched a class — "Ghostty", or
+	// "Terminal" against anything calling itself a terminal — would hand the
+	// class pass a direct match and land on whichever window came up first. So
+	// the record on disk keeps the name it arrived with, and only what is drawn
+	// changes.
+	function displayName(app: string): string {
+		const name = String(app ?? "");
+		return name === "notify-send" ? "Terminal" : name;
+	}
+
 	// Low / normal / critical, in the same three colours mako's per-urgency
 	// border rules used.
 	function urgencyColor(urgency: int): color {

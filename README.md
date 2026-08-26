@@ -284,12 +284,28 @@ because notifications say more than their app name does:
   notification's default action runs instead — Brave opens the tab, which is the
   right answer there. That path needs `misc:focus_on_activate = true` in
   `hyprland.conf`.
-- **Anonymous senders.** herdr notifies through a bare `notify-send`: no desktop
-  entry, app name "notify-send", and the project in the body ("dotfiles · 1 · 1
-  agent"). With nothing to identify the app, the script scores windows by the
-  words their titles share with the notification, which finds the ghostty
-  window titled `danilo-pc: dotfiles` — and picks the right terminal when
-  several projects are open.
+- **herdr.** It notifies through a bare `notify-send`: no desktop entry, app
+  name "notify-send", and the project in the body ("dotfiles · 1 · 1 agent").
+  Matching on windows cannot work here, because herdr multiplexes every project
+  into one ghostty window — the class is the same whichever project notified,
+  and the title names only the workspace currently on screen, so scoring the
+  notification's words against it found the terminal for the project you were
+  already looking at and nothing else. So the script asks herdr instead:
+  `herdr workspace list` says whether that first field names a live workspace,
+  `herdr workspace focus` switches to it, and the window is matched on the label
+  herdr *was* showing, read before the switch because that is what the title
+  still says. Clicking "claude finished / sopezinho" now lands on sopezinho.
+- **The label.** Those say **Terminal** on screen rather than `notify-send`,
+  which is the name of the tool and not of a sender: herdr has no option to name
+  itself, and a notify-send typed at a prompt came from a terminal too, so it is
+  the one label true of both. It is only the label — the record keeps the raw
+  name, because that is what has to *fail* the class pass for the passes below
+  it to run at all.
+- **Everything else anonymous.** A `notify-send` typed at a prompt, or a tool
+  that shells out to one without naming itself (`gh-dash`, through the beeep
+  library). Nothing identifies these and herdr does not claim them, so all that
+  is left is the text: the script scores windows by the words their titles share
+  with the notification, and gives up rather than guess when none of them do.
 
 Notifications can carry action buttons, the popups use the bar's palette, and
 the history is a panel with a keyboard (`j`/`k` to move, `enter` to open, `d` to
