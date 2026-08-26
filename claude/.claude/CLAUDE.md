@@ -36,3 +36,9 @@ See the hunk-review skill (`hunk skill path`) for the full command reference. Ne
 When writing PR descriptions (or other markdown for the user to paste), do not hard-wrap paragraph text at a fixed column. Keep each paragraph on a single line and let it soft-wrap in the editor.
 
 The user reflows/removes line breaks from generated markdown before using it, so pre-wrapped text is extra work to undo. Produce PR description bodies with one line per paragraph and per list item; do not insert manual newlines mid-paragraph even if lines get long.
+
+## "Global memory" means this file
+
+When the user asks to add, save, or remember something in "claude's global memory", "global claude memory", "your global memory", or any variation of that phrasing, they mean **`~/.claude/CLAUDE.md`** — this file. Write it here, not to the auto-memory directory (`~/.claude/projects/*/memory/`) and not to a project's `CLAUDE.md`.
+
+The user will say explicitly when something belongs in a project's memory instead. If a request is genuinely ambiguous about which memory is meant, ask rather than guessing.
