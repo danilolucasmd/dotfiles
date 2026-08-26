@@ -64,15 +64,6 @@ PanelWindow {
 
 		readonly property int timeout: NotificationsState.popupTimeout(modelData)
 		readonly property bool sticky: timeout === 0
-
-		// The same two lines the panel's rows carry, for the same reasons — see
-		// Entry in NotificationsPanel.qml. What it said goes on top, where a
-		// third of the card used to go to the app's name saying it twice
-		// ("Brave" over "web.whatsapp.com" over the message), and the app is
-		// only worth a line when there is no message to put there.
-		readonly property string message: NotificationsState.message(modelData)
-		readonly property string title: modelData.summary || NotificationsState.content(modelData)
-		readonly property string subtitle: modelData.summary && message ? message : modelData.appName
 		// Everything but the default action, which is not a button — it is what
 		// clicking the notification itself means.
 		readonly property var actions: (modelData.actions ?? []).filter(a => a.identifier !== "default")
@@ -164,12 +155,9 @@ PanelWindow {
 
 			BarText {
 				width: parent.width
-				visible: text !== ""
 
-				text: card.title
-				// Urgency is the border colour, all the way round the card;
-				// saying it again in the title only makes every ordinary
-				// notification shout.
+				text: card.modelData.appName
+				color: NotificationsState.urgencyColor(card.modelData.urgency)
 				font.weight: Font.DemiBold
 				elide: Text.ElideRight
 			}
@@ -178,12 +166,19 @@ PanelWindow {
 				width: parent.width
 				visible: text !== ""
 
-				text: card.subtitle
-				color: Theme.dim
-				// Apps are told markup is supported, so honour it — the panel
-				// flattens this line, the popup has the room not to. Long
-				// bodies are cut here rather than allowed to push the stack off
-				// the screen; the panel has the whole thing.
+				text: card.modelData.summary
+				font.weight: Font.DemiBold
+				elide: Text.ElideRight
+			}
+
+			BarText {
+				width: parent.width
+				visible: text !== ""
+
+				text: card.modelData.body
+				// Apps are told markup is supported, so honour it. Long bodies
+				// are cut here rather than allowed to push the stack off the
+				// screen — the panel has the whole thing.
 				textFormat: Text.StyledText
 				wrapMode: Text.Wrap
 				maximumLineCount: 4

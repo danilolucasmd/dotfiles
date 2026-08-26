@@ -170,8 +170,9 @@ Panel {
 		}
 	}
 
-	// One past notification. Two lines: who it is from and when, then what it
-	// said — the walker menu had to fit all of that on one.
+	// One past notification. What it said, then who sent it and when, then the
+	// message on a second line if there is one — the walker menu had to fit all
+	// of that on one.
 	component Entry: Rectangle {
 		id: entry
 
@@ -226,10 +227,23 @@ Panel {
 					Layout.fillWidth: true
 
 					text: entry.title
-					// Urgency is a border colour on the popup, where there is
-					// room for one. Here only the urgent case earns a colour.
-					color: entry.modelData.urgency === 2 ? Theme.red : Theme.fg
 					font.weight: Font.DemiBold
+					elide: Text.ElideRight
+				}
+
+				// Who sent it, in its urgency colour — the popup's whole first
+				// line, folded into the slot the timestamp had already opened
+				// for secondary text. Without it a row said what it said and
+				// never who said it, and low and normal urgency were the same
+				// row twice. Capped rather than sized to its text: `notify-send`
+				// is eleven characters of nothing much, and the title is what
+				// the width belongs to.
+				BarText {
+					Layout.maximumWidth: 96
+					visible: text !== ""
+
+					text: entry.modelData.app
+					color: NotificationsState.urgencyColor(entry.modelData.urgency)
 					elide: Text.ElideRight
 				}
 
@@ -264,15 +278,15 @@ Panel {
 			}
 
 			// What it said, and nothing else — `Brave · web.whatsapp.com` in
-			// front of a message is three ways of saying the row above it.
-			// The app's name is worth the line only when there is no message
-			// to put there, either because the body is empty or because it
-			// went into the title for want of a summary.
+			// front of a message is three ways of saying the row above it, and
+			// the app now has its own place on the line above. A row with no
+			// message to show is one line rather than two: the summary went
+			// into the title, and there is nothing left for this one to say.
 			BarText {
 				Layout.fillWidth: true
 				visible: text !== ""
 
-				text: entry.modelData.summary && entry.flat ? entry.flat : entry.modelData.app
+				text: entry.modelData.summary ? entry.flat : ""
 				color: Theme.dim
 				elide: Text.ElideRight
 			}
