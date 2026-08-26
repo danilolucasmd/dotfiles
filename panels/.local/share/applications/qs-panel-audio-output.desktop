@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Audio output picker
+Comment=The audio device panel, opened on the outputs — Super+O
+Icon=audio-speakers-symbolic
+Keywords=quickshell;panel;sound;speakers;sink;
+Exec=qs ipc call audio outputs
+Terminal=false
+StartupNotify=false
+Categories=Utility;

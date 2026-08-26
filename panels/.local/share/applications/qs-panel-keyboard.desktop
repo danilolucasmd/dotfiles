@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Keyboard layout picker
+Comment=The configured xkb layouts, with the live one ticked
+Icon=input-keyboard-symbolic
+Keywords=quickshell;panel;xkb;language;
+Exec=qs ipc call keyboard toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

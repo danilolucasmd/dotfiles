@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Network panel
+Comment=Both links, what the active one is doing, and the Wi-Fi in range — Super+Shift+W
+Icon=network-wireless-symbolic
+Keywords=quickshell;panel;wifi;ethernet;
+Exec=qs ipc call network toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

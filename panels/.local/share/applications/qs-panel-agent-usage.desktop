@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Claude usage panel
+Comment=Claude Code's usage against the current window — Super+A
+Icon=utilities-terminal-symbolic
+Keywords=quickshell;panel;tokens;anthropic;
+Exec=qs ipc call agentUsage toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

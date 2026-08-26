@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Notification history
+Comment=Everything the daemon has kept — Super+N
+Icon=preferences-system-notifications-symbolic
+Keywords=quickshell;panel;alerts;
+Exec=qs ipc call notifications toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

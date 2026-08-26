@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Now playing panel
+Comment=Every player, one row each, with a transport on each — Super+M
+Icon=multimedia-player-symbolic
+Keywords=quickshell;panel;music;mpris;
+Exec=qs ipc call media toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

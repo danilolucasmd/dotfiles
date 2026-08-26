@@ -206,6 +206,17 @@ a monitor comes up at the fastest mode it offers rather than the one it
 advertises — the VG279QR advertises 60Hz and does 144. That one is the exception
 and is pinned to 120 by name: at 144 it does not come back from suspend.
 
+Every panel is also reachable by name from the walker launcher, for the ones
+whose keybind you do not have in your fingers yet. `panels/` is a stow package
+of desktop entries — one per panel, each a single
+`Exec=qs ipc call <target> <function>`, which is exactly what the matching
+`bindd` runs — symlinked into `~/.local/share/applications` and picked up by
+walker's `desktopapplications` provider with nothing to restart. Searching
+`panel` or `quickshell` lists the lot. `toggle` is the right verb even from a
+launcher: walker takes the keyboard when it opens, which clears the
+`HyprlandFocusGrab` an open panel is holding, so the panel is always already
+closed by the time the entry runs. See `panels/README.md`.
+
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
 one that ships light symbolic icons for a dark bar.

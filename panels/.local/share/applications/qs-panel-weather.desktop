@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Weather panel
+Comment=The reading, what it feels like, and the humidity — Super+Shift+T
+Icon=weather-few-clouds-symbolic
+Keywords=quickshell;panel;forecast;temperature;
+Exec=qs ipc call weather toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

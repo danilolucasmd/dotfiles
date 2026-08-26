@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Display panel
+Comment=Brightness, refresh rate, scale and rotation — Super+D
+Icon=video-display-symbolic
+Keywords=quickshell;panel;monitor;screen;
+Exec=qs ipc call display toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

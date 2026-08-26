@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Performance panel
+Comment=Processor, graphics, memory and disk — Super+Shift+P
+Icon=power-profile-performance-symbolic
+Keywords=quickshell;panel;cpu;gpu;ram;disk;temperature;
+Exec=qs ipc call performance toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

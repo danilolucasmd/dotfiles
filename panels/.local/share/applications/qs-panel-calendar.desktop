@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Calendar panel
+Comment=The month, walkable with the arrows — Super+C
+Icon=x-office-calendar-symbolic
+Keywords=quickshell;panel;
+Exec=qs ipc call calendar toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

@@ -36,6 +36,11 @@ ShellRoot {
 	// Hyprland binds are the only sensible place for a global shortcut here —
 	// the wlr global-shortcuts protocol would need a portal Hyprland does not
 	// wire up to its own keybind config.
+	//
+	// A new handler here wants two things outside this file: the `bindd` in
+	// hyprland.conf, and a desktop entry in ~/dotfiles/panels, which is what
+	// puts the panel in the walker launcher under its own name. See
+	// panels/README.md.
 	IpcHandler {
 		target: "agentUsage"
 

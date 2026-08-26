@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Audio input picker
+Comment=The audio device panel, opened on the inputs — Super+I
+Icon=audio-input-microphone-symbolic
+Keywords=quickshell;panel;sound;microphone;source;
+Exec=qs ipc call audio inputs
+Terminal=false
+StartupNotify=false
+Categories=Utility;

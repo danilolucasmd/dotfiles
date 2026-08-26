@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Battery panel
+Comment=Charge per pack, health and the power profile — Super+B
+Icon=battery-good-symbolic
+Keywords=quickshell;panel;power;
+Exec=qs ipc call battery toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

@@ -544,6 +544,12 @@ stow \
 # GStreamer's gtkglsink is broken on NVIDIA. See dbus/README.md.
 stow --no-folding dbus
 
+# panels carries the desktop entries that put every quickshell panel in the
+# walker launcher. --no-folding so that ~/.local/share/applications stays a real
+# directory -- webapps/generate.sh writes the Brave web-app launchers in there,
+# and folding would send those into this repo. See panels/README.md.
+stow --no-folding panels
+
 # kanata carries two files: the keymap and a systemd user unit. --no-folding so
 # that ~/.config/systemd/user stays a real directory -- `systemctl --user
 # enable` writes its default.target.wants symlink in there, and folding would
