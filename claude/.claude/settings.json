@@ -28,9 +28,20 @@
     "type": "command",
     "command": "bash ~/.config/quickshell/scripts/agent-usage-statusline.sh"
   },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
   "effortLevel": "high",
   "theme": "auto",
   "preferredNotifChannel": "ghostty",
   "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "enabledPlugins": {
+    "caveman@caveman": true
+  }
 }

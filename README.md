@@ -412,6 +412,16 @@ which drops a versioned binary in `~/.local/share/claude` and links it into
 `~/.local/bin` — which `.zshrc` puts on `PATH` (rather than relying on
 `~/.profile`, which the installer writes and which is not in this repo).
 
+### caveman
+
+[caveman](https://github.com/JuliusBrussee/caveman) is a plugin that makes Claude answer in clipped, telegraphic prose — the same technical content in far fewer output tokens. Two keys in `settings.json` carry it: `extraKnownMarketplaces.caveman` names the GitHub repo the plugin comes from, and `enabledPlugins."caveman@caveman"` turns it on.
+
+Those keys are declarations, not an installation. The plugin CLI still has to clone the marketplace into `~/.claude/plugins` (untracked runtime state, like everything else in there) and register the plugin, so `install.sh` runs `claude plugin marketplace add JuliusBrussee/caveman` and `claude plugin install caveman@caveman --scope user` right after stowing `claude`. Both are guarded on their own output and skip when the plugin is already there, so re-running the script costs nothing.
+
+The ordering matters. Run those commands before the stow and the CLI writes a real `~/.claude/settings.json`, which `resolve_stow_conflicts` then moves aside as `.pre-stow`; run them after and they follow the symlink and write straight into this repo's copy — rewriting the two keys identically, leaving the tree clean.
+
+To drop the plugin: `claude plugin uninstall caveman@caveman`, `claude plugin marketplace remove caveman`, then delete the `install.sh` block. The upstream repo also ships a much larger installer (`install.sh --all`) covering an MCP server, a proxy and extensions for other agents — none of that is used here, only the Claude Code plugin.
+
 ---
 
 ## 9. Nautilus Video Previews (NVIDIA)

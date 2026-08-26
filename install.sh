@@ -597,6 +597,36 @@ fi
 resolve_stow_conflicts --no-folding claude
 stow --no-folding claude
 
+# caveman is a Claude Code plugin that swaps Claude's prose for clipped,
+# telegraphic answers -- same technical content, far fewer output tokens. The
+# marketplace it comes from and its enabled state are both declared in the
+# settings.json stowed just above, but those declarations do not install
+# anything on their own: the plugin CLI still has to clone the marketplace into
+# ~/.claude/plugins and register the plugin. That is all these two commands do,
+# and they write back into the same stowed settings.json, so the entries this
+# repo already tracks are rewritten identically and the file stays clean.
+#
+# Deliberately after the stow: run before it and the CLI would create a real
+# ~/.claude/settings.json, which resolve_stow_conflicts would then shove aside
+# as .pre-stow. Upstream: https://github.com/JuliusBrussee/caveman
+#
+# `claude` is in ~/.local/bin, which .zshrc puts on PATH -- but this script is
+# bash and never sources it, so the binary is addressed by path when the
+# command is not already visible.
+CLAUDE_BIN="$(command -v claude || echo "$HOME/.local/bin/claude")"
+if [[ -x "$CLAUDE_BIN" ]]; then
+  if ! "$CLAUDE_BIN" plugin marketplace list 2>/dev/null |
+    grep -q 'JuliusBrussee/caveman'; then
+    try "caveman marketplace" \
+      "$CLAUDE_BIN" plugin marketplace add JuliusBrussee/caveman
+  fi
+
+  if ! "$CLAUDE_BIN" plugin list 2>/dev/null | grep -q 'caveman@caveman'; then
+    try "caveman plugin" \
+      "$CLAUDE_BIN" plugin install caveman@caveman --scope user
+  fi
+fi
+
 resolve_stow_conflicts --no-folding herdr
 stow --no-folding herdr
 
