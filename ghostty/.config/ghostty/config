@@ -13,3 +13,12 @@ confirm-close-surface = false
 # and silently breaks the shortcut inside herdr. Karabiner's "Ctrl+Backspace =>
 # Cmd+Backspace" rule now excludes Ghostty so this binding wins.
 keybind = ctrl+backspace=text:\x1b\x7f
+
+# Ctrl+Enter and Shift+Enter insert a newline. Without this, an app that turns
+# on xterm's modifyOtherKeys mode (Claude Code does) makes Ghostty encode these
+# keys as ESC[27;5;13~ and ESC[27;2;13~, and any app that does not decode that
+# form prints the tail (";5;13~", "2;13~") straight into the prompt. Sending a
+# bare LF, the same byte as Ctrl+J, skips key encoding altogether, so the result
+# is identical everywhere: a newline in Claude Code and nvim, submit in zsh.
+keybind = ctrl+enter=text:\n
+keybind = shift+enter=text:\n
