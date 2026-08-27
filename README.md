@@ -460,6 +460,10 @@ Those keys are declarations, not an installation. The plugin CLI still has to cl
 
 The ordering matters. Run those commands before the stow and the CLI writes a real `~/.claude/settings.json`, which `resolve_stow_conflicts` then moves aside as `.pre-stow`; run them after and they follow the symlink and write straight into this repo's copy — rewriting the two keys identically, leaving the tree clean.
 
+The plugin activates itself on every session start — a `SessionStart` hook of its own, needing nothing in `settings.json.hooks` — and there is no per-session command to type. What that hook injects is the intensity level, which it resolves from `$CAVEMAN_DEFAULT_MODE`, then a `.caveman.json` checked into the repo being worked on, then `~/.config/caveman/config.json`, then its own built-in default. The `caveman` stow package is that user config, and holds one key: `defaultMode: "full"`. It matches the built-in default today, so the visible behaviour is unchanged — the point is that the level every session opens in is pinned here rather than inherited from whatever upstream currently ships. `/caveman lite|ultra|off` still switches it for the session in hand, and a project that wants its own default checks in a `.caveman.json`, which wins over this file.
+
+The package is stowed `--no-folding`: the caveman CLI keeps its own state (login token, cavemem) in `~/.config/caveman`, and only `config.json` belongs in this repo.
+
 To drop the plugin: `claude plugin uninstall caveman@caveman`, `claude plugin marketplace remove caveman`, then delete the `install.sh` block. The upstream repo also ships a much larger installer (`install.sh --all`) covering an MCP server, a proxy and extensions for other agents — none of that is used here, only the Claude Code plugin.
 
 ---

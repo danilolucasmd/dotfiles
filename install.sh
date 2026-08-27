@@ -685,6 +685,18 @@ if [[ -x "$CLAUDE_BIN" ]]; then
   fi
 fi
 
+# caveman resolves its default mode from, in order: $CAVEMAN_DEFAULT_MODE, a
+# checked-in .caveman.json in the repo being worked on, this user config, and
+# finally its own built-in default -- which happens to be `full` today, so
+# without this file the mode every session opens in is whatever upstream last
+# decided. Pinning it here makes the choice ours and survives that changing.
+#
+# --no-folding so ~/.config/caveman stays a real directory: the caveman CLI
+# writes its own state (login token, cavemem) alongside this file, and none of
+# that belongs in the repo.
+resolve_stow_conflicts --no-folding caveman
+stow --no-folding caveman
+
 resolve_stow_conflicts --no-folding herdr
 stow --no-folding herdr
 
