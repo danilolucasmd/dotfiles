@@ -330,6 +330,24 @@ Panel {
 		visible: NetworkState.online
 		spacing: 5
 
+		// Receiving / Sending up there and Download / Upload down here are both
+		// a link speed, in the same typeface, in the same two-column row -- so
+		// without a rule the second pair reads as more of the first rather than
+		// as an answer to a different question. Above it is what the link is
+		// carrying; below it is what it can do when asked. The same rule divides
+		// the performance panel's disk test from that drive's live rates.
+		//
+		// Theme.line, the bar's own hairline, which lands near #6d6d6d on this
+		// card. The card's #3f3f3f border colour disappears into the surface at
+		// one pixel.
+		Rectangle {
+			Layout.fillWidth: true
+			Layout.bottomMargin: 7
+
+			implicitHeight: 1
+			color: Theme.line
+		}
+
 		StatRow {
 			leftLabel: "Download"
 			leftValue: root.speedValue(NetworkState.speedDownload, "download")
