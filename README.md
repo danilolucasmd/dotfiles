@@ -154,9 +154,14 @@ backlight-to-monitor discovery, and matching a notification against the window
 list to find the app that sent it. `updates.sh` shells out to
 `checkupdates`, which is why `pacman-contrib` is in the package list.
 
+The centre group is the weather and the clock, and two indicators that are
+anchored to its edges rather than laid out in it: the recording dot on the
+right, the night light glyph on the left. Both come and go mid-session, and
+anchoring is what keeps the clock from sliding sideways when they do.
+
 The right cluster is split in two. Media, keyboard layout, volume, network,
 bluetooth, battery, display, performance, agent usage, updates and
-notifications are always on screen; the recording indicator and the tray fold away behind a chevron that
+notifications are always on screen; only the tray folds away behind a chevron that
 stays the leftmost thing in the cluster. Clicking it slides them out rightward
 from the chevron, with a hairline marking where they end and the always-visible
 modules begin; those never shift.
@@ -366,6 +371,24 @@ directory and nothing else, and the panel grows a tab for it on the next tick.
 Left and right walk the tabs, and the bar follows the tab you left open. Claude
 Code is simply the only agent installed here. `scripts/agents/README.md` is the
 contract.
+
+The night light is the one thing in the bar with no panel and no keybind: it is
+a blue-light filter, warming the screen to 4000K, and it is turned on by name
+from the launcher and off again by clicking the glyph that turning it on puts
+beside the weather. Nothing sits idle waiting for it. `hyprsunset` ships a
+systemd user unit that would run all session and be told to go neutral while the
+filter is off, but the filter *is* the process — the warm ramp lives on the
+`wlr-gamma-control` object hyprsunset holds, and the compositor gives every
+output its own ramp back the instant that client disconnects. So quickshell runs
+it only while the filter is on, and "is the night light on" has one answer
+instead of two that can disagree: a hyprsunset that died, or never started,
+takes the glyph with it rather than leaving it lit over an untinted screen. The
+cost is that reloading the shell turns the filter off, which is a thing that
+happens while editing quickshell rather than while using it.
+
+The glyph is a setting sun rather than the moon the desktop convention would
+use, because the weather module two places along already draws a moon for a
+clear night.
 
 Every panel is also reachable by name from the walker launcher, for the ones
 whose keybind you do not have in your fingers yet. `panels/` is a stow package

@@ -157,4 +157,17 @@ ShellRoot {
 			PerformanceState.toggle();
 		}
 	}
+
+	// The one handler here that opens nothing: it flips the blue-light filter,
+	// which is a setting rather than a card, and the only thing it puts on
+	// screen is the bar glyph that says it is on. It still wants the desktop
+	// entry in ~/dotfiles/panels — being reachable by name from the launcher is
+	// the whole point of a toggle with no keybind.
+	IpcHandler {
+		target: "nightLight"
+
+		function toggle(): void {
+			NightLightState.toggle();
+		}
+	}
 }

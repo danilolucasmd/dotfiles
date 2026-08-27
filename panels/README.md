@@ -3,6 +3,11 @@
 Desktop entries that put every quickshell panel in the walker launcher, so a
 panel can be reached by name as well as by its keybind.
 
+`qs-night-light.desktop` is the odd one out and is named without the `panel`
+infix on purpose: it opens nothing. The night light is a setting rather than a
+card, so the launcher is not a second way in but the *only* way in — the bar
+glyph it turns on can only turn it off again.
+
 Each one is a one-line `Exec=qs ipc call <target> <function>` — exactly what the
 matching `bindd` in `hyprland.conf` runs. There is no second copy of the panel
 here and nothing to keep in sync beyond the command itself; `qs ipc` finds the

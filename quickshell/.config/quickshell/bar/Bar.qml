@@ -88,6 +88,15 @@ Variants {
 				anchors.verticalCenter: parent.verticalCenter
 			}
 
+			// The night light glyph gets the other side of the centre group,
+			// anchored for the same reason: both of these are indicators that
+			// appear and vanish mid-session, and the clock is the one thing on
+			// the bar whose position the eye actually relies on.
+			NightLight {
+				anchors.right: centre.left
+				anchors.verticalCenter: parent.verticalCenter
+			}
+
 			RowLayout {
 				anchors.right: parent.right
 				anchors.verticalCenter: parent.verticalCenter

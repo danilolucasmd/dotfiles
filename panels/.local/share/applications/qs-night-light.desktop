@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Night light
+Comment=Warm the screen with hyprsunset — on until toggled off again
+Icon=night-light-symbolic
+Keywords=quickshell;night;light;blue;filter;warm;sunset;hyprsunset;gamma;
+Exec=qs ipc call nightLight toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

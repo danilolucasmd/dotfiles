@@ -303,6 +303,7 @@ pac \
   hypridle \
   hyprshot \
   hyprpicker \
+  hyprsunset \
   nautilus \
   sushi \
   gvfs-mtp \
