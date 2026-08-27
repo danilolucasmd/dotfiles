@@ -95,8 +95,9 @@ resolve_stow_conflicts() {
 # DIRECTORY STRUCTURE                                      #
 ############################################################
 
-# Videos is where screen-record.sh writes; Code is where the repos live and
-# what the Nautilus sidebar points at.
+# Screenshots is where screenshot.sh writes and Videos is where
+# screen-record.sh does; Code is where the repos live and what the Nautilus
+# sidebar points at.
 echo "==> Creating directories"
 mkdir -p \
   "$HOME/Downloads" \
@@ -301,7 +302,6 @@ pac \
   hyprpaper \
   hyprlock \
   hypridle \
-  hyprshot \
   hyprpicker \
   hyprsunset \
   nautilus \

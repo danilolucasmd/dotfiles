@@ -183,7 +183,7 @@ Singleton {
 	// true of both — herdr *is* the terminal, and the other one came from one —
 	// where naming herdr outright would mislabel every notification fired by
 	// hand. Everything else installed here names itself and never lands in
-	// this case — hyprshot, fumon, uuctl, uwsm-app and our own
+	// this case — fumon, uuctl, uwsm-app and our own screenshot.sh and
 	// screen-record.sh all pass -a, and anything driving libnotify directly
 	// has to. The exception is a Go tool notifying through beeep, which
 	// shells out bare; gh-dash is the one installed, and it is a terminal

@@ -35,10 +35,10 @@
 #          usually matches the class; app_name is a human label, so it ranks
 #          below.
 #   path   No window is the app, because the app was a script that wrote a file
-#          and exited -- hyprshot's "Image saved in /home/.../shot.png". What
-#          the notification is really pointing at is the file, so open the
-#          folder with it selected. Ranked under class so an app that has a
-#          window still gets its window, and over title so a screenshot does
+#          and exited -- screenshot.sh's "Image saved in /home/.../shot.png".
+#          What the notification is really pointing at is the file, so open
+#          the folder with it selected. Ranked under class so an app that has
+#          a window still gets its window, and over title so a screenshot does
 #          not go looking for a terminal that happens to say "Pictures".
 #   title  Nothing identified the app, and herdr did not claim it either — a
 #          bare `notify-send` typed at a prompt, or a tool that shells out to
@@ -99,7 +99,7 @@ host=$(printf '%s' "$body" | head -n1 | grep -oE '^[a-z0-9]([a-z0-9.-]*[a-z0-9])
 # Existing is the whole test: it is what stops prose about a path that has since
 # been moved -- or a lone "/" between two words -- from sending the file manager
 # somewhere useless, and it costs nothing when there is no path at all. Markup
-# is stripped first (hyprshot italicises the path) and a path with a space in it
+# is stripped first (screenshot.sh italicises the path) and a path with a space in it
 # is not found, which is the price of finding one in a sentence.
 path=""
 while read -r cand; do
