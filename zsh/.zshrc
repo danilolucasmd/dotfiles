@@ -81,7 +81,54 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # Aliases
-alias copy="perl -0 -pe 's/\n\Z//' | pbcopy"
+# `copy`: send stdin to the clipboard minus the trailing newline, so pasted text
+# doesn't arrive with a line break attached. Optional filters, applied in order:
+#   --strip <re>  delete the first match of a Perl regex on each line
+#   --only <re>   copy only the matching part of each line; if the regex has a
+#                 capture group, only that group. Non-matching lines are dropped
+#   --hist        preset: --strip '^[[:space:]]*[0-9]+[[:space:]]+', which turns
+#                 "2298  git status" into "git status". For `history | fzf | copy --hist`
+# Examples:
+#   history | fzf | copy --hist
+#   git branch --show-current | copy --only '[a-z]+-[0-9]+'   # ddias/vend-2516-x -> vend-2516
+#   cat notes.md | copy --strip '^> '
+function copy() {
+  local strip_re='' only_re=''
+  while (( $# )); do
+    case "$1" in
+      --hist)    strip_re='^[[:space:]]*[0-9]+[[:space:]]+' ;;
+      --strip=*) strip_re="${1#--strip=}" ;;
+      --only=*)  only_re="${1#--only=}" ;;
+      --strip|--only)
+        if (( $# < 2 )); then
+          print -ru2 -- "copy: $1 needs a regex"
+          return 2
+        fi
+        [[ "$1" == --strip ]] && strip_re="$2" || only_re="$2"
+        shift
+        ;;
+      --help|-h)
+        print -r -- 'usage: <command> | copy [--hist] [--strip <re>] [--only <re>]'
+        return 0
+        ;;
+      *)
+        print -ru2 -- "copy: unknown option: $1"
+        return 2
+        ;;
+    esac
+    shift
+  done
+
+  local text
+  text=$(cat)
+  if [[ -n "$strip_re" ]]; then
+    text=$(print -r -- "$text" | re="$strip_re" perl -pe 's/$ENV{re}//') || return
+  fi
+  if [[ -n "$only_re" ]]; then
+    text=$(print -r -- "$text" | re="$only_re" perl -nle 'print(defined $1 ? $1 : $&) if /$ENV{re}/') || return
+  fi
+  print -rn -- "$text" | pbcopy
+}
 alias bt="btui"
 
 source ~/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization scriptexport PATH="$HOME/.local/bin:$PATH"
@@ -122,11 +169,12 @@ function _noop() { }
 zle -N _noop
 bindkey '^L' _noop
 
-# `history`: print commands without the leading event numbers. Oh My Zsh aliases
-# `history` to a wrapper that always runs `fc -l`, which numbers every line; the
-# `-n` flag suppresses those numbers. Flags like `history -c` are handed back to
-# the OMZ wrapper untouched. Must come after `source $ZSH/oh-my-zsh.sh` so it
-# overrides OMZ's alias.
+# `history`: at the terminal, print commands with no leading event numbers. Oh My
+# Zsh aliases `history` to a wrapper that always runs `fc -l`, which numbers every
+# line; `fc -ln` drops the numbers. When the output is piped the numbers are kept,
+# so they stay visible in `history | fzf`; strip them on the way to the clipboard
+# with `copy --hist`. Must come after `source $ZSH/oh-my-zsh.sh` so it overrides
+# OMZ's alias.
 unalias history 2>/dev/null
 function history() {
   # -c (clear) and the timestamp flags (-f/-E/-i/-t) go back to the OMZ wrapper;
@@ -134,5 +182,9 @@ function history() {
   case "$1" in
     -c|-f|-E|-i|-t) omz_history "$@"; return ;;
   esac
-  builtin fc -ln ${@:-1}
+  if [[ -t 1 ]]; then
+    builtin fc -ln ${@:-1}
+  else
+    builtin fc -l ${@:-1}
+  fi
 }
