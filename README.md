@@ -992,7 +992,42 @@ produce something else.
 
 ---
 
-## 16. General Notes
+## 16. `copy` from a pipe
+
+`copy` is the shell end of all this: a zsh function in `.zshrc` that puts stdin,
+or its arguments, on the clipboard through `wl-copy --trim-newline`. It was an
+alias until it grew a set of regex flags, and those exist for one command in
+particular:
+
+```bash
+history | fzf | copy --hist
+```
+
+`history` prints an index in front of every line, and that index is not noise —
+it is half of what fzf matches against when you are hunting for a command you
+half remember. It has to survive the picker and die on the way out, which is
+what `--strip` is: a PCRE deleted from what is being copied, everywhere it
+matches, line by line. `--hist` is that flag with the pattern already written:
+`--strip '^\s*\d+\s+(?:[\d/.-]{8,10}\s+)?'`, the index and — if `HIST_STAMPS` is
+ever uncommented in `.zshrc` — the date beside it.
+
+`--only` is the inverse and keeps just what matched, so
+`copy --only 'https?://\S+'` off a wall of log output, or
+`--only 'v(\d+\.\d+\.\d+)'`, where a capture group wins over the whole match so
+the pattern can anchor on the `v` without copying it. A line matching nothing is
+dropped rather than copied blank, several matches on a line come back one per
+line, and the flags refuse to be combined, because composing them would mean
+picking an order and neither order is the obvious one.
+
+The regex engine is perl, not `sed -E`: POSIX ERE has no `\d`, no `\s` and no
+non-greedy, which is most of what makes a pattern typeable at a prompt without
+stopping to think. perl is nothing this repo installs on purpose — it is git's
+dependency, so it is already on any machine that got this far. With no flags
+nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
+
+---
+
+## 17. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`

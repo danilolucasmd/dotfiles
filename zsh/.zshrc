@@ -119,7 +119,87 @@ alias vim=nvim
 alias lock=hyprlock
 alias suspend="systemctl suspend"
 alias logout="hyprctl dispatch exit"
-alias copy="wl-copy --trim-newline"
+
+# `copy` puts stdin, or its arguments, on the clipboard. It is a function
+# rather than an alias because of the two regex flags, and what makes those
+# worth having is `history | fzf | copy`: the line fzf hands back is still
+# carrying the history index it matched against ("  432  git rebase -i") and
+# only the command belongs on the clipboard. The number has to survive the
+# picker -- it is half of what makes an entry findable -- and die on the way
+# out.
+#
+#   copy --strip '^\s*\d+\s+'     delete every match, keep the rest
+#   copy --only  'https?://\S+'   keep only what matches, drop the rest
+#   copy --hist                   that first pattern, spelled out for you
+#
+# PCRE, applied per line and to every occurrence on it, via perl -- `sed -E` is
+# POSIX ERE and has no `\d`, `\s` or non-greedy, which is most of what makes a
+# pattern typeable at a prompt one-handed. perl is nothing this repo installs
+# on purpose; it is git's dependency, so it is on every machine this lands on.
+#
+# With `--only` a capture group wins over the whole match when the pattern has
+# one, so `--only 'v(\d+\.\d+\.\d+)'` can anchor on the `v` without copying it.
+# A line that matches nothing is dropped rather than copied as an empty one,
+# and several matches on one line come back one per line.
+function copy() {
+	local mode= pattern=
+
+	while (( $# )); do
+		case $1 in
+			# The one pattern worth not retyping. The optional second token is
+			# a HIST_STAMPS date -- oh-my-zsh has it commented out a hundred
+			# lines up, and uncommenting it should not silently start copying
+			# the date along with the command.
+			--hist)
+				set -- --strip '^\s*\d+\s+(?:[\d/.-]{8,10}\s+)?' "${@:2}"
+				continue
+				;;
+			--strip|--only)
+				# Mutually exclusive rather than composed: chaining them would
+				# mean picking an order, and neither order is the obvious one.
+				if [[ -n $mode ]]; then
+					print -u2 "copy: --strip, --only and --hist are mutually exclusive"
+					return 2
+				fi
+				if (( $# < 2 )); then
+					print -u2 "copy: $1 needs a regex"
+					return 2
+				fi
+				mode=${1#--} pattern=$2
+				shift 2
+				;;
+			# Everything past `--` is text, even when it starts with a dash.
+			--) shift; break ;;
+			-*) print -u2 "copy: unknown flag: $1"; return 2 ;;
+			*) break ;;
+		esac
+	done
+
+	# `cat` and not a zsh read when there is nothing but stdin: with no flags
+	# this has to stay byte-transparent, because an image piped in is still a
+	# perfectly good thing to copy.
+	local -a input
+	if (( $# )); then
+		input=(printf '%s\n' "$*")
+	else
+		input=(cat)
+	fi
+
+	local -a filter
+	case $mode in
+		# The pattern travels in the environment rather than spliced into the
+		# perl source, where a `/` or a `$` in it would be perl's syntax and not
+		# the user's regex.
+		strip) filter=(env "COPY_PATTERN=$pattern" perl -pe 'BEGIN { $re = qr/$ENV{COPY_PATTERN}/ } s/$re//g') ;;
+		only)  filter=(env "COPY_PATTERN=$pattern" perl -ne 'BEGIN { $re = qr/$ENV{COPY_PATTERN}/ }
+			my @hits;
+			push @hits, defined $1 ? $1 : $& while /$re/g;
+			print join("\n", @hits), "\n" if @hits') ;;
+		*)     filter=(cat) ;;
+	esac
+
+	"${input[@]}" | "${filter[@]}" | wl-copy --trim-newline
+}
 
 # Set up fzf key bindings and fuzzy completion
 source <(fzf --zsh)
