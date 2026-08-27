@@ -33,10 +33,16 @@ Panel {
 	// to put in them.
 	cardWidth: LauncherState.mode === "clipboard" ? 900 : 620
 
-	// The upper third rather than the middle: the list grows downwards, so a
-	// centred card would walk the search field up the screen as results came
-	// in, and the field is the one thing the eye is already on.
-	margins.top: 140
+	// Centred, both ways. Panel anchors its top edge and lets the compositor
+	// centre the other axis; unsetting that anchor leaves neither edge anchored,
+	// which is what makes layer-shell centre the surface outright.
+	//
+	// The cost is that the card grows from its middle, so narrowing a query
+	// past eight results walks the search field down a little as the list
+	// shrinks under it. Worth it: the launcher is summoned from anywhere by a
+	// keybind and has no bar module it should appear to hang from, unlike every
+	// other panel here.
+	anchors.top: false
 
 	// The line under the list. Per mode, because the keys are per mode, and an
 	// unlabelled ctrl+d that wipes a clipboard is a trap.
