@@ -536,6 +536,26 @@ because notifications say more than their app name does:
   the one label true of both. It is only the label — the record keeps the raw
   name, because that is what has to *fail* the class pass for the passes below
   it to run at all.
+- **Screenshots open in an editor.** A screenshot notification names the PNG
+  `screenshot.sh` just wrote, and no window sent it — the script wrote a file and
+  exited. Clicking it opens that image in **tensaku**, a GTK4 annotation editor
+  (a fork of Satty): pointer, crop, brush, line, arrow, rectangle, ellipse,
+  text, numbered markers, blur, highlighter and spotlight, each on a single
+  left-hand key. It opens on the arrow tool, because a screenshot worth clicking
+  back into is usually one with something to point at. **Enter** copies the
+  edited image to the clipboard — over the raw one `screenshot.sh` already put
+  there — and closes the window; `ctrl+s` saves a *new* file beside the original
+  under the same `%Y-%m-%d-%H%M%S.png` name rather than overwriting it, and
+  `esc` closes without copying. The colour palette is the bar's, the config is
+  `tensaku/.config/tensaku/config.toml`, and the in-app preferences dialog
+  (`ctrl+,`) writes back into that same stowed file, so a setting changed there
+  lands in the repo. `hyprland.conf` floats and centres the window, which is
+  what lets it open at the size of the image it was given.
+
+  This is keyed on the app name (`-a "Screenshot"`), so a **screen recording is
+  untouched**: its notification, and any other one naming a file that exists,
+  still opens nautilus on the folder with that file selected. There is nothing
+  to annotate in an mp4.
 - **Everything else anonymous.** A `notify-send` typed at a prompt, or a tool
   that shells out to one without naming itself (`gh-dash`, through the beeep
   library). Nothing identifies these and herdr does not claim them, so all that

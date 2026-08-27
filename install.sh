@@ -462,6 +462,7 @@ aur_packages=(
   btop
   docker-desktop
   kanata-bin
+  tensaku # the screenshot annotation editor clicking a screenshot notification opens
 )
 
 for pkg in "${aur_packages[@]}"; do
@@ -577,7 +578,7 @@ sudo stow -t / sddm
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
   btop elephant fastfetch ghostty git hunk hypr lazygit nvim scripts sounds \
-  quickshell walker wallpapers yazi zsh
+  quickshell tensaku walker wallpapers yazi zsh
 stow \
   btop \
   elephant \
@@ -591,6 +592,7 @@ stow \
   scripts \
   sounds \
   quickshell \
+  tensaku \
   walker \
   wallpapers \
   yazi \

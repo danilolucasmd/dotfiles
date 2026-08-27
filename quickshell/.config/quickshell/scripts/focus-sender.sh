@@ -36,10 +36,12 @@
 #          below.
 #   path   No window is the app, because the app was a script that wrote a file
 #          and exited -- screenshot.sh's "Image saved in /home/.../shot.png".
-#          What the notification is really pointing at is the file, so open
-#          the folder with it selected. Ranked under class so an app that has
-#          a window still gets its window, and over title so a screenshot does
-#          not go looking for a terminal that happens to say "Pictures".
+#          What the notification is really pointing at is the file, so open it:
+#          a screenshot in the tensaku annotation editor, anything else as the
+#          folder around it with the file selected. Ranked under class so an app
+#          that has a window still gets its window, and over title so a
+#          screenshot does not go looking for a terminal that happens to say
+#          "Pictures".
 #   title  Nothing identified the app, and herdr did not claim it either — a
 #          bare `notify-send` typed at a prompt, or a tool that shells out to
 #          one without naming itself. All that is left is the text: score
@@ -181,6 +183,21 @@ elif [ -n "$byclass" ]; then
   # above.
   [ -z "$host" ] && addr="$byclass"
 elif [ -n "$path" ]; then
+  # A screenshot is the one file worth more than the folder around it.
+  # screenshot.sh sends `-a "Screenshot"` and names the PNG it just wrote, and
+  # what that notification is really offering is the chance to draw on the
+  # image -- an arrow at the thing being pointed out, and Enter to put the
+  # edited version back on the clipboard over the raw one screenshot.sh already
+  # copied there. tensaku is that editor; see tensaku/.config/tensaku/config.toml.
+  #
+  # Keyed on the app name rather than on the file being a .png, so
+  # screen-record.sh's "Recording saved" -- and any other tool that happens to
+  # name an image -- still gets the file manager below.
+  if [ "$app" = "Screenshot" ] && [ -f "$path" ]; then
+    setsid -f tensaku --filename "$path" >/dev/null 2>&1
+    exit 0
+  fi
+
   # Nothing identified the app, but it named a file. Nautilus is what this
   # system opens a directory with; -s opens the folder *around* a file with it
   # selected, which is not what a path that is already a folder wants. Detached,

@@ -1,0 +1,71 @@
+# Tensaku -- the screenshot annotation editor, a GTK4/libadwaita fork of Satty.
+#
+# Nothing opens this by hand. screenshot.sh writes a PNG and notifies; clicking
+# that notification (the popup, or its row in the notifications panel) lands in
+# focus-sender.sh's path pass, which opens the file here instead of in nautilus.
+# See quickshell/.config/quickshell/scripts/focus-sender.sh.
+#
+# Only what differs from the defaults is set. `tensaku --help` and
+# https://github.com/jondkinney/tensaku list the rest; the Preferences dialog
+# (ctrl+comma) writes back into this file, key by key, so anything changed there
+# lands in the repo rather than in some private state -- which is the reason the
+# file is stowed rather than left to be created on first run.
+
+[general]
+# The editor is reached by clicking a notification about a screenshot, so it is
+# opened to point at something -- an arrow is what that means nine times in ten.
+initial-tool = "arrow"
+
+# Enter is the whole point of the round trip: the edited image goes back to the
+# clipboard (screenshot.sh already put the raw one there) and the window goes
+# away. Escape is the same key every panel in this shell closes on, so it closes
+# this too rather than only cancelling the tool in hand.
+actions-on-enter = ["save-to-clipboard", "exit"]
+close-on-esc = true
+
+# ctrl+s writes a *new* file rather than overwriting the screenshot that was
+# clicked: the same directory and the same `%Y-%m-%d-%H%M%S.png` name
+# screenshot.sh builds, so an edit sits beside its original instead of replacing
+# it. ctrl+shift+s opens the file dialog on this path.
+output-filename = "~/Pictures/Screenshots/%Y-%m-%d-%H%M%S.png"
+
+# Hyprland floats and centres this window (see the windowrule in
+# hyprland.conf); the hack asks for it from tensaku's side too, and dropping the
+# decoration leaves the toolbar as the only chrome, which is what the editor is.
+floating-hack = true
+no-window-decoration = true
+
+# Open at the size the image wants rather than at a fixed geometry -- a region
+# grab of a dialog and a full 1920x1080 monitor arrive through the same bind.
+resize = { mode = "smart" }
+annotation-size-factor = 1.0
+
+[font]
+# The one font this system installs. Adwaita would otherwise ask for Cantarell,
+# which is not here, and fall back to whatever fontconfig picks.
+family = "JetBrainsMono Nerd Font"
+style = "Regular"
+
+[color-palette]
+# Theme.qml's accents, in the order the number keys select them. Red first
+# because it is the default the editor opens on and the colour an arrow drawn
+# over a screenshot wants; the rest are the same six the bar and its panels use,
+# so an annotation looks like it came from this system.
+palette = [
+	"#f38ba8",
+	"#fab387",
+	"#f9e2af",
+	"#a6e3a1",
+	"#89b4fa",
+	"#dddddd",
+]
+
+# The picker's presets. Same six, so the swatch grid and the palette agree.
+custom = [
+	"#f38ba8",
+	"#fab387",
+	"#f9e2af",
+	"#a6e3a1",
+	"#89b4fa",
+	"#dddddd",
+]

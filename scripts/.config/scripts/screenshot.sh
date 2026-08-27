@@ -55,7 +55,9 @@ wl-copy --type image/png <"$file"
 # The image itself as the icon, which is what hyprshot did and what makes the
 # notification readable at a glance. Nothing here identifies the sender as a
 # window, so clicking it falls through focus-sender.sh's class passes to its
-# path pass, which opens nautilus on the folder with the file selected.
+# path pass -- which opens the PNG in tensaku, the annotation editor, so the
+# shot can be drawn on and put back on the clipboard. That pass recognises this
+# notification by the `-a "Screenshot"` below, so the name is load-bearing.
 [ -s "$file" ] && notify-send "Screenshot saved" \
 	"Image saved in <i>${file}</i> and copied to the clipboard." \
 	-t 5000 -i "$file" -a "Screenshot"
