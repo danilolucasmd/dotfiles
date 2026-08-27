@@ -17,6 +17,7 @@ call.
   "id": "claude-code",
   "name": "Claude Code",
   "icon": "󰚩",
+  "avatar": "claude.svg",
   "plan": "PRO",
   "available": true,
   "source": "statusLine feed",
@@ -30,7 +31,11 @@ call.
 
 `id` must match the filename without `.sh` — that is the key `agent-tokens.sh`
 files the history under. `icon` is a Nerd Font glyph and is what the bar module
-draws beside the percentage.
+draws beside the percentage. `avatar` is optional and names a file in
+`../../assets/` — the vendor's own mark, which the panel header draws in place
+of the glyph. A filename rather than a path, so a provider does not have to know
+where the shell keeps its assets; leave it out and the header falls back to
+`icon`, which is the right answer for an agent with no logo worth 24 pixels.
 
 `pace` is how much of the window has already elapsed, as a percentage, which is
 what the panel marks on the meter: past it is spending faster than the window

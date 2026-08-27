@@ -58,10 +58,37 @@ Panel {
 		Layout.fillWidth: true
 		spacing: 10
 
-		BarText {
-			text: root.agent.icon ?? ""
-			color: Theme.peach
-			font.pixelSize: 22
+		// The agent's own mark where it has one, its bar glyph where it does
+		// not. Claude Code ships an SVG (assets/claude.svg) and the header is
+		// where it earns its keep — the bar is 30px tall and monochrome, and a
+		// vendor logo scaled into that row is a smudge, so the glyph stays
+		// there. `avatar` is a filename rather than a path so a provider does
+		// not have to know where this shell keeps its assets.
+		Item {
+			implicitWidth: 24
+			implicitHeight: 24
+
+			Image {
+				anchors.fill: parent
+				visible: source !== ""
+
+				source: (root.agent.avatar ?? "") === "" ? "" : `${Paths.assets}/${root.agent.avatar}`
+				// Rasterised at the size it is drawn at, not at the SVG's own
+				// 248px and scaled down, which is what makes a vector mark look
+				// soft at icon sizes.
+				sourceSize.width: width
+				sourceSize.height: height
+				fillMode: Image.PreserveAspectFit
+			}
+
+			BarText {
+				anchors.centerIn: parent
+				visible: (root.agent.avatar ?? "") === ""
+
+				text: root.agent.icon ?? ""
+				color: Theme.peach
+				font.pixelSize: 22
+			}
 		}
 
 		ColumnLayout {

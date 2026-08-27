@@ -330,7 +330,10 @@ and is pinned to 120 by name: at 144 it does not come back from suspend.
 
 The agent module is the percentage of the current rate-limit window a coding
 agent has burned, beside that agent's own glyph. Clicking it (or `super+A`)
-opens a panel in three sections, in the order the questions get asked. **Limits**
+opens a panel headed by that agent's actual mark — `quickshell/.config/quickshell/assets/claude.svg`
+is the one Anthropic ships in `@anthropic-ai/sdk`, copied rather than redrawn,
+and an agent with no logo falls back to its bar glyph. Below it, three sections,
+in the order the questions get asked. **Limits**
 is one meter per window the agent reports — a session window and a weekly one
 for Claude Code, plus a per-model weekly window on the plans that have them —
 each marked with how much of the window has *elapsed*, so the gap between the

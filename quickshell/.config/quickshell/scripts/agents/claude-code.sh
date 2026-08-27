@@ -191,8 +191,8 @@ do_limits() {
 
   if [ -z "$reading" ]; then
     jq -nc --arg plan "$plan" \
-      '{id:"claude-code", name:"Claude Code", icon:"󰚩", plan:$plan,
-        available:false, limits:[]}'
+      '{id:"claude-code", name:"Claude Code", icon:"󰚩", avatar:"claude.svg",
+        plan:$plan, available:false, limits:[]}'
     return
   fi
 
@@ -210,7 +210,8 @@ do_limits() {
            else "\($m)m" end
       end;
     ($now - .at) as $age
-    | { id: "claude-code", name: "Claude Code", icon: "󰚩", plan: $plan,
+    | { id: "claude-code", name: "Claude Code", icon: "󰚩",
+        avatar: "claude.svg", plan: $plan,
         available: true, source: .source, ageSeconds: $age,
         stale: ($age >= $staleAfter * 60),
         limits: [ .limits[]
