@@ -388,6 +388,33 @@ Left and right walk the tabs, and the bar follows the tab you left open. Claude
 Code is simply the only agent installed here. `scripts/agents/README.md` is the
 contract.
 
+The weather module is a glyph and a temperature, and clicking it opens the
+conditions in full: what it feels like, humidity, wind with the compass point
+spelled out, and a row each for the next three days — weekday, sky, high and
+low. Three days rather than the sixteen Open-Meteo will hand over, because the
+question a bar module gets asked is whether this week needs a jacket, and a
+scrolling list is one nobody reads past the top of.
+
+The header is also where the location is set. By default the reading follows the
+machine: `weather-place.sh` turns the IP into coordinates through `ipwho.is` and
+those into a neighbourhood and city through OpenStreetMap's Nominatim, cached
+for an hour, and a small pin beside the name says that is what happened. Both
+services are keyless, as Open-Meteo is, so the whole module needs no account
+anywhere. Clicking the name opens an address box over it; anything Nominatim
+recognises works, and the resolved point is written to
+`~/.local/state/quickshell/weather-location.json` so it survives a relogin. The
+pin is then replaced by a clear button that hands the reading back to the
+machine.
+
+The location used to be hardcoded to Pinheiros, with a comment explaining that
+geolocating by IP reports the Proton VPN exit node rather than São Paulo. That
+is still true, and it is now the reason the address box exists rather than the
+reason there is no auto-detection: an IP lookup can do nothing about a VPN, and
+a laptop that is somewhere else this week can do nothing with a coordinate pair
+compiled into a script. The forecast cache holds the finished reading rather
+than the raw response, so a stale one keeps the place name it was actually taken
+at instead of relabelling old numbers with a new address.
+
 The night light is one of two things in the bar with no panel and no keybind:
 it is a blue-light filter, warming the screen to 4000K, and it is turned on by
 name from the launcher and off again by clicking the glyph that turning it on
