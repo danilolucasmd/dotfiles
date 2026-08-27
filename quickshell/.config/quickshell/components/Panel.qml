@@ -24,8 +24,11 @@ PanelWindow {
 	// only way to hear a modifier come back up (see the layout HUD).
 	property bool revealed: true
 	// Every panel is the same width, so opening two in turn does not read as
-	// two unrelated pieces of UI.
-	readonly property int cardWidth: 360
+	// two unrelated pieces of UI. Overridable, but only one thing overrides it:
+	// the launcher, which is not a card raised from a bar module but a window
+	// summoned into the middle of the screen, and reads as its own kind of
+	// thing on purpose.
+	property int cardWidth: 360
 	readonly property int pad: 14
 
 	default property alias content: layout.data

@@ -20,6 +20,12 @@ ShellRoot {
 	MediaPanel {}
 	EmojiPanel {}
 
+	// The two that replaced walker. Neither is a bar module and neither ever will
+	// be: they are summoned by a keybind from anywhere and have nothing worth a
+	// permanent glyph.
+	LauncherPanel {}
+	KeybindsPanel {}
+
 	AudioDevicesPanel {}
 	NetworkPanel {}
 	BluetoothPanel {}
@@ -41,8 +47,7 @@ ShellRoot {
 	//
 	// A new handler here wants two things outside this file: the `bindd` in
 	// hyprland.conf, and a desktop entry in ~/dotfiles/panels, which is what
-	// puts the panel in the walker launcher under its own name. See
-	// panels/README.md.
+	// puts the panel in the launcher under its own name. See panels/README.md.
 	IpcHandler {
 		target: "agentUsage"
 
@@ -101,6 +106,31 @@ ShellRoot {
 
 		function toggle(): void {
 			EmojiState.toggle();
+		}
+	}
+
+	// super+SPACE and super+V. One panel, two ways in: `clipboard` opens it
+	// already switched to the history, which is what the `:` prefix does from
+	// the keyboard. Both are toggles, so the key that opened it closes it.
+	IpcHandler {
+		target: "launcher"
+
+		function toggle(): void {
+			LauncherState.toggle();
+		}
+
+		function clipboard(): void {
+			LauncherState.toggleClipboard();
+		}
+	}
+
+	// super+shift+slash. Lists every bind on the system and runs the one that
+	// is chosen, so it doubles as a command palette.
+	IpcHandler {
+		target: "keybinds"
+
+		function toggle(): void {
+			KeybindsState.toggle();
 		}
 	}
 

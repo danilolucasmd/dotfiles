@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Clipboard history
+Comment=Everything copied, text and images, newest first — Super+V
+Icon=edit-paste-symbolic
+Keywords=quickshell;panel;clipboard;history;copy;paste;
+Exec=qs ipc call launcher clipboard
+Terminal=false
+StartupNotify=false
+Categories=Utility;

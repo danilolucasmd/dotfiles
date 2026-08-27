@@ -473,14 +473,15 @@ CLDR search keywords as well as the names, so
 arrows walk the grid and Return picks. Choosing one copies it, closes the panel
 and pastes it into whatever had focus, which is section 15 below.
 
-`super+E` used to open walker on elephant's `symbols` provider, and the reason
-that provider is no longer what the key reaches is ordering. It sorts by name,
-so an empty query opened on "1st place medal", "abacus", "accordion" — the emoji
-nobody wants next to the ones everybody does, with no shape to the list at all.
-elephant has no ordering knob to turn, and walker's list is flat and could not
-carry the headings even if it had one. The provider is still installed and still
-reachable under walker's `.` prefix, which is where the arrows, the maths and the
-currency signs live: those are not emoji and do not belong in the grid.
+`super+E` used to open walker on elephant's `symbols` provider, and ordering is
+why it stopped. That provider sorts by name, so an empty query opened on "1st
+place medal", "abacus", "accordion" — the emoji nobody wants next to the ones
+everybody does, with no shape to the list at all. elephant had no ordering knob
+to turn, and walker's list was flat and could not have carried the headings even
+if it had. The picker outlived both of them; what did not survive is the rest of
+that provider, the arrows and the maths and the currency signs, which went when
+walker did (section 15). They were never emoji and never belonged in this grid,
+and nothing has asked for them back.
 
 The dataset is generated rather than written: `scripts/gen-emoji-data.py` builds
 `quickshell/.config/quickshell/data/emoji.json` from Unicode's `emoji-test.txt`
@@ -494,16 +495,16 @@ rebuilt when Unicode ships a release or the font is swapped. The 1500-odd
 entries are parsed on the first open of a session rather than at login, and the
 "Frequently Used" tally lives in `~/.local/state/quickshell/emoji-usage.json`.
 
-Every panel is also reachable by name from the walker launcher, for the ones
-whose keybind you do not have in your fingers yet. `panels/` is a stow package
-of desktop entries — one per panel, each a single
+Every panel is also reachable by name from the launcher, for the ones whose
+keybind you do not have in your fingers yet. `panels/` is a stow package of
+desktop entries — one per panel, each a single
 `Exec=qs ipc call <target> <function>`, which is exactly what the matching
-`bindd` runs — symlinked into `~/.local/share/applications` and picked up by
-walker's `desktopapplications` provider with nothing to restart. Searching
-`panel` or `quickshell` lists the lot. `toggle` is the right verb even from a
-launcher: walker takes the keyboard when it opens, which clears the
-`HyprlandFocusGrab` an open panel is holding, so the panel is always already
-closed by the time the entry runs. See `panels/README.md`.
+`bindd` runs — symlinked into `~/.local/share/applications`, where
+`DesktopEntries` finds them with nothing to restart. Searching `panel` or
+`quickshell` lists the lot. `toggle` is the right verb even from a launcher: the
+launcher holds a `HyprlandFocusGrab` of its own while it is up, which clears the
+one an open panel was holding, so the panel is always already closed by the time
+the entry runs. See `panels/README.md`.
 
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
@@ -587,15 +588,14 @@ because notifications say more than their app name does:
   still opens nautilus on the folder with that file selected. There is nothing
   to annotate in an mp4.
 
-  The same editor is the second way into an image: **`ctrl+o` on an image in
-  walker's clipboard history** (`:` in the launcher) opens it in tensaku, which
-  is `image_editor_cmd` in `elephant/.config/elephant/clipboard.toml`. Return
-  there stays `copy` — the entry back onto the clipboard and pasted into the
-  window you came from, per section 15 — and it has to, because elephant offers
-  walker the same five actions for every entry (copy, edit, pin, remove,
-  localsend) and walker picks a keybind's action by taking the first one in its
-  config that the entry offers. Nothing walker can see says image or text, so
-  putting `edit` on Return would send text to a text editor along with it.
+  The same editor is the second way into an image: **`ctrl+o` on an image in the
+  clipboard history** (`super+V`, or `:` in the launcher) opens it in tensaku,
+  which is the `edit` subcommand of `quickshell/scripts/clipboard.sh`. It works
+  on the file that listing already decoded into `~/.cache/quickshell/clipboard`
+  for the thumbnail, so nothing has to be written out again to open it. Return
+  there stays paste — the entry back onto the clipboard and into the window you
+  came from, per section 15 — because that is what the history is opened for,
+  and `ctrl+o` is the exception rather than the other way round.
 - **Everything else anonymous.** A `notify-send` typed at a prompt, or a tool
   that shells out to one without naming itself (`gh-dash`, through the beeep
   library). Nothing identifies these and herdr does not claim them, so all that
@@ -846,47 +846,149 @@ AltGr, which the `us,intl` secondary layout uses for accented characters.
 
 ---
 
-## 15. Launcher Pastes What You Pick
+## 15. The Launcher
 
-`super+V` opens walker on the **clipboard history** (elephant's `clipboard`
-provider, also reachable in the launcher under the `:` prefix), and `super+E`
-opens the **emoji picker** — quickshell's own panel now, described in section 5.
-Return on an entry used to do exactly one thing: put it back on the clipboard,
-leaving you to paste it yourself. It now also pastes it into whatever window was
-focused before the picker opened, which is the only reason either of them gets
-opened in the first place.
+`super+SPACE` opens the launcher, `super+V` opens it already switched to the
+clipboard history, and `super+shift+/` opens the keybind sheet. All three are
+quickshell panels — `qs ipc call launcher toggle`, `... launcher clipboard`,
+`... keybinds toggle` — and none of them is a bar module, because none of them
+has anything to say while it is closed.
 
-No elephant provider has a paste action to switch to. What they have is a
-`command` -- the thing elephant shells out to when the entry is chosen,
-defaulting to a bare `wl-copy` -- and they hand it the entry on stdin the same
-way: text as text, an image as the raw bytes of the PNG elephant already cached.
-So the `clipboard` and `symbols` configs point that `command` at
-`scripts/.config/scripts/copy-and-paste.sh`, which copies exactly as before and
-then presses `ctrl+v` with `wtype` over the virtual-keyboard protocol. `ctrl+v`
-and not `ctrl+shift+v` because ghostty is bound to paste on `ctrl+v` here, so one
-chord covers the terminal and every GUI app, and the script never has to ask
-what it is pasting into.
+They replaced **walker**, and with walker went **elephant**, the provider daemon
+it talked to: six AUR packages and a socket protocol whose entire job was to put
+a list of `.desktop` files on a screen. Everything that stack actually did is
+native to what was already running. `DesktopEntries` is a Quickshell singleton
+that indexes the same files walker's `desktopapplications` provider did.
+`Hyprland.toplevels` is a live window list the shell was already holding. The
+clipboard is `cliphist`, which is in the official repos where elephant's
+provider was an AUR build. And the calculator is `qalc`, which elephant was
+shelling out to anyway.
 
-The emoji panel runs the same script rather than a version of its own, since the
-wait below is the subtle part and there is no reason for two copies of it to
-drift. It calls it as `copy-and-paste.sh --layer quickshell:emoji <emoji>`: the
-emoji arrives as an argument instead of on stdin, and the layer to wait on is
-its own surface rather than walker's. That is also why the panel takes a layer
-namespace to itself instead of the `quickshell:panel` the others share -- a
-panel left open elsewhere must not be able to hold the wait open.
+That last one was not a lateral move. elephant's `calc` provider answered
+`100 usd to brl` with `14.34121571 in·€²`; `qalc -t` answers
+`BRL 514.7134299`. The currency conversion that had been quietly broken was
+never qalc's fault, and dropping the layer in between fixed it.
+
+### One window, six modes
+
+The prefixes are walker's, character for character, deliberately — they are in
+the fingers and there was nothing to gain by retraining them:
+
+| Prefix | Mode | What it lists |
+| --- | --- | --- |
+| *(none)* | Apps | `.desktop` entries, most-used first |
+| `:` | Clipboard | Everything copied, newest first |
+| `=` | Calculator | `qalc`, including unit and currency conversion |
+| `$` | Windows | Every open window, by title or class |
+| `>` | Run | A shell command, with `$PATH` completion |
+| `@` | Web | A search, or a URL to open |
+
+Apps mode also answers the other two things walker had in its default provider
+set. A query that is unambiguously a sum gets a result row above the app list,
+and a query that matched no app at all falls through to a web search. The guard
+on the first of those is strict on purpose: `qalc` reads everything as units and
+will answer `firefox` with `0 B` and `hello world` with `6.5E−26 B²·h²·L³`, so
+nothing short of a digit-operator-digit, a `<number> <unit> to <unit>`, or a
+named function gets to be arithmetic. The `=` prefix skips the guard, which is
+the way to ask when it guesses wrong.
+
+Return activates, `shift+Return` activates and leaves the panel up, and the line
+along the bottom names whatever else the current mode can do — an unlabelled
+`ctrl+shift+D` that wipes a clipboard is a trap. The arrows wrap, unlike the
+bar's panels: a launcher list is walked from the bottom as often as from the
+top, and walker wrapped.
+
+Ranking is a fuzzy match plus a launch history. The match is three tiers in the
+order someone typing expects them — what starts with the query, what contains it
+at a word boundary, then what merely spells it out in order, which is what makes
+`gimp` find "GNU Image Manipulation Program". On top of that sits a frecency
+score capped at 240, so the thing you always open wins a one-letter query
+without a month of habit being able to outvote an exact match. `ctrl+P` pins an
+app above all of it. Both live in
+`~/.local/state/quickshell/launcher-usage.json`.
+
+### The clipboard
+
+`cliphist` is a store, not a daemon: it is fed by two `wl-paste --watch`
+processes, one for text and one for images, because `wl-paste` watches a single
+MIME type at a time and an image on the clipboard is not offered as text.
+Starting them is `scripts/clipboard.sh watch` in `hyprland.conf`, which clears
+its own stale watchers first so that running it again is how `ctrl+P` resumes a
+paused history — cliphist has no pause of its own, so pausing is stopping the
+things that feed it.
+
+Clipboard mode is the one mode with a second column. The card widens and a
+preview pane opens to the right of the list, because a listing line is not
+enough to tell two entries apart that begin the same way — and it never can be,
+since cliphist folds every entry onto one line to list it and a row is 46px
+besides. The pane shows an image at pane size, or the text as it was actually
+copied, newlines and indentation intact. That last part costs a `decode`, so it
+is fetched for the row the cursor is on rather than for the hundred it walked
+past, debounced by 90ms so that holding Down does not fork per row and capped at
+4KB because the pane is for recognising an entry, not reading it.
+
+Everything the panel does to an entry is a subcommand of that same script,
+because an entry is addressed by a cliphist id and `cliphist delete` will not
+take one: it wants the whole listing line back on stdin. `list` also decodes any
+image it has not seen into `~/.cache/quickshell/clipboard/<id>.<ext>` — the
+bytes only come back through `decode`, and the panel cannot draw a thumbnail
+without a file to point an `Image` at. Ids are never reused, so a cached file
+can only ever be the entry it was named for. `ctrl+O` opens an image in tensaku,
+which is the same annotation editor a screenshot notification opens (section 6),
+and it works because that decode already happened.
+
+### The keybind sheet
+
+`super+shift+/` lists every bind on the system, built from `hyprctl binds -j` at
+open time — so it is the live bind table and never a second copy of
+`hyprland.conf` that could drift. Adding a `bindd` is all it takes to appear
+there. Selecting a row runs it, so the sheet doubles as a command palette; a
+mouse bind has nothing to dispatch and is listed dimmed and read-only.
+
+`scripts/keybinds.py` still does the parsing — the modmask, the evdev keycodes a
+`code:59` bind comes back as, the XF86 media keysyms — but it now prints JSON and
+stops. It used to draw the sheet itself, by padding a key column to a fixed
+width and piping the lot into `walker --dmenu --index`, which was the best that
+could be done with a flat list of strings. The panel draws each modifier as a
+keycap of its own, which is why `keys` is a list now rather than a `SUPER + T`
+string. Dispatching is the panel's job for a reason: it holds a focus grab, and
+a good third of what it can run is `exec` on something that wants the keyboard —
+its own bind included.
+
+### Pasting what you pick
+
+`super+V` and `super+E` both exist to put something into the window you were
+just in, so Return on an entry copies it **and** pastes it. That was true under
+walker too, and the script that does it is the one piece of that era that
+survived unchanged in substance:
+`scripts/.config/scripts/copy-and-paste.sh`. It copies, then presses `ctrl+v`
+with `wtype` over the virtual-keyboard protocol. `ctrl+v` and not
+`ctrl+shift+v`, because ghostty is bound to paste on `ctrl+v` here, so one chord
+covers the terminal and every GUI app and the script never has to ask what it is
+pasting into.
+
+The clipboard hands it the entry on stdin — text as text, an image as the raw
+bytes of the cached PNG, so nothing in the script has to know which it is
+holding. The emoji picker calls the same script with the emoji as an argument
+and `--layer quickshell:emoji`, and runs it rather than a version of its own
+because the wait below is the subtle part and there is no reason for two copies
+of it to drift.
 
 The paste cannot fire immediately, and the delay is not a guessed `sleep`. The
-picker still holds exclusive keyboard focus at the moment the command runs, so a
-`ctrl+v` sent too early is typed into its own search input and lost when it
-closes. The script polls `hyprctl layers` until that layer surface is gone -- the
-one honest signal that focus is on its way back -- waits another 80ms for the
-compositor to actually hand it over, and gives up after about 1.2s so a picker
-deliberately left open drops the paste rather than firing it at a random
-moment.
+panel still holds the keyboard at the moment the command runs, so a `ctrl+v`
+sent too early is typed into its own search field and lost when it closes. The
+script polls `hyprctl layers` until that layer surface is gone — the one honest
+signal that focus is on its way back — waits another 80ms for the compositor to
+actually hand it over, and gives up after about 1.2s so a panel left open drops
+the paste rather than firing it at a random moment. That wait is also why the
+launcher and the emoji picker each take a layer namespace of their own,
+`quickshell:launcher` and `quickshell:emoji`, instead of the `quickshell:panel`
+the bar's cards share: a panel left open elsewhere must not be able to hold the
+wait open.
 
-Keeping the copy matters beyond habit: the `symbols` provider's `history = true`
-ordering is built on entries going through the clipboard, and a clipboard entry
-you picked belongs at the top of the history again.
+The copy is kept as well as the paste. The thing that was chosen does belong on
+the clipboard, and pasting it somewhere is not a reason for the next `ctrl+v` to
+produce something else.
 
 ---
 

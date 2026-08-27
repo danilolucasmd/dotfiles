@@ -13,8 +13,9 @@ Three sources, all fetched fresh:
   emoji-test.txt      the emoji themselves, already in CLDR order -- which is
                       the order every emoji keyboard uses, macOS included, and
                       the whole reason this file exists. elephant's `symbols`
-                      provider sorted alphabetically by name, so an empty query
-                      opened on medals and abacuses.
+                      provider, which super+E reached before this, sorted
+                      alphabetically by name -- so an empty query opened on
+                      medals and abacuses.
   annotations/en.xml  CLDR search keywords ("lol", "joy" -> face with tears of
                       joy). Names alone make for a picker where nothing but the
                       official noun finds anything.

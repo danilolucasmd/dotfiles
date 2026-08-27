@@ -276,8 +276,14 @@ sudo systemctl enable sddm
 # passkey confirmed; nothing else here depends on them. pacman-contrib is what provides
 # `checkupdates`, which the bar's updates module shells out to. wtype is the
 # virtual-keyboard client behind copy-and-paste.sh, which is how picking an
-# entry in walker's clipboard history, or an emoji in the quickshell picker,
-# pastes it rather than only refilling the clipboard.
+# entry in the clipboard history, or an emoji in the quickshell picker, pastes
+# it rather than only refilling the clipboard.
+#
+# cliphist and libqalculate are the two halves of the launcher that are not
+# quickshell's own: cliphist is the clipboard store the `wl-paste --watch` pair
+# in hyprland.conf feeds, and libqalculate brings `qalc`, which answers the `=`
+# prefix. Both replaced an elephant provider, and both are in the official
+# repos where those were three AUR builds.
 echo "==> Installing pacman packages"
 
 pac \
@@ -289,6 +295,8 @@ pac \
   ripgrep \
   fd \
   wl-clipboard \
+  cliphist \
+  libqalculate \
   wtype \
   wf-recorder \
   unzip \
@@ -449,12 +457,6 @@ aur_packages=(
   rtl8188gu-dkms-git
   hunk-bin
   herdr-bin
-  elephant-bin
-  elephant-desktopapplications-bin
-  elephant-clipboard-bin
-  elephant-symbols-bin # walker's `.` prefix: arrows, maths, currency (elephant/symbols.toml)
-  elephant-calc-bin    # `calc` is in walker's default provider list
-  walker-bin
   gh-dash-bin
   ttf-joypixels # the colour emoji font, and what gen-emoji-data.py checks coverage against
   1password
@@ -581,11 +583,10 @@ sudo stow -t / sddm
 
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
-  btop elephant fastfetch ghostty git hunk hypr lazygit nvim scripts sounds \
-  quickshell tensaku walker wallpapers yazi zsh
+  btop fastfetch ghostty git hunk hypr lazygit nvim scripts sounds \
+  quickshell tensaku wallpapers yazi zsh
 stow \
   btop \
-  elephant \
   fastfetch \
   ghostty \
   git \
@@ -597,7 +598,6 @@ stow \
   sounds \
   quickshell \
   tensaku \
-  walker \
   wallpapers \
   yazi \
   zsh
@@ -636,7 +636,7 @@ stow --no-folding --ignore='^dconf\.ini$' nautilus
 try "nautilus/GTK preferences" dconf load / < "$DOTFILES/nautilus/dconf.ini"
 
 # panels carries the desktop entries that put every quickshell panel in the
-# walker launcher. --no-folding so that ~/.local/share/applications stays a real
+# launcher by name. --no-folding so that ~/.local/share/applications stays a real
 # directory -- webapps/generate.sh writes the Brave web-app launchers in there,
 # and folding would send those into this repo. See panels/README.md.
 stow --no-folding panels

@@ -107,7 +107,7 @@ def main() -> int:
     def focus(cls: str) -> None:
         nonlocal focused
         focused = cls
-        if not cls:  # a layer surface (walker, lock screen); leave the layout be
+        if not cls:  # a layer surface (the launcher, lock screen); leave the layout be
             return
         if cls in layouts:
             apply(layouts[cls])

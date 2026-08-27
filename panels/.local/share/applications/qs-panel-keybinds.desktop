@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Keybinds
+Comment=Every keybind on the system, searchable and runnable — Super+Shift+/
+Icon=preferences-desktop-keyboard-shortcuts-symbolic
+Keywords=quickshell;panel;keybind;shortcut;cheatsheet;help;
+Exec=qs ipc call keybinds toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

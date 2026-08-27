@@ -20,8 +20,8 @@ a replace. Anything else that turns out to be dconf-shaped belongs there too.
 The live config is a symlink into this repo, so there is no deploy step and no
 copy to keep in sync. Two consequences worth holding onto:
 
-- Most packages are folded -- `~/.config/quickshell`, `~/.config/hypr` and
-  `~/.config/walker` are single symlinks to the directory here -- so a **new**
+- Most packages are folded -- `~/.config/quickshell` and `~/.config/hypr` are
+  single symlinks to the directory here -- so a **new**
   file appears live the moment it is written. The exceptions are the packages
   stowed `--no-folding` (`panels`, `dbus`, `claude`, `herdr`, `kanata`,
   `nautilus`), where each file is linked individually and a new one needs
@@ -39,9 +39,12 @@ copy to keep in sync. Two consequences worth holding onto:
 - **Hyprland** autoreloads `hyprland.conf`; `hyprctl reload` forces it.
   `hyprctl binds -j` is the live bind table, `hyprctl layers` shows whether a
   panel is actually mapped, `hyprctl monitors -j` the display state.
-- **walker / elephant** pick up new desktop entries with nothing to restart.
-  `elephant query 'desktopapplications;<query>;20'` is the launcher's own search,
-  which is the honest way to check an entry is found and how it will read.
+- **the launcher** is a quickshell panel, so it hot-reloads with the rest of the
+  shell and picks up a new desktop entry with nothing to restart.
+  `qs ipc call launcher toggle` opens it, and `grim` on the result is the honest
+  way to check an entry is found and how it will read -- there is no query
+  command to ask instead. `clipboard.sh list` and `keybinds.py` both print the
+  JSON their panels draw, which is where to look when a list is wrong.
 - **kanata** needs `systemctl --user restart kanata` after a keymap edit.
 
 ## A change is not done until it is portable
@@ -71,8 +74,8 @@ more files than it looks. All of these, or it is only half-added:
    an `IpcHandler` so `qs ipc call <target> toggle` reaches it.
 5. `hypr/.config/hypr/hyprland.conf` -- a `bindd` running that IPC call.
 6. `panels/.local/share/applications/qs-panel-<slug>.desktop` -- the same IPC
-   call as an `Exec`, which is what puts the panel in the walker launcher under
-   its own name. See `panels/README.md`.
+   call as an `Exec`, which is what puts the panel in the launcher under its own
+   name. See `panels/README.md`.
 
 Scripts a panel needs go in `quickshell/.config/quickshell/scripts/`, reached
 through `Paths.scripts`, and print one line of JSON for a `JsonScript`.

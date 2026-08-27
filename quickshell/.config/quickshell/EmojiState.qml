@@ -8,17 +8,18 @@ import qs
 // The emoji picker: the dataset, the frequently-used tally, and what happens
 // when one is chosen.
 //
-// super+E used to open walker on elephant's `symbols` provider, which sorts by
+// super+E used to open walker on elephant's `symbols` provider, which sorted by
 // name -- so an empty query opened on "1st place medal", "abacus", "accordion",
 // with the emoji nobody wants next to the ones everybody does and no shape to
 // the list at all. Every emoji keyboard worth using, macOS's included, is in
-// CLDR order under the standard headings instead, so this replaces the provider
-// rather than trying to reorder it: elephant has no ordering knob, and walker's
-// list is flat and cannot carry the headings.
+// CLDR order under the standard headings instead, so this replaced the provider
+// rather than trying to reorder it: elephant had no ordering knob, and walker's
+// list was flat and could not carry the headings.
 //
-// The `.` prefix in walker still reaches the symbols provider, which is where
-// the arrows, the maths and the currency signs live -- none of which are emoji
-// and none of which belong in this grid.
+// This outlived both of them by a while; the rest of that provider -- the
+// arrows, the maths, the currency signs, reachable under walker's `.` prefix --
+// went when walker did and has not been missed. None of it was ever emoji, and
+// none of it would have belonged in this grid.
 Singleton {
 	id: root
 
@@ -93,10 +94,10 @@ Singleton {
 		paste.running = true;
 	}
 
-	// The same script elephant runs for the clipboard and symbols providers --
-	// the copy, then the wait for the picker's surface to vanish, then ctrl+v.
-	// Shared rather than reimplemented here because the wait is the subtle part
-	// and there is no reason for two versions of it to drift.
+	// The same script the clipboard history runs on a chosen entry -- the copy,
+	// then the wait for the picker's surface to vanish, then ctrl+v. Shared
+	// rather than reimplemented here because the wait is the subtle part and
+	// there is no reason for two versions of it to drift.
 	Process {
 		id: paste
 	}

@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-"""Keybind cheatsheet, in Walker.
+"""Keybind cheatsheet, as JSON for the quickshell panel.
 
 Reads the live bind table out of `hyprctl binds -j`, so nothing here is a
 second copy of the config that could drift: adding a bind to hyprland.conf is
 all it takes for it to show up. Each bind carries its own label because they
-are all written as `bindd` — the description is the third field:
+are all written as `bindd` -- the description is the third field:
 
     bindd = $mainMod, T, Open terminal, exec, $terminal
 
 A bind without one still lists; it falls back to `dispatcher arg`, which is a
 hint to go and give it a description.
 
-Selecting a row runs the bind, so the sheet doubles as a command palette.
-Mouse binds have nothing to dispatch and are listed read-only.
+This prints and exits. It used to draw the sheet itself, by padding the key
+column to a fixed width and piping the lot into `walker --dmenu --index`; the
+panel that replaced walker draws each modifier as a keycap of its own, which is
+why `keys` here is a list rather than the "SUPER + T" string it once was.
+Dispatching is the panel's job too -- it has to close before it fires, because
+the bind it is about to run may well be the one that opens a panel.
 """
 
 import json
-import os
 import re
 import subprocess
 import sys
@@ -146,53 +149,31 @@ def flags(bind):
 
 
 def rows(binds, codes):
-    """(keys, description, bind) per bind, submaps folded into the keys column."""
+    """One record per bind: the keycaps to draw, the label, and what to run."""
     out = []
     for bind in binds:
-        keys = pretty_mods(bind["modmask"]) + [pretty_key(bind, codes)]
-        text = label(bind)
         extra = flags(bind)
         if bind["submap"]:
             extra.insert(0, "submap %s" % bind["submap"])
-        if extra:
-            text = "%s  (%s)" % (text, ", ".join(extra))
-        out.append((" + ".join(keys), text, bind))
+        out.append({
+            "keys": pretty_mods(bind["modmask"]) + [pretty_key(bind, codes)],
+            "description": label(bind),
+            # Rendered as a parenthetical after the label. Empty for all but a
+            # handful, which is the point -- see flags().
+            "note": ", ".join(extra),
+            # What the panel dispatches. A mouse bind has nothing to run and is
+            # listed read-only, which is what the empty dispatcher says.
+            "dispatcher": "" if bind["mouse"] else bind["dispatcher"],
+            "arg": bind["arg"],
+        })
     return out
-
-
-def dispatch(bind):
-    if bind["mouse"]:
-        return
-    args = ["hyprctl", "dispatch", bind["dispatcher"]]
-    if bind["arg"]:
-        args.append(bind["arg"])
-    subprocess.run(args, stdout=subprocess.DEVNULL)
 
 
 def main():
     binds = json.loads(subprocess.run(
         ["hyprctl", "binds", "-j"], capture_output=True, text=True, check=True).stdout)
-    table = rows(binds, keycode_names())
-    if not table:
-        return 0
-
-    # The Walker theme sets JetBrainsMono for the whole window, so padding the
-    # key column to the widest entry actually lines the descriptions up.
-    width = max(len(keys) for keys, _, _ in table)
-    menu = "".join("%-*s   %s\n" % (width, keys, text) for keys, text, _ in table)
-
-    # --index hands back the row number rather than its text, so the lookup
-    # below is exact and the padding above cannot confuse it.
-    walker = subprocess.run(
-        ["walker", "--dmenu", "--index", "--placeholder", "Search keybinds"],
-        input=menu, capture_output=True, text=True)
-    picked = walker.stdout.strip()
-    if walker.returncode != 0 or not picked.isdigit():
-        return 0
-
-    index = int(picked)
-    if 0 <= index < len(table):
-        dispatch(table[index][2])
+    json.dump({"binds": rows(binds, keycode_names())}, sys.stdout)
+    print()
     return 0
 
 
