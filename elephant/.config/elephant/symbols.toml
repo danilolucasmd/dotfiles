@@ -1,4 +1,7 @@
-command = 'wl-copy'
+# Return copies the emoji and pastes it into whatever was focused before the
+# picker opened. elephant's default is a bare `wl-copy`, which stopped at the
+# clipboard; see the script for why the paste cannot fire immediately.
+command = "~/.config/scripts/copy-and-paste.sh"
 history = true
 history_when_empty = true
 locale = 'en'

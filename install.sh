@@ -274,7 +274,10 @@ sudo systemctl enable sddm
 # bluez/bluez-utils back the quickshell Bluetooth module and panel, bluetui, and
 # the `bluetoothctl pair` the panel falls back to for a device that wants a
 # passkey confirmed; nothing else here depends on them. pacman-contrib is what provides
-# `checkupdates`, which the bar's updates module shells out to.
+# `checkupdates`, which the bar's updates module shells out to. wtype is the
+# virtual-keyboard client behind copy-and-paste.sh, which is how picking an
+# entry in walker's clipboard history or emoji picker pastes it rather than
+# only refilling the clipboard.
 echo "==> Installing pacman packages"
 
 pac \
@@ -286,6 +289,7 @@ pac \
   ripgrep \
   fd \
   wl-clipboard \
+  wtype \
   wf-recorder \
   unzip \
   yazi \

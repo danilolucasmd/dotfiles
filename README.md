@@ -560,12 +560,12 @@ because notifications say more than their app name does:
   The same editor is the second way into an image: **`ctrl+o` on an image in
   walker's clipboard history** (`:` in the launcher) opens it in tensaku, which
   is `image_editor_cmd` in `elephant/.config/elephant/clipboard.toml`. Return
-  there stays `copy` — the entry straight back onto the clipboard — and it has
-  to, because elephant offers walker the same five actions for every entry
-  (copy, edit, pin, remove, localsend) and walker picks a keybind's action by
-  taking the first one in its config that the entry offers. Nothing walker can
-  see says image or text, so putting `edit` on Return would send text to a text
-  editor along with it.
+  there stays `copy` — the entry back onto the clipboard and pasted into the
+  window you came from, per section 15 — and it has to, because elephant offers
+  walker the same five actions for every entry (copy, edit, pin, remove,
+  localsend) and walker picks a keybind's action by taking the first one in its
+  config that the entry offers. Nothing walker can see says image or text, so
+  putting `edit` on Return would send text to a text editor along with it.
 - **Everything else anonymous.** A `notify-send` typed at a prompt, or a tool
   that shells out to one without naming itself (`gh-dash`, through the beeep
   library). Nothing identifies these and herdr does not claim them, so all that
@@ -816,7 +816,42 @@ AltGr, which the `us,intl` secondary layout uses for accented characters.
 
 ---
 
-## 15. General Notes
+## 15. Launcher Pastes What You Pick
+
+`super+V` opens walker on the **clipboard history** and `super+E` on the
+**emoji picker** (elephant's `clipboard` and `symbols` providers; the same two
+are reachable in the launcher under the `:` and `.` prefixes). Return on an
+entry used to do exactly one thing: put it back on the clipboard, leaving you to
+paste it yourself. It now also pastes it into whatever window was focused before
+walker opened, which is the only reason either of those pickers gets opened in
+the first place.
+
+Neither provider has a paste action to switch to. What both have is a `command`
+-- the thing elephant shells out to when the entry is chosen, defaulting to a
+bare `wl-copy` -- and both hand it the entry on stdin the same way: text as
+text, an image as the raw bytes of the PNG elephant already cached. So both
+configs point that `command` at `scripts/.config/scripts/copy-and-paste.sh`,
+which copies exactly as before and then presses `ctrl+v` with `wtype` over the
+virtual-keyboard protocol. `ctrl+v` and not `ctrl+shift+v` because ghostty is
+bound to paste on `ctrl+v` here, so one chord covers the terminal and every GUI
+app, and the script never has to ask what it is pasting into.
+
+The paste cannot fire immediately, and the delay is not a guessed `sleep`.
+walker still holds exclusive keyboard focus at the moment elephant runs the
+command, so a `ctrl+v` sent too early is typed into walker's own search input
+and lost when it closes. The script polls `hyprctl layers` until walker's layer
+surface is gone -- the one honest signal that focus is on its way back -- waits
+another 80ms for the compositor to actually hand it over, and gives up after
+about 1.2s so a walker deliberately left open drops the paste rather than firing
+it at a random moment.
+
+Keeping the copy matters beyond habit: the emoji picker's `history = true`
+ordering is built on entries going through the clipboard, and a clipboard entry
+you picked belongs at the top of the history again.
+
+---
+
+## 16. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`
