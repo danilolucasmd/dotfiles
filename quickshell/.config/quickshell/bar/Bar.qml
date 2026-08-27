@@ -79,12 +79,23 @@ Variants {
 				Clock {}
 			}
 
-			// The recording dot sits beside the clock but not *in* the centre
-			// group: anchored to its right edge rather than laid out in the
-			// row, so it comes and goes without the date and time sliding over
-			// to make room for it.
-			Recording {
+			// The keep-awake mug and the recording dot sit beside the clock but
+			// not *in* the centre group: anchored off its right edge rather
+			// than laid out in the row, so the dot comes and goes without the
+			// date and time sliding over to make room for it. The mug is
+			// permanent and could have been laid out in the row, but it is the
+			// thing the dot is anchored to, and a chain of anchors is easier to
+			// follow than a row that one indicator hangs off the end of.
+			KeepAwake {
+				id: keepAwake
+
 				anchors.left: centre.right
+				anchors.leftMargin: -7
+				anchors.verticalCenter: parent.verticalCenter
+			}
+
+			Recording {
+				anchors.left: keepAwake.right
 				anchors.verticalCenter: parent.verticalCenter
 			}
 

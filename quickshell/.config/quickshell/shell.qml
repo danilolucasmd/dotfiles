@@ -170,4 +170,16 @@ ShellRoot {
 			NightLightState.toggle();
 		}
 	}
+
+	// The other one that opens nothing: it holds a logind idle inhibitor for as
+	// long as it is on, so the screen stays up and the machine stays awake. The
+	// bar mug is always there to click, but the launcher entry is what the
+	// toggle was asked for -- it has no keybind.
+	IpcHandler {
+		target: "keepAwake"
+
+		function toggle(): void {
+			KeepAwakeState.toggle();
+		}
+	}
 }

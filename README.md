@@ -154,10 +154,11 @@ backlight-to-monitor discovery, and matching a notification against the window
 list to find the app that sent it. `updates.sh` shells out to
 `checkupdates`, which is why `pacman-contrib` is in the package list.
 
-The centre group is the weather and the clock, and two indicators that are
-anchored to its edges rather than laid out in it: the recording dot on the
-right, the night light glyph on the left. Both come and go mid-session, and
-anchoring is what keeps the clock from sliding sideways when they do.
+The centre group is the weather and the clock, with three more things anchored
+to its edges rather than laid out in it: the night light glyph on the left, the
+keep-awake mug and then the recording dot on the right. The glyph and the dot
+come and go mid-session, and anchoring is what keeps the clock from sliding
+sideways when they do; the mug is always there, and is what the dot anchors to.
 
 The right cluster is split in two. Media, keyboard layout, volume, network,
 bluetooth, battery, display, performance, agent usage, updates and
@@ -372,10 +373,10 @@ Left and right walk the tabs, and the bar follows the tab you left open. Claude
 Code is simply the only agent installed here. `scripts/agents/README.md` is the
 contract.
 
-The night light is the one thing in the bar with no panel and no keybind: it is
-a blue-light filter, warming the screen to 4000K, and it is turned on by name
-from the launcher and off again by clicking the glyph that turning it on puts
-beside the weather. Nothing sits idle waiting for it. `hyprsunset` ships a
+The night light is one of two things in the bar with no panel and no keybind:
+it is a blue-light filter, warming the screen to 4000K, and it is turned on by
+name from the launcher and off again by clicking the glyph that turning it on
+puts beside the weather. Nothing sits idle waiting for it. `hyprsunset` ships a
 systemd user unit that would run all session and be told to go neutral while the
 filter is off, but the filter *is* the process — the warm ramp lives on the
 `wlr-gamma-control` object hyprsunset holds, and the compositor gives every
@@ -389,6 +390,36 @@ happens while editing quickshell rather than while using it.
 The glyph is a setting sun rather than the moon the desktop convention would
 use, because the weather module two places along already draws a moon for a
 clear night.
+
+Keep awake is the other one with no panel: the coffee mug between the clock and
+the recording dot. It fills as well as changes colour — an outlined dim cup
+while the machine is free to lock and suspend, a filled yellow one while it is
+not — and the two glyphs are the same drawing at the same ink box, so nothing
+beside it moves when the state flips. It is drawn a notch smaller than every
+other icon on the bar, at 14px rather than 16, and pushed a pixel down: the cup
+stands on a thin saucer line, which puts its ink weight above the middle of the
+box it is centred in, and at 16 and dead centre it read as sitting high against
+the digits next to it. Clicking it toggles, and so
+does its launcher entry, which is the way in it was asked for — it has no
+keybind either.
+
+What it holds while it is on is a single logind inhibitor lock,
+`systemd-inhibit --what=idle` wrapped around a command that never finishes.
+hypridle watches logind's `BlockInhibited` property and skips every listener it
+has while an idle lock is held, so one lock is the whole policy: no `hyprlock`
+at 300s, no `dpms off` at 330s, and no idle suspend at 600s either, since that
+suspend is something hypridle asks `lid.sh` for rather than something logind
+does on its own. Nothing in `hypridle.conf` knows the toggle exists.
+
+The lock is `--what=idle` and not `idle:sleep` on purpose. Closing the lid with
+no external monitor still suspends on battery: that is a laptop going into a
+bag, not a machine going idle, and blocking it would leave the thing running
+warm in there because of a toggle flipped hours earlier for a download. Keep
+awake stops the machine deciding to sleep on its own; asking it to sleep still
+works. The state lives in the process the same way the night light's does —
+`systemd-inhibit` dying takes the mug's colour with it rather than leaving it
+lit over a machine that is free to lock again — and reloading the shell drops
+the lock for the same reason it turns the filter off.
 
 Every panel is also reachable by name from the walker launcher, for the ones
 whose keybind you do not have in your fingers yet. `panels/` is a stow package
