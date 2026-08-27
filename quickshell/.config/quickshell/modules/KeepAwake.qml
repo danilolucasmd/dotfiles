@@ -1,4 +1,3 @@
-import QtQuick
 import qs
 import qs.components
 
@@ -13,12 +12,13 @@ import qs.components
 //
 // Bar.qml parks it between the clock and the recording dot.
 BarItem {
-	// No left margin: the clock's own 16px is the gap the mug sits in, the same
-	// way the recording dot used to sit in it. The 8px on the right is the
-	// clearance to that dot, which now hangs off this module instead.
-	rightMargin: 8
+	// The 8px is the clearance to the recording dot, which hangs off this
+	// module rather than off the clock now. The gap on the *left* is not set
+	// here at all -- it is the negative anchor margin in Bar.qml, which pulls
+	// the mug back out of the clock's own trailing 16px.
+	rightMargin: 10
 
-	tooltip: KeepAwakeState.enabled ? "Keep awake on — screen will not lock or blank, machine will not suspend itself. Click to turn it off" : "Keep awake off — click to keep the screen and the machine up"
+	tooltip: KeepAwakeState.enabled ? "Keep awake on" : "Keep awake off"
 
 	onClicked: KeepAwakeState.toggle()
 

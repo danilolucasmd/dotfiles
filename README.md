@@ -225,7 +225,7 @@ confirmed has nobody to confirm it; the panel says so and points at
 One thing the module does not take from Quickshell's BlueZ client, because it
 cannot be trusted after a resume, is whether the adapter is powered. The
 adapter here is a USB dongle: waking from suspend re-enumerates it, bluetoothd
-drops `/org/bluez/hci0` and publishes it again, and the `Powered: true` that
+drops `/org/bluez/hci0` and publishes it again, and the `PropertiesChanged` that
 follows a few milliseconds later arrives before Quickshell has finished
 subscribing to the new object — so it is delivered to nobody, and the bar and
 the panel go on reporting a Bluetooth that is off while music plays through it.
@@ -233,6 +233,21 @@ the panel go on reporting a Bluetooth that is off while music plays through it.
 into the adapter when the two disagree. It runs when the adapter is replaced —
 a burst of checks, since the dongle needs a few seconds to finish coming up —
 and once more each time the panel is opened.
+
+The script reads two properties, not one, and the second is what makes the
+repair land. That missed signal carried `Powered` and `PowerState` together, so
+both go stale together: Quickshell is left believing the adapter is powered off
+*and* still `off-enabling`, a full second after BlueZ has settled it to `on`.
+An adapter that looks mid-transition is one the state deliberately will not
+write to — the switch is left alone rather than bounced a second time on a
+double click — so the first version of this repair asked BlueZ the right
+question every two seconds and then declined to act on the answer, forever.
+Reading `PowerState` too means the mid-transition test is BlueZ's own answer
+rather than the stale copy, and the two properties are believed or discarded as
+a pair. A reading is discarded whenever the adapter has moved since it was
+asked for, so a burst still in flight cannot undo a switch the user has just
+flipped; the repair's own write is the one move that does not count, since it
+lands on exactly what the reading said.
 
 Until this panel existed, clicking the module opened buds-tui in a terminal —
 reasonable while the only Bluetooth device here was one pair of earbuds, which
@@ -396,12 +411,13 @@ the recording dot. It fills as well as changes colour — an outlined dim cup
 while the machine is free to lock and suspend, a filled yellow one while it is
 not — and the two glyphs are the same drawing at the same ink box, so nothing
 beside it moves when the state flips. It is drawn a notch smaller than every
-other icon on the bar, at 14px rather than 16, and pushed a pixel down: the cup
-stands on a thin saucer line, which puts its ink weight above the middle of the
-box it is centred in, and at 16 and dead centre it read as sitting high against
-the digits next to it. Clicking it toggles, and so
-does its launcher entry, which is the way in it was asked for — it has no
-keybind either.
+other icon on the bar, at 14px rather than 16: the cup stands on a thin saucer
+line, which puts its ink weight above the middle of the box it is centred in,
+and at 16 it read as sitting high against the digits next to it. The gap it
+leaves to the date is pulled back to match the gap between the temperature and
+the date on the other side of the clock. Clicking it toggles, and so does its
+launcher entry, which is the way in it was asked for — it has no keybind
+either.
 
 What it holds while it is on is a single logind inhibitor lock,
 `systemd-inhibit --what=idle` wrapped around a command that never finishes.

@@ -29,10 +29,10 @@ Singleton {
 	readonly property bool enabled: adapter?.enabled ?? false
 	// rfkill. Nothing the panel's switch does brings the adapter back from
 	// this one -- it is `rfkill unblock bluetooth` or the laptop's own key.
-	readonly property bool blocked: adapter?.state === BluetoothAdapterState.Blocked
+	readonly property bool blocked: reading ? reading.powerState === "off-blocked" : adapter?.state === BluetoothAdapterState.Blocked
 	// Mid-transition. The switch is left alone while this is true rather than
 	// bouncing the adapter a second time on a double click.
-	readonly property bool settling: adapter?.state === BluetoothAdapterState.Enabling || adapter?.state === BluetoothAdapterState.Disabling
+	readonly property bool settling: reading ? (reading.powerState === "off-enabling" || reading.powerState === "on-disabling") : (adapter?.state === BluetoothAdapterState.Enabling || adapter?.state === BluetoothAdapterState.Disabling)
 
 	readonly property bool discovering: adapter?.discovering ?? false
 
@@ -263,7 +263,15 @@ Singleton {
 	property double checkSentAt: 0
 	property double adapterMovedAt: 0
 
-	onEnabledChanged: adapterMovedAt = Date.now()
+	// A move that lands on what the reading already said is repair() itself
+	// arriving, not the user clicking, and it leaves the reading as good as it
+	// was -- bumping the timestamp there would discard the reading a
+	// millisecond after acting on it, and put `settling` straight back on the
+	// stale PowerState this whole section exists to route around.
+	onEnabledChanged: {
+		if (powered.data.powered !== enabled)
+			adapterMovedAt = Date.now();
+	}
 	// The adapter object being replaced is the event this whole section is
 	// about, and the only moment worth a burst of checks.
 	onAdapterChanged: {
@@ -272,16 +280,30 @@ Singleton {
 	}
 
 	function repair(): void {
-		const truth = powered.data.powered;
-		// No adapter, no reading, or a reading that the adapter has already
-		// moved out from under: nothing safe to conclude.
-		if (truth === undefined || !adapter || settling || adapterMovedAt > checkSentAt)
+		// No adapter, or nothing safe to conclude: no usable reading, or a
+		// reading that says BlueZ is still moving the adapter, which is the
+		// one moment its answer is about to change on its own. That second
+		// test is `settling`, and with a reading in hand it is BlueZ's own
+		// PowerState rather than the copy that goes stale with Powered --
+		// which is what left the earlier version of this check declining to
+		// act on every reading it asked for.
+		if (!adapter || !reading || settling)
 			return;
-		if (truth === enabled) {
+		if (reading.powered === enabled) {
 			checksLeft = 0;
 			return;
 		}
-		adapter.enabled = truth;
+		adapter.enabled = reading.powered;
+	}
+
+	// The last reading from BlueZ, or null if there is nothing to go on. A
+	// reading taken before the adapter last moved describes where it was, not
+	// where it is, so it is dropped rather than acted on -- otherwise the burst
+	// still in flight when the user flips the switch would flip it back.
+	readonly property var reading: {
+		if (powered.data.powered === undefined || adapterMovedAt > checkSentAt)
+			return null;
+		return powered.data;
 	}
 
 	JsonScript {

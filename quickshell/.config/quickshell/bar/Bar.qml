@@ -90,7 +90,14 @@ Variants {
 				id: keepAwake
 
 				anchors.left: centre.right
-				anchors.leftMargin: -7
+				// Back inside the clock's own 16px trailing margin. That margin
+				// is the centre group's padding and moving it would shift the
+				// group on the screen, so the mug is pulled left instead, until
+				// the gap it leaves matches the one between the temperature and
+				// the date on the other side of the clock -- 9px of daylight,
+				// measured off the pixels rather than off the margins, since
+				// what the eye sees is the gap between ink and ink.
+				anchors.leftMargin: -5
 				anchors.verticalCenter: parent.verticalCenter
 			}
 
