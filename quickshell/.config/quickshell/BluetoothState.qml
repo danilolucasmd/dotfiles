@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
+import qs.components
 
 // The adapter and everything BlueZ knows is on it: what the bar glyph draws,
 // and what the panel lists.
@@ -11,9 +12,12 @@ import Quickshell.Bluetooth
 // window of its own rather than a child of the bar module, and super+B
 // can summon it without the bar being involved at all.
 //
-// Nothing here shells out. The waybar version ran `bluetoothctl` and tailed
-// `dbus-monitor` to know when to re-read it; BlueZ is a first-class service in
-// Quickshell, so connection state is just a property that notifies.
+// Almost nothing here shells out. The waybar version ran `bluetoothctl` and
+// tailed `dbus-monitor` to know when to re-read it; BlueZ is a first-class
+// service in Quickshell, so connection state is just a property that notifies.
+// The one exception is the check at the bottom of this file, which asks BlueZ
+// itself whether the adapter is powered — see there for the resume race that
+// makes Quickshell's own answer to that question go stale.
 Singleton {
 	id: root
 
@@ -65,8 +69,13 @@ Singleton {
 		// Opening always sweeps. The nearby list is the half of the panel
 		// that needs it, and someone who stopped the sweep last time was
 		// stopping it for that visit, not for good.
-		if (panelOpen)
+		if (panelOpen) {
 			wantDiscovery = true;
+			// And opening is a good moment to make sure the switch about to
+			// be looked at is telling the truth. One look is enough here:
+			// nothing is moving, unlike the burst after the adapter returns.
+			checksLeft = Math.max(checksLeft, 1);
+		}
 	}
 
 	function close(): void {
@@ -222,5 +231,83 @@ Singleton {
 		property: "discovering"
 		value: root.panelOpen && root.wantDiscovery && root.enabled
 		when: root.adapter !== null
+	}
+
+	// ------------------------------------------------------------------
+	// Repairing `enabled` after a resume
+	// ------------------------------------------------------------------
+	//
+	// The adapter here is a USB dongle, so a resume from suspend re-enumerates
+	// it: bluetoothd drops /org/bluez/hci0 and republishes it a moment later,
+	// and Quickshell builds a fresh adapter object from the properties that
+	// InterfacesAdded carried. Those say the adapter is still coming up. The
+	// PropertiesChanged that says it is up follows within milliseconds --
+	// before Quickshell's match rule for the new object has finished
+	// registering with the bus -- and is delivered to nobody. Everything that
+	// arrives later (devices, Discovering, connections) lands fine, which is
+	// why the panel can list a connected pair of earbuds under a switch that
+	// says the radio is off.
+	//
+	// So: ask BlueZ, and write the answer back into the adapter when the two
+	// disagree. Writing `enabled` sets Quickshell's own copy and pushes
+	// Powered to BlueZ, which already holds that value -- the write is a no-op
+	// on the far side and the display is what actually gets fixed.
+
+	// How many more times to ask. Counted rather than run on a timer forever:
+	// this is a repair for one event, not a poll, and it stops the moment the
+	// two agree.
+	property int checksLeft: 0
+	// When the current reading was asked for, and when the adapter last moved
+	// under it. A reading taken before the user's own click would undo the
+	// click, so it is dropped instead -- see repair().
+	property double checkSentAt: 0
+	property double adapterMovedAt: 0
+
+	onEnabledChanged: adapterMovedAt = Date.now()
+	// The adapter object being replaced is the event this whole section is
+	// about, and the only moment worth a burst of checks.
+	onAdapterChanged: {
+		adapterMovedAt = Date.now();
+		checksLeft = 5;
+	}
+
+	function repair(): void {
+		const truth = powered.data.powered;
+		// No adapter, no reading, or a reading that the adapter has already
+		// moved out from under: nothing safe to conclude.
+		if (truth === undefined || !adapter || settling || adapterMovedAt > checkSentAt)
+			return;
+		if (truth === enabled) {
+			checksLeft = 0;
+			return;
+		}
+		adapter.enabled = truth;
+	}
+
+	JsonScript {
+		id: powered
+
+		command: [`${Paths.scripts}/bluetooth-powered.sh`, root.adapter?.dbusPath ?? ""]
+
+		onDataChanged: root.repair()
+	}
+
+	// The adapter comes back mid-enable, so one look after it returns is not
+	// enough: BlueZ itself reports Powered false for a second or so, agrees
+	// with Quickshell, and proves nothing. Hence a handful of looks spread
+	// over the ten seconds the dongle takes to finish coming up, the first of
+	// them immediate for the far commoner case of the panel simply being
+	// opened.
+	Timer {
+		interval: 2000
+		repeat: true
+		triggeredOnStart: true
+		running: root.checksLeft > 0
+
+		onTriggered: {
+			root.checksLeft -= 1;
+			root.checkSentAt = Date.now();
+			powered.refresh();
+		}
 	}
 }

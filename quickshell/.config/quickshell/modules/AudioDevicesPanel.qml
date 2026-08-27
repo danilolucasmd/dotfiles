@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Services.Pipewire
 import qs
 import qs.components
 
@@ -185,6 +186,20 @@ Panel {
 			font.weight: Font.DemiBold
 		}
 
+		// Inputs only. What a microphone is picking up is invisible until
+		// something plays it back, which is the whole reason to draw it; an
+		// output you can simply listen to, and the meter under it only ever
+		// repeated what the speakers were already saying.
+		Loader {
+			Layout.fillWidth: true
+			Layout.bottomMargin: 8
+			visible: active
+
+			active: section.inputs && AudioState.source !== null
+
+			sourceComponent: Meter {}
+		}
+
 		Repeater {
 			model: section.devices
 
@@ -200,6 +215,72 @@ Panel {
 
 			text: section.inputs ? "No input devices." : "No output devices."
 			wrapMode: Text.Wrap
+		}
+	}
+
+	// A live level meter for the microphone in use: what it is picking up right
+	// now, which is the one thing a list of device names cannot tell you.
+	// Picking the wrong input and picking a dead one read the same on this panel
+	// until something moves here.
+	component Meter: Rectangle {
+		id: meter
+
+		readonly property PwNode node: AudioState.source
+		readonly property bool muted: node?.audio?.muted ?? false
+
+		// `peak` is linear amplitude, and everything short of a shout lives in
+		// the bottom tenth of that range -- drawn straight it is a bar that
+		// barely twitches. dB against a 60 dB floor is how a meter is normally
+		// read, and spends the width on the part of the range speech and music
+		// actually occupy.
+		//
+		// Straight dB was still pinned to the right-hand end of the track for
+		// anything audible at all: normal playback peaks within a few dB of full
+		// scale, so 0.9 of the width was where the bar lived and the last tenth
+		// was all it ever moved through. The exponent bends the curve down --
+		// -6 dB lands at 0.69 of the width, -12 dB at 0.46, -20 dB at 0.24,
+		// -30 dB at 0.09 -- which puts ordinary levels in the middle of the bar
+		// and leaves the end meaning what it says. Tuned by eye against music
+		// and speech; 2.2 was still reading hot.
+		readonly property real level: {
+			if (muted || !monitor.enabled || monitor.peak <= 0)
+				return 0;
+			const db = Math.max(0, Math.min(1, (20 * Math.log10(monitor.peak) + 60) / 60));
+			return Math.pow(db, 3.5);
+		}
+
+		implicitHeight: 6
+
+		radius: height / 2
+		color: Theme.track
+
+		// The monitor opens a capture stream against the node, so it runs only
+		// while the card is up: a meter nobody is looking at is pure wakeups.
+		PwNodePeakMonitor {
+			id: monitor
+
+			node: meter.node
+			enabled: root.open && meter.node !== null
+		}
+
+		Rectangle {
+			width: meter.level * parent.width
+			height: parent.height
+			radius: parent.radius
+			// Read through the curve above these land at -3.7 dB and -0.9 dB: a
+			// meter riding the top of its range is a level to turn down, not a
+			// device working well.
+			color: meter.level > 0.95 ? Theme.red : meter.level > 0.8 ? Theme.yellow : Theme.green
+
+			// Short enough to still read as the sound happening, long enough that
+			// the bar is not a strobe -- the peaks arrive faster than the eye
+			// resolves them.
+			Behavior on width {
+				NumberAnimation {
+					duration: 90
+					easing.type: Easing.OutCubic
+				}
+			}
 		}
 	}
 

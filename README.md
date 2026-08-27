@@ -197,6 +197,18 @@ Quickshell registers no `org.bluez.Agent1`, so a device that wants a passkey
 confirmed has nobody to confirm it; the panel says so and points at
 `bluetoothctl pair` rather than leaving the row looking unchanged.
 
+One thing the module does not take from Quickshell's BlueZ client, because it
+cannot be trusted after a resume, is whether the adapter is powered. The
+adapter here is a USB dongle: waking from suspend re-enumerates it, bluetoothd
+drops `/org/bluez/hci0` and publishes it again, and the `Powered: true` that
+follows a few milliseconds later arrives before Quickshell has finished
+subscribing to the new object — so it is delivered to nobody, and the bar and
+the panel go on reporting a Bluetooth that is off while music plays through it.
+`bluetooth-powered.sh` asks BlueZ directly, and the state writes the answer back
+into the adapter when the two disagree. It runs when the adapter is replaced —
+a burst of checks, since the dongle needs a few seconds to finish coming up —
+and once more each time the panel is opened.
+
 Until this panel existed, clicking the module opened buds-tui in a terminal —
 reasonable while the only Bluetooth device here was one pair of earbuds, which
 connect themselves the moment they leave the case. It stopped being reasonable
