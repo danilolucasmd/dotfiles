@@ -262,6 +262,37 @@ panel does it rather than by sleeping inside the script. It samples every five
 seconds with the panel closed, which is what the bar glyph needs, and every
 second while it is open.
 
+`d` runs a disk speed test, which is the one thing on that panel that has to be
+asked for, for the same reason the network panel's is: the read and write rates
+above it are what the drive happens to be carrying, which on an idle desktop is
+nothing whatever the drive is worth, and `busy` is a share of an interval rather
+than a speed. `disktest.sh` writes 2 GiB and reads it back, four `dd` streams at
+a time — one stream is a single thread at queue depth 1, and an NVMe answers a
+single outstanding request with a fraction of the parallelism it has, so one
+`dd` reports about 1000 MB/s here where four report 1500 writing and 1800
+reading.
+The phases run in four passes rather than one long transfer, which is what moves
+the progress bar and revises the running figure on the way through.
+
+Two things have to be got right or the number is fiction. The data written is
+incompressible, generated once from `/dev/urandom` into `/dev/shm` and then
+written from memory — zeros would measure the `compress=zstd` mount option, and
+generating the random data inside the write phase would measure `/dev/urandom`,
+which manages about 430 MB/s. And the test directory gets `chattr +C`, because
+btrfs will not serve `O_DIRECT` on a compressed inode: it falls back to the page
+cache, and a read phase served from the page cache reports how fast memory is.
+The files are removed and recreated each run so the attribute is inherited, and
+removed again at the end.
+
+The test writes into the cache directory, which is the one place the session
+owns that is on a real filesystem — not `/tmp`, which is tmpfs here and would be
+measuring RAM. So the panel names the drive and mount it actually landed on
+beside the figures: on a machine where the cache and the root filesystem are on
+different drives, that row is the number's explanation rather than a fault.
+There is no random-IOPS figure, deliberately: measuring one honestly needs a
+queue depth `dd` cannot produce — forking a process per 4 KiB read times the
+fork, not the drive — and `fio` is a package nothing else here needs.
+
 One gap worth knowing about: **this board's fan speeds are not readable.** The
 Z370M AORUS has an ITE IT8686E behind an ACPI resource conflict, and the
 mainline kernel has no driver for it, so only the GPU fan — which comes from

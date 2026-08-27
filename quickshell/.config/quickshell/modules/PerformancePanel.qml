@@ -25,6 +25,14 @@ Panel {
 	open: PerformanceState.panelOpen
 	onDismissed: PerformanceState.close()
 	onRefreshRequested: PerformanceState.refresh()
+	// The panel claims R for itself; everything else arrives here, and the only
+	// thing this one wants is the key that starts and cancels the disk test.
+	onKeyPressed: event => {
+		if (event.key === Qt.Key_D) {
+			PerformanceState.toggleDiskTest();
+			event.accepted = true;
+		}
+	}
 
 	// The module sits in the bar's right cluster, so the panel drops from the
 	// same corner rather than from the middle of the screen.
@@ -46,6 +54,14 @@ Panel {
 	function tempColor(celsius: real, warm: real, hot: real): color {
 		const l = PerformanceState.level(celsius, warm, hot);
 		return l >= 2 ? Theme.red : l >= 1 ? Theme.yellow : Theme.dim;
+	}
+
+	// One of the two disk-test cells: the figure once the phase measuring it
+	// has run at all, and a dash before that -- a zero would be a claim about
+	// the drive. The figure appears after the phase's first pass and is revised
+	// by each one after it, so the number moves while the bar does.
+	function testValue(bytesPerSecond: real): string {
+		return bytesPerSecond > 0 ? PerformanceState.formatDiskSpeed(bytesPerSecond) : "—";
 	}
 
 	RowLayout {
@@ -359,11 +375,152 @@ Panel {
 				color: PerformanceState.diskBusy >= 90 ? Theme.yellow : Theme.dim
 			}
 		}
+
+		// --------------------------------------------------------------
+		// What the drive can do
+		//
+		// The rates above are what the drive is carrying, which on an idle
+		// machine is nothing whatever it is worth. This is the other question
+		// -- how fast is it -- and it is a button rather than another reading
+		// because answering it means writing two gigabytes and reading them
+		// back.
+		//
+		// Words rather than the 󰇚 / 󰕒 glyphs the live rates use one row up:
+		// the two pairs of numbers are a different kind of thing, and at a
+		// glance the labels are what says so.
+		// --------------------------------------------------------------
+
+		ColumnLayout {
+			Layout.fillWidth: true
+			spacing: 5
+
+			// The live rates a row up and the test's figures are both a disk
+			// speed, in the same typeface, a few pixels apart -- so at a glance
+			// the second row read as a continuation of the first rather than as
+			// an answer to a different question. A rule and the space around it
+			// are what say otherwise: above it is what the drive is carrying,
+			// below it is what it can do when asked.
+			//
+			// Theme.line, the same half-transparent hairline the bar divides its
+			// modules with, which lands near #6d6d6d on this card. The card's own
+			// #3f3f3f border colour was tried first and disappears into the
+			// surface at one pixel -- a rule nobody can see is just whitespace
+			// with markup around it.
+			Rectangle {
+				Layout.fillWidth: true
+				Layout.topMargin: 8
+				Layout.bottomMargin: 7
+
+				implicitHeight: 1
+				color: Theme.line
+			}
+
+			RowLayout {
+				Layout.fillWidth: true
+				spacing: 16
+
+				Cell {
+					label: "Read"
+					value: root.testValue(PerformanceState.diskTestRead)
+					// Dimmed while its own phase is running: the figure is a
+					// running total that the next pass will revise, and it
+					// should not read as final until it is.
+					valueColor: PerformanceState.diskTestPhase === "read" ? Theme.dim : Theme.fg
+				}
+
+				Cell {
+					label: "Write"
+					value: root.testValue(PerformanceState.diskTestWrite)
+					valueColor: PerformanceState.diskTestPhase === "write" ? Theme.dim : Theme.fg
+				}
+			}
+
+			// Which drive the test actually landed on, and how much it moved.
+			// The test writes into the cache directory, which is not always on
+			// the drive metered above -- and when it is not, this row is the
+			// figure's explanation rather than a fault.
+			BarText {
+				Layout.fillWidth: true
+				visible: PerformanceState.diskTestDevice !== ""
+
+				text: {
+					const s = PerformanceState;
+					const parts = [`${s.diskTestDevice} · ${s.diskTestMount}`];
+					if (s.diskTestBytes > 0)
+						parts.push(`${s.formatBytes(s.diskTestBytes, 0)} each way`);
+					return parts.join(" · ");
+				}
+				color: Theme.dim
+				elide: Text.ElideRight
+			}
+
+			// Passes done rather than a clock: the phases are bounded by how
+			// much they move, so on a fast drive the bar is simply over sooner
+			// instead of an estimate having to be walked back.
+			Meter {
+				Layout.topMargin: 2
+
+				value: PerformanceState.diskTestProgress * 100
+				accent: Theme.blue
+				implicitHeight: 4
+				// Kept in the layout rather than hidden, so the button
+				// underneath does not jump down the card when a run starts.
+				opacity: PerformanceState.diskTestRunning ? 1 : 0
+
+				Behavior on opacity {
+					NumberAnimation {
+						duration: 150
+					}
+				}
+			}
+
+			RowLayout {
+				Layout.fillWidth: true
+				Layout.topMargin: 2
+				spacing: 8
+
+				Run {
+					label: PerformanceState.diskTestRunning ? "Cancel" : PerformanceState.diskTestPhase !== "" ? "Test again" : "Disk test"
+
+					onClicked: PerformanceState.toggleDiskTest()
+				}
+
+				BarText {
+					Layout.fillWidth: true
+
+					text: {
+						if (PerformanceState.diskTestError !== "")
+							return PerformanceState.diskTestError;
+						switch (PerformanceState.diskTestPhase) {
+						case "prepare":
+							// Naming it rather than showing a stalled bar: the
+							// data has to be incompressible or the test
+							// measures the filesystem's compressor, and
+							// generating it is a second of nothing happening
+							// to the drive.
+							return "Preparing test data…";
+						case "write":
+							return "Measuring write…";
+						case "read":
+							return "Measuring read…";
+						default:
+							// What a run costs, said before it is asked for. No
+							// figure here, because the size is the script's to
+							// decide and the row above prints the exact amount
+							// once a run has been made.
+							return PerformanceState.diskTestRunning ? "" : "Writes a couple of gigabytes";
+						}
+					}
+					color: PerformanceState.diskTestError !== "" ? Theme.red : Theme.dim
+					elide: Text.ElideRight
+				}
+			}
+		}
 	}
 
 	BarText {
 		Layout.fillWidth: true
-		text: "r refresh · esc close"
+		text: "d disk test · r refresh · esc close"
 		horizontalAlignment: Text.AlignRight
 	}
 
@@ -395,6 +552,77 @@ Panel {
 					easing.type: Easing.OutCubic
 				}
 			}
+		}
+	}
+
+	// A labelled figure in one of two equal columns, for the disk test's pair
+	// of rates. Equal halves whatever is in them: without the fixed preferred
+	// width the wider pair would take the space and the two columns would not
+	// line up.
+	component Cell: RowLayout {
+		id: cell
+
+		property string label: ""
+		property string value: ""
+		property color valueColor: Theme.fg
+
+		Layout.fillWidth: true
+		Layout.preferredWidth: 1
+		spacing: 8
+
+		BarText {
+			text: cell.label
+			color: Theme.dim
+		}
+
+		BarText {
+			Layout.fillWidth: true
+
+			text: cell.value
+			color: cell.valueColor
+			elide: Text.ElideRight
+		}
+	}
+
+	// The disk test's button. The only thing on this panel that starts work
+	// rather than reading something already happening, so it looks like a
+	// button instead of like a row.
+	component Run: Rectangle {
+		id: run
+
+		property string label: ""
+
+		signal clicked
+
+		implicitWidth: text.implicitWidth + 20
+		implicitHeight: 26
+
+		radius: 6
+		color: hover.hovered ? Theme.tooltipBorder : Qt.darker(Theme.tooltipBorder, 1.25)
+
+		Behavior on color {
+			ColorAnimation {
+				duration: 150
+			}
+		}
+
+		HoverHandler {
+			id: hover
+		}
+
+		MouseArea {
+			anchors.fill: parent
+			cursorShape: Qt.PointingHandCursor
+
+			onClicked: run.clicked()
+		}
+
+		BarText {
+			id: text
+
+			anchors.centerIn: parent
+
+			text: run.label
 		}
 	}
 

@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.components
 
 // What the machine is doing: processor, graphics, memory, disk.
@@ -132,10 +133,74 @@ Singleton {
 
 	function close(): void {
 		panelOpen = false;
+		// A run left behind a closed panel would keep the drive busy for
+		// several more seconds with nothing on screen to read it.
+		stopDiskTest();
 	}
 
 	function refresh(): void {
 		statsScript.refresh();
+	}
+
+	// ------------------------------------------------------------------
+	// Disk speed test
+	//
+	// The one figure on this panel that cannot be watched. The read and write
+	// rates above are what the machine happens to be doing, which on an idle
+	// desktop is nothing whatever the drive is worth, and `busy` is a share of
+	// an interval rather than a speed. Finding out how fast the drive is means
+	// making it go as fast as it can — so this is a measurement someone asks
+	// for, on `d`, and never a poll: a run writes two gigabytes and reads them
+	// back, which is the drive's whole attention for a few seconds and real
+	// wear on it.
+	//
+	// The script prints a line per pass and each line is the whole reading, so
+	// the newest one replaces the state rather than being merged into it.
+	// ------------------------------------------------------------------
+
+	property var diskTestResult: ({})
+	property bool diskTestRunning: false
+
+	// Which of prepare / write / read is being measured, "done" once the script
+	// has printed its last line, and "" before the first run.
+	readonly property string diskTestPhase: diskTestResult.phase ?? ""
+	// How far through that phase the script has got, 0..1. Passes done rather
+	// than a clock: the phases are bounded by how much they move, not by how
+	// long they take, so on a fast drive the bar is simply over sooner.
+	readonly property real diskTestProgress: diskTestResult.progress ?? 0
+	readonly property real diskTestRead: diskTestResult.read ?? 0
+	readonly property real diskTestWrite: diskTestResult.write ?? 0
+	// What each phase moves. Printed before a run is asked for, because it is
+	// the whole decision on a drive with a write budget worth thinking about.
+	readonly property real diskTestBytes: diskTestResult.bytes ?? 0
+	// The drive the test actually landed on, and where it is mounted. Worth
+	// printing: the test writes into the cache directory, which on a machine
+	// with a separate home is not the drive metered above.
+	readonly property string diskTestDevice: diskTestResult.device ?? ""
+	readonly property string diskTestMount: diskTestResult.mount ?? ""
+	readonly property string diskTestError: diskTestResult.error ?? ""
+
+	function startDiskTest(): void {
+		if (diskTestRunning)
+			return;
+		// Last run's numbers go with it: they were measured on whatever the
+		// drive was doing then, and leaving them up while the new run works
+		// would read as progress that has not happened.
+		diskTestResult = {};
+		diskTestRunning = true;
+		diskTestProcess.running = true;
+	}
+
+	function stopDiskTest(): void {
+		if (diskTestRunning)
+			diskTestProcess.running = false;
+	}
+
+	function toggleDiskTest(): void {
+		if (diskTestRunning)
+			stopDiskTest();
+		else
+			startDiskTest();
 	}
 
 	// ------------------------------------------------------------------
@@ -212,6 +277,24 @@ Singleton {
 		return `${formatBytes(bytesPerSecond, 1)}/s`;
 	}
 
+	// The speed test's figures, in decimal megabytes, which is the unit a drive
+	// is sold in — the box says 2100 MB/s and means 2.1e9. Everything else on
+	// this panel is binary because it is describing capacity, where GiB is what
+	// the BIOS and the filesystem both say; this one line is describing a
+	// throughput that has a number on a box to be compared against, and
+	// printing it in MiB/s would be quietly 5% short of it.
+	//
+	// MB/s the whole way up rather than rolling over to GB/s past a thousand,
+	// because every disk benchmark there is — CrystalDiskMark, KDiskMark,
+	// gnome-disks — prints four figures of MB/s and so does the box. "1790 MB/s"
+	// is the number a drive gets compared against; "1.79 GB/s" is the same
+	// measurement in a unit nobody quotes it in.
+	function formatDiskSpeed(bytesPerSecond: real): string {
+		if (!(bytesPerSecond > 0))
+			return "—";
+		return `${Math.round(bytesPerSecond / 1000000)} MB/s`;
+	}
+
 	// MHz in, "3.60 GHz" or "800 MHz" out. Under a gigahertz is a parked core,
 	// and printing that as "0.80 GHz" hides the leading digit that says so.
 	function formatFreq(mhz: real): string {
@@ -237,6 +320,30 @@ Singleton {
 		if (h > 0)
 			return `${h}h ${m}m`;
 		return `${m}m`;
+	}
+
+	// Not a JsonScript: that one collects the whole output and parses it once
+	// at exit, and this script's point is the lines it prints on the way — a
+	// blank panel for the length of a run is indistinguishable from a hang.
+	Process {
+		id: diskTestProcess
+
+		command: [`${Paths.scripts}/disktest.sh`]
+
+		stdout: SplitParser {
+			onRead: line => {
+				try {
+					root.diskTestResult = JSON.parse(line);
+				} catch (e) {
+					// A half-written line is not worth blanking the panel over;
+					// the next one carries the same state again.
+				}
+			}
+		}
+
+		// Covers the cancelled run as well as the finished one: stopping the
+		// process is what `d` and closing the panel both do.
+		onExited: root.diskTestRunning = false
 	}
 
 	JsonScript {
