@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=Claude usage panel
-Comment=Claude Code's usage against the current window — Super+A
+Name=Agent usage panel
+Comment=A coding agent's rate limits and the week's tokens — Super+A
 Icon=utilities-terminal-symbolic
-Keywords=quickshell;panel;tokens;anthropic;
+Keywords=quickshell;panel;tokens;claude;anthropic;usage;
 Exec=qs ipc call agentUsage toggle
 Terminal=false
 StartupNotify=false

@@ -147,15 +147,15 @@ them regardless. `power-profiles-daemon` is there for the battery panel's
 profile switch — quickshell talks to it over D-Bus, and the panel hides that
 section entirely when the daemon is not running.
 
-Eight scripts survive in `quickshell/.config/quickshell/scripts/` because they
-do work no service exposes: weather, package updates, screen-recording state,
-Claude Code usage, network counters, system counters, backlight-to-monitor
-discovery, and matching a notification against the window list to find the app
-that sent it. `updates.sh` shells out to
+Eight jobs still want a script in `quickshell/.config/quickshell/scripts/`,
+because no service exposes them: weather, package updates, screen-recording
+state, coding-agent usage, network counters, system counters,
+backlight-to-monitor discovery, and matching a notification against the window
+list to find the app that sent it. `updates.sh` shells out to
 `checkupdates`, which is why `pacman-contrib` is in the package list.
 
 The right cluster is split in two. Media, keyboard layout, volume, network,
-bluetooth, battery, display, performance, Claude usage, updates and
+bluetooth, battery, display, performance, agent usage, updates and
 notifications are always on screen; the recording indicator and the tray fold away behind a chevron that
 stays the leftmost thing in the cluster. Clicking it slides them out rightward
 from the chevron, with a hairline marking where they end and the always-visible
@@ -328,6 +328,42 @@ a monitor comes up at the fastest mode it offers rather than the one it
 advertises — the VG279QR advertises 60Hz and does 144. That one is the exception
 and is pinned to 120 by name: at 144 it does not come back from suspend.
 
+The agent module is the percentage of the current rate-limit window a coding
+agent has burned, beside that agent's own glyph. Clicking it (or `super+A`)
+opens a panel in three sections, in the order the questions get asked. **Limits**
+is one meter per window the agent reports — a session window and a weekly one
+for Claude Code, plus a per-model weekly window on the plans that have them —
+each marked with how much of the window has *elapsed*, so the gap between the
+fill and the mark is whether you are spending faster than it refills, and
+annotated with where that rate lands at reset. **Tokens by day** is the last
+seven days as a bar each, weekday-labelled and today emphasised. **Tokens by
+model** is the same seven days split the other way, which is where a habit shows
+that the daily totals hide: an expensive model left selected for work that did
+not need it.
+
+The two token sections exist because a percentage cannot be compared against
+yesterday — Anthropic reports a share of an allowance it does not publish, so
+"71% of the session window" is not a quantity. Token counts are, and Claude Code
+already writes every one of them to `~/.claude/projects/**/*.jsonl`. That is
+300 MB here, and a full pass over the last eight days of it takes 1.2 seconds,
+which is far too slow to sit on a 15-second refresh — so the parse is
+incremental, keyed on each transcript's inode and size, and a steady-state run
+touches only the file the live session is appending to (0.13s). Rows are
+deduplicated by message id, which is not a nicety: resuming or compacting a
+session copies its history into the new transcript, and the 7218 rows across
+eight days here are only 3826 distinct messages. Summing the files as they lie
+overstates every figure by nearly half. The whole thing runs only while the
+panel is open.
+
+Nothing in the panel is written against Claude Code. `scripts/agents/` holds one
+script per agent, each answering a cheap `limits` and an expensive `tokens`
+verb, and `agent-usage.sh` and `agent-tokens.sh` run every executable in there
+and merge what comes back — so a second agent is a file dropped in that
+directory and nothing else, and the panel grows a tab for it on the next tick.
+Left and right walk the tabs, and the bar follows the tab you left open. Claude
+Code is simply the only agent installed here. `scripts/agents/README.md` is the
+contract.
+
 Every panel is also reachable by name from the walker launcher, for the ones
 whose keybind you do not have in your fingers yet. `panels/` is a stow package
 of desktop entries — one per panel, each a single
@@ -472,11 +508,28 @@ tracked:
 - `hooks/herdr-agent-state.sh`, which herdr owns (section 7).
 
 `statusLine` runs `quickshell/.config/quickshell/scripts/agent-usage-statusline.sh`.
-That is not cosmetic — it is the freshest source the bar's usage module has.
-Claude Code hands `.rate_limits` to every status-line render, so the module gets
-near-live numbers for free, without touching the OAuth usage endpoint (which
-rate-limits hard: ~20 requests in 30s earns a multi-minute 429). Without the
-entry the module falls back to polling and goes stale between sessions.
+That is not cosmetic — it is the freshest of the three sources the bar's agent
+module reads (section 5). Claude Code hands `.rate_limits` to every status-line
+render, so the module gets near-live numbers for free, without touching the
+OAuth usage endpoint (which rate-limits hard: ~20 requests in 30s earns a
+multi-minute 429). Without the entry the module falls back to polling and goes
+stale between sessions.
+
+The other two sources fill the gaps that feed leaves. `~/.claude.json`'s
+`cachedUsageUtilization` is Claude Code's own cache of the endpoint, which keeps
+the number roughly current through a session with no status line. The endpoint
+itself, fetched with the OAuth token in `~/.claude/.credentials.json`, is the
+only source that still answers with no session running at all, and the only one
+that enumerates the windows rather than naming two of them — which is what lets
+a per-model weekly limit appear in the panel without the script being taught the
+model names. It is polled slowly, skipped entirely while the status-line feed is
+fresh, and sat out for fifteen minutes after a 429. The token goes to `curl`
+over stdin rather than argv, so it stays out of `ps`.
+
+`~/.claude/projects` is the "history" above, and it is where the panel's token
+figures come from — 300 MB of session transcript here, which is the largest
+thing in `~/.claude` by two orders of magnitude and the clearest single reason
+this package is stowed unfolded.
 
 Claude Code itself has no Arch package. `install.sh` runs the official installer,
 which drops a versioned binary in `~/.local/share/claude` and links it into

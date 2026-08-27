@@ -2,9 +2,11 @@ import QtQuick
 import qs
 import qs.components
 
-// Claude Code rate-limit usage: the 5h session window as a percentage on the
-// bar, everything else a click away in AgentUsagePanel. The reading itself
-// lives in AgentUsageState, which the panel and the super+A binding share.
+// Coding-agent rate-limit usage: the shortest window as a percentage on the
+// bar, beside the agent's own glyph, and everything else — the other windows,
+// the pace, the week's tokens by day and by model — a click away in
+// AgentUsagePanel. The reading itself lives in AgentUsageState, which the panel
+// and the super+A binding share.
 BarItem {
 	active: AgentUsageState.available
 	rightMargin: Theme.gap
@@ -20,10 +22,10 @@ BarItem {
 	}
 
 	BarText {
-		text: AgentUsageState.data.text ?? ""
+		text: AgentUsageState.text
 
 		color: {
-			switch (AgentUsageState.data["class"] ?? "") {
+			switch (AgentUsageState.cls) {
 			case "stale":
 				return Theme.dim;
 			case "critical":
