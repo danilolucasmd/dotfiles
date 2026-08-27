@@ -556,6 +556,16 @@ because notifications say more than their app name does:
   untouched**: its notification, and any other one naming a file that exists,
   still opens nautilus on the folder with that file selected. There is nothing
   to annotate in an mp4.
+
+  The same editor is the second way into an image: **`ctrl+o` on an image in
+  walker's clipboard history** (`:` in the launcher) opens it in tensaku, which
+  is `image_editor_cmd` in `elephant/.config/elephant/clipboard.toml`. Return
+  there stays `copy` — the entry straight back onto the clipboard — and it has
+  to, because elephant offers walker the same five actions for every entry
+  (copy, edit, pin, remove, localsend) and walker picks a keybind's action by
+  taking the first one in its config that the entry offers. Nothing walker can
+  see says image or text, so putting `edit` on Return would send text to a text
+  editor along with it.
 - **Everything else anonymous.** A `notify-send` typed at a prompt, or a tool
   that shells out to one without naming itself (`gh-dash`, through the beeep
   library). Nothing identifies these and herdr does not claim them, so all that

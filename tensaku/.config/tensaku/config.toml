@@ -35,6 +35,12 @@ output-filename = "~/Pictures/Screenshots/%Y-%m-%d-%H%M%S.png"
 floating-hack = true
 no-window-decoration = true
 
+# The editor already says what it did -- the image lands on the clipboard, or a
+# file appears -- and a toast for it would arrive through the same daemon that
+# put up the screenshot notification this was opened from. One notification per
+# screenshot is enough.
+disable-notifications = true
+
 # Open at the size the image wants rather than at a fixed geometry -- a region
 # grab of a dialog and a full 1920x1080 monitor arrive through the same bind.
 resize = { mode = "smart" }

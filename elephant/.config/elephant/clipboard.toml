@@ -1,0 +1,14 @@
+# The clipboard history behind walker's `:` prefix.
+#
+# Return stays what it has always been -- `copy`, the entry straight back onto
+# the clipboard. `ctrl+o` is elephant's `edit` action, and this is the editor it
+# reaches for on an image: elephant substitutes the path of the PNG it already
+# has cached, so nothing here needs a temporary file. Without it, ctrl+o on an
+# image does nothing at all ("image_editor not set").
+#
+# It cannot be Return instead. elephant offers walker the same five actions for
+# every entry -- copy, edit, pin, remove, localsend -- and walker resolves a
+# keybind by taking the first action in its config that the entry offers, so
+# nothing walker can see says image or text and `edit` on Return would send text
+# to a text editor along with it.
+image_editor_cmd = "tensaku --filename %FILE%"
