@@ -296,6 +296,9 @@ pac \
   zoxide \
   uv \
   imagemagick \
+  tesseract \
+  tesseract-data-eng \
+  tesseract-data-por \
   pacman-contrib \
   bluez \
   bluez-utils \
