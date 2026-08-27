@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Networking
 import qs.components
 
@@ -146,6 +147,9 @@ Singleton {
 
 	function close(): void {
 		panelOpen = false;
+		// A run left behind a closed panel would keep pulling a hundred
+		// megabytes with nothing on screen to read it.
+		stopSpeedTest();
 	}
 
 	function reset(): void {
@@ -173,6 +177,66 @@ Singleton {
 			sent: d.sent ?? 0,
 			recv: d.recv ?? 0
 		}].slice(-pingWindowSize);
+	}
+
+	// ------------------------------------------------------------------
+	// Speed test
+	//
+	// Throughput is the one figure on the panel that cannot be watched: the
+	// counters describe traffic that is already happening, and an idle link
+	// reads as zero whether it is a gigabit or a dead socket. So this is a
+	// measurement someone asks for, on `s`, and never a poll — a run saturates
+	// the link for twelve seconds, which on a fast one is a gigabyte and on a
+	// tethered phone is the month's allowance.
+	//
+	// The script prints a line per phase and each line is the whole reading,
+	// so the newest one replaces the state rather than being merged into it.
+	// ------------------------------------------------------------------
+
+	property var speedResult: ({})
+	property bool speedRunning: false
+
+	// Which of latency / download / upload is being measured, "done" once the
+	// script has printed its last line, and "" before the first run.
+	readonly property string speedPhase: speedResult.phase ?? ""
+	// How long the phase now running was declared to take, which is what the
+	// panel draws its progress bar against — the script fixes the duration, so
+	// this is an interval rather than a guess.
+	readonly property int speedSeconds: speedResult.seconds ?? 0
+	readonly property real speedDownload: speedResult.download ?? 0
+	readonly property real speedUpload: speedResult.upload ?? 0
+	readonly property real speedLatency: speedResult.latency ?? 0
+	readonly property real speedJitter: speedResult.jitter ?? 0
+	// The Cloudflare edge that answered: an airport code and the city it is
+	// in. Worth printing — a link routed to another continent explains a
+	// figure that otherwise looks like a fault.
+	readonly property string speedServer: speedResult.server ?? ""
+	readonly property string speedLocation: speedResult.location ?? ""
+	readonly property string speedError: speedResult.error ?? ""
+
+	readonly property bool speedDone: speedPhase === "done"
+
+	function startSpeedTest(): void {
+		if (speedRunning || !online)
+			return;
+		// Last run's numbers go with it: they were measured on whatever the
+		// link was doing then, and leaving them up while the new run works
+		// would read as progress that has not happened.
+		speedResult = {};
+		speedRunning = true;
+		speedProcess.running = true;
+	}
+
+	function stopSpeedTest(): void {
+		if (speedRunning)
+			speedProcess.running = false;
+	}
+
+	function toggleSpeedTest(): void {
+		if (speedRunning)
+			stopSpeedTest();
+		else
+			startSpeedTest();
 	}
 
 	// ------------------------------------------------------------------
@@ -282,6 +346,21 @@ Singleton {
 		return `${formatBytes(bytesPerSecond)}/s`;
 	}
 
+	// Throughput in bits, decimal, because that is the unit every other speed
+	// test and every ISP quotes one in — a link sold as 100 Mb reads as 11
+	// MB/s in the counters above, and the panel would be printing the same
+	// measurement in two units that look like a disagreement.
+	function formatSpeed(bytesPerSecond: real): string {
+		if (!(bytesPerSecond > 0))
+			return "—";
+		const bits = bytesPerSecond * 8;
+		if (bits >= 1000000000)
+			return `${(bits / 1000000000).toFixed(2)} Gbps`;
+		if (bits >= 1000000)
+			return `${(bits / 1000000).toFixed(1)} Mbps`;
+		return `${Math.round(bits / 1000)} kbps`;
+	}
+
 	// Scanning is not free — it takes the radio off the air for a moment on
 	// each channel — so the device only sweeps while the list that wants the
 	// results is on screen.
@@ -290,6 +369,30 @@ Singleton {
 		property: "scannerEnabled"
 		value: root.panelOpen
 		when: root.wifiDevice !== null
+	}
+
+	// Not a JsonScript: that one collects the whole output and parses it once
+	// at exit, and this script's point is the lines it prints on the way —
+	// twelve seconds of a blank panel is indistinguishable from a hang.
+	Process {
+		id: speedProcess
+
+		command: [`${Paths.scripts}/speedtest.sh`]
+
+		stdout: SplitParser {
+			onRead: line => {
+				try {
+					root.speedResult = JSON.parse(line);
+				} catch (e) {
+					// A half-written line is not worth blanking the panel over;
+					// the next one carries the same state again.
+				}
+			}
+		}
+
+		// Covers the cancelled run as well as the finished one: stopping the
+		// process is what `s` and closing the panel both do.
+		onExited: root.speedRunning = false
 	}
 
 	JsonScript {

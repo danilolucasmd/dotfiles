@@ -112,6 +112,9 @@ Panel {
 		case Qt.Key_F:
 			forget(rows[cursor]?.net ?? null);
 			return true;
+		case Qt.Key_S:
+			NetworkState.toggleSpeedTest();
+			return true;
 		default:
 			return false;
 		}
@@ -170,6 +173,17 @@ Panel {
 	function forget(net: var): void {
 		if (net?.known)
 			net.forget();
+	}
+
+	// One of the two throughput cells: the figure once it has been measured,
+	// an ellipsis while the phase that measures it is running, and a dash for
+	// a run nobody has asked for — a zero would be a claim about the link.
+	function speedValue(bytesPerSecond: real, phase: string): string {
+		if (bytesPerSecond > 0)
+			return NetworkState.formatSpeed(bytesPerSecond);
+		if (NetworkState.speedRunning && NetworkState.speedPhase === phase)
+			return "…";
+		return "—";
 	}
 
 	// ------------------------------------------------------------------
@@ -291,6 +305,154 @@ Panel {
 			// One wide column: a link with two resolvers has no room left for a
 			// second pair.
 			single: true
+		}
+	}
+
+	// ------------------------------------------------------------------
+	// What the link can do
+	//
+	// The counters above say what the link is carrying, which on an idle
+	// machine is nothing whatever the line is worth. This section is the other
+	// question — how fast is it — and it is a button rather than another
+	// reading because answering it means moving a couple of hundred megabytes.
+	// ------------------------------------------------------------------
+
+	ColumnLayout {
+		id: speed
+
+		// How far through the current phase the bar is drawn. Time against the
+		// duration the script declared rather than bytes against a total:
+		// nothing reports progress mid-transfer, but the phase is cut off at a
+		// fixed number of seconds, so the clock is the honest measure of it.
+		property real sweep: 0
+
+		Layout.fillWidth: true
+		visible: NetworkState.online
+		spacing: 5
+
+		StatRow {
+			leftLabel: "Download"
+			leftValue: root.speedValue(NetworkState.speedDownload, "download")
+			leftColor: NetworkState.speedPhase === "download" ? Theme.dim : Theme.fg
+			rightLabel: "Upload"
+			rightValue: root.speedValue(NetworkState.speedUpload, "upload")
+			rightColor: NetworkState.speedPhase === "upload" ? Theme.dim : Theme.fg
+		}
+
+		// Only once a run has produced them: an empty pair of cells above the
+		// button would read as a link with no latency rather than as a test
+		// nobody has asked for yet.
+		StatRow {
+			visible: NetworkState.speedLatency > 0
+
+			leftLabel: "Latency"
+			leftValue: `${Math.round(NetworkState.speedLatency)} ms`
+			rightLabel: "Jitter"
+			rightValue: `${Math.round(NetworkState.speedJitter)} ms`
+		}
+
+		// The edge that answered, on a row of its own: an airport code and a
+		// city name have no chance of sharing a half-width cell with anything.
+		StatRow {
+			visible: NetworkState.speedServer !== ""
+
+			leftLabel: "Server"
+			leftValue: `${NetworkState.speedServer} · ${NetworkState.speedLocation}`
+			single: true
+		}
+
+		Rectangle {
+			Layout.fillWidth: true
+			Layout.topMargin: 2
+
+			implicitHeight: 4
+			radius: height / 2
+			color: Theme.track
+			// Kept in the layout rather than hidden, so the button underneath
+			// does not jump down the card the moment a run starts.
+			opacity: NetworkState.speedRunning ? 1 : 0
+
+			Behavior on opacity {
+				NumberAnimation {
+					duration: 150
+				}
+			}
+
+			Rectangle {
+				width: speed.sweep * parent.width
+				height: parent.height
+				radius: parent.radius
+				color: Theme.blue
+			}
+		}
+
+		// Each phase gets its own sweep of the bar: the script says how long
+		// the one it is starting will take, and the line it prints is what
+		// starts the animation.
+		NumberAnimation {
+			id: sweepAnimation
+
+			target: speed
+			property: "sweep"
+			from: 0
+			to: 1
+			easing.type: Easing.InOutSine
+		}
+
+		Connections {
+			target: NetworkState
+
+			function onSpeedPhaseChanged(): void {
+				sweepAnimation.stop();
+				if (NetworkState.speedSeconds > 0) {
+					sweepAnimation.duration = NetworkState.speedSeconds * 1000;
+					sweepAnimation.start();
+				} else {
+					// The two phases that measure nothing: "" is a run being
+					// cleared before it starts, "done" is one that has ended —
+					// so the bar is empty for the first and full for the
+					// second, rather than snapping back as it fades out.
+					speed.sweep = NetworkState.speedPhase === "" ? 0 : 1;
+				}
+			}
+		}
+
+		RowLayout {
+			Layout.fillWidth: true
+			Layout.topMargin: 2
+			spacing: 8
+
+			Run {
+				label: NetworkState.speedRunning ? "Cancel" : NetworkState.speedPhase !== "" ? "Test again" : "Speed test"
+
+				onClicked: NetworkState.toggleSpeedTest()
+			}
+
+			BarText {
+				Layout.fillWidth: true
+
+				text: {
+					if (NetworkState.speedError !== "")
+						return NetworkState.speedError;
+					switch (NetworkState.speedPhase) {
+					case "latency":
+						return "Measuring latency…";
+					case "download":
+						return "Measuring download…";
+					case "upload":
+						return "Measuring upload…";
+					default:
+						// What a run costs, said before it is asked for: on a
+						// tethered phone that is the whole decision. Time
+						// rather than megabytes, because each phase runs for a
+						// fixed number of seconds — the faster the link, the
+						// more it moves in them.
+						return NetworkState.speedRunning ? "" : "12 s at full speed";
+					}
+				}
+				color: NetworkState.speedError !== "" ? Theme.red : Theme.dim
+				elide: Text.ElideRight
+			}
 		}
 	}
 
@@ -554,7 +716,7 @@ Panel {
 			BarText {
 				Layout.fillWidth: true
 
-				text: "w wi-fi · d disconnect · r reset"
+				text: "w wi-fi · d disconnect · s speed · r reset"
 				elide: Text.ElideRight
 			}
 
@@ -711,6 +873,48 @@ Panel {
 			color: cell.valueColor
 			horizontalAlignment: Text.AlignRight
 			elide: Text.ElideRight
+		}
+	}
+
+	// The speed test's button. The only thing on this panel that starts work
+	// rather than reading something already happening, so it looks like a
+	// button instead of like a row.
+	component Run: Rectangle {
+		id: run
+
+		property string label: ""
+
+		signal clicked
+
+		implicitWidth: text.implicitWidth + 20
+		implicitHeight: 26
+
+		radius: 6
+		color: hover.hovered ? Theme.tooltipBorder : Qt.darker(Theme.tooltipBorder, 1.25)
+
+		Behavior on color {
+			ColorAnimation {
+				duration: 150
+			}
+		}
+
+		HoverHandler {
+			id: hover
+		}
+
+		MouseArea {
+			anchors.fill: parent
+			cursorShape: Qt.PointingHandCursor
+
+			onClicked: run.clicked()
+		}
+
+		BarText {
+			id: text
+
+			anchors.centerIn: parent
+
+			text: run.label
 		}
 	}
 

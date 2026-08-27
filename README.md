@@ -176,6 +176,25 @@ refusal there. Everything but the counters comes from NetworkManager over D-Bus;
 `network-stats.sh` reads `/proc/net/dev`, `ip route` and a three-packet ping,
 and only runs while the panel is open.
 
+`s` runs a speed test, which is the one thing on that panel that has to be
+asked for: the counters describe traffic that is already happening, so an idle
+link reads as zero whether it is a gigabit or a dead socket, and finding out
+otherwise means saturating it. `speedtest.sh` measures latency and jitter, then
+download, then upload, against Cloudflare's `speed.cloudflare.com` — the same
+endpoint the browser tests use, reached over whatever path everything else
+takes, and needing no package beyond the `curl` and `jq` already here. Each
+phase runs several connections at once and sums their rates, because one TCP
+stream reports its own ceiling rather than the link's on anything much past
+100 Mbit. The phases are six seconds each, so a run costs twelve seconds of
+saturated link — `s` again cancels it, and closing the panel does too. The
+script prints a line of JSON per phase rather than one at the end, which is
+what fills the download figure in while the upload is still being measured.
+The panel also names the Cloudflare edge that answered, since a test served
+from another continent explains a figure that would otherwise look like a
+fault, and it reports a refusal as one: the endpoint rate limits a run that
+comes too soon after the last, and a rejection body arrives fast enough to
+otherwise read as a very slow link.
+
 The bluetooth module is one glyph too, in three shapes: the adapter off, the
 adapter on with nothing connected, and something connected. It stays the same
 colour in all three — the shape already says which, and a glyph that also
