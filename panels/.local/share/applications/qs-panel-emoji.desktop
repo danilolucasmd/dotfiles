@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Emoji picker
+Comment=Emoji in keyboard order, frequently used first — Super+E
+Icon=face-smile-symbolic
+Keywords=quickshell;panel;emoji;smiley;symbol;
+Exec=qs ipc call emoji toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

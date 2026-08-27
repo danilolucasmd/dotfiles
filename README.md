@@ -464,6 +464,36 @@ works. The state lives in the process the same way the night light's does —
 lit over a machine that is free to lock again — and reloading the shell drops
 the lock for the same reason it turns the filter off.
 
+The emoji picker is a panel with no bar module at all: `super+E` is the only
+thing that opens it, and it has nothing to say while it is closed. It is laid
+out the way every emoji keyboard is — "Frequently Used" first, then the eight
+standard categories under their headings, in CLDR order. Typing filters on the
+CLDR search keywords as well as the names, so
+`lol` finds 😂 and `hi` finds 👋, neither of which says so in its name; the
+arrows walk the grid and Return picks. Choosing one copies it, closes the panel
+and pastes it into whatever had focus, which is section 15 below.
+
+`super+E` used to open walker on elephant's `symbols` provider, and the reason
+that provider is no longer what the key reaches is ordering. It sorts by name,
+so an empty query opened on "1st place medal", "abacus", "accordion" — the emoji
+nobody wants next to the ones everybody does, with no shape to the list at all.
+elephant has no ordering knob to turn, and walker's list is flat and could not
+carry the headings even if it had one. The provider is still installed and still
+reachable under walker's `.` prefix, which is where the arrows, the maths and the
+currency signs live: those are not emoji and do not belong in the grid.
+
+The dataset is generated rather than written: `scripts/gen-emoji-data.py` builds
+`quickshell/.config/quickshell/data/emoji.json` from Unicode's `emoji-test.txt`
+(the emoji themselves, already in CLDR order) and CLDR's `annotations/en.xml`
+(the search keywords), and drops anything the emoji font fontconfig resolves has
+no glyph for, so nothing in the grid can render as a blank box. Skin-tone
+variants are left out for the same reason macOS hides them behind a long press:
+they would triple the list and bury the base glyph. The JSON is checked in, so a
+fresh machine needs no network for it; the script is checked in so it can be
+rebuilt when Unicode ships a release or the font is swapped. The 1500-odd
+entries are parsed on the first open of a session rather than at login, and the
+"Frequently Used" tally lives in `~/.local/state/quickshell/emoji-usage.json`.
+
 Every panel is also reachable by name from the walker launcher, for the ones
 whose keybind you do not have in your fingers yet. `panels/` is a stow package
 of desktop entries — one per panel, each a single
@@ -818,34 +848,43 @@ AltGr, which the `us,intl` secondary layout uses for accented characters.
 
 ## 15. Launcher Pastes What You Pick
 
-`super+V` opens walker on the **clipboard history** and `super+E` on the
-**emoji picker** (elephant's `clipboard` and `symbols` providers; the same two
-are reachable in the launcher under the `:` and `.` prefixes). Return on an
-entry used to do exactly one thing: put it back on the clipboard, leaving you to
-paste it yourself. It now also pastes it into whatever window was focused before
-walker opened, which is the only reason either of those pickers gets opened in
-the first place.
+`super+V` opens walker on the **clipboard history** (elephant's `clipboard`
+provider, also reachable in the launcher under the `:` prefix), and `super+E`
+opens the **emoji picker** — quickshell's own panel now, described in section 5.
+Return on an entry used to do exactly one thing: put it back on the clipboard,
+leaving you to paste it yourself. It now also pastes it into whatever window was
+focused before the picker opened, which is the only reason either of them gets
+opened in the first place.
 
-Neither provider has a paste action to switch to. What both have is a `command`
--- the thing elephant shells out to when the entry is chosen, defaulting to a
-bare `wl-copy` -- and both hand it the entry on stdin the same way: text as
-text, an image as the raw bytes of the PNG elephant already cached. So both
-configs point that `command` at `scripts/.config/scripts/copy-and-paste.sh`,
-which copies exactly as before and then presses `ctrl+v` with `wtype` over the
-virtual-keyboard protocol. `ctrl+v` and not `ctrl+shift+v` because ghostty is
-bound to paste on `ctrl+v` here, so one chord covers the terminal and every GUI
-app, and the script never has to ask what it is pasting into.
+No elephant provider has a paste action to switch to. What they have is a
+`command` -- the thing elephant shells out to when the entry is chosen,
+defaulting to a bare `wl-copy` -- and they hand it the entry on stdin the same
+way: text as text, an image as the raw bytes of the PNG elephant already cached.
+So the `clipboard` and `symbols` configs point that `command` at
+`scripts/.config/scripts/copy-and-paste.sh`, which copies exactly as before and
+then presses `ctrl+v` with `wtype` over the virtual-keyboard protocol. `ctrl+v`
+and not `ctrl+shift+v` because ghostty is bound to paste on `ctrl+v` here, so one
+chord covers the terminal and every GUI app, and the script never has to ask
+what it is pasting into.
 
-The paste cannot fire immediately, and the delay is not a guessed `sleep`.
-walker still holds exclusive keyboard focus at the moment elephant runs the
-command, so a `ctrl+v` sent too early is typed into walker's own search input
-and lost when it closes. The script polls `hyprctl layers` until walker's layer
-surface is gone -- the one honest signal that focus is on its way back -- waits
-another 80ms for the compositor to actually hand it over, and gives up after
-about 1.2s so a walker deliberately left open drops the paste rather than firing
-it at a random moment.
+The emoji panel runs the same script rather than a version of its own, since the
+wait below is the subtle part and there is no reason for two copies of it to
+drift. It calls it as `copy-and-paste.sh --layer quickshell:emoji <emoji>`: the
+emoji arrives as an argument instead of on stdin, and the layer to wait on is
+its own surface rather than walker's. That is also why the panel takes a layer
+namespace to itself instead of the `quickshell:panel` the others share -- a
+panel left open elsewhere must not be able to hold the wait open.
 
-Keeping the copy matters beyond habit: the emoji picker's `history = true`
+The paste cannot fire immediately, and the delay is not a guessed `sleep`. The
+picker still holds exclusive keyboard focus at the moment the command runs, so a
+`ctrl+v` sent too early is typed into its own search input and lost when it
+closes. The script polls `hyprctl layers` until that layer surface is gone -- the
+one honest signal that focus is on its way back -- waits another 80ms for the
+compositor to actually hand it over, and gives up after about 1.2s so a picker
+deliberately left open drops the paste rather than firing it at a random
+moment.
+
+Keeping the copy matters beyond habit: the `symbols` provider's `history = true`
 ordering is built on entries going through the clipboard, and a clipboard entry
 you picked belongs at the top of the history again.
 

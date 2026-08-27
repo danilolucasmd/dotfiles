@@ -276,8 +276,8 @@ sudo systemctl enable sddm
 # passkey confirmed; nothing else here depends on them. pacman-contrib is what provides
 # `checkupdates`, which the bar's updates module shells out to. wtype is the
 # virtual-keyboard client behind copy-and-paste.sh, which is how picking an
-# entry in walker's clipboard history or emoji picker pastes it rather than
-# only refilling the clipboard.
+# entry in walker's clipboard history, or an emoji in the quickshell picker,
+# pastes it rather than only refilling the clipboard.
 echo "==> Installing pacman packages"
 
 pac \
@@ -452,11 +452,11 @@ aur_packages=(
   elephant-bin
   elephant-desktopapplications-bin
   elephant-clipboard-bin
-  elephant-symbols-bin # super+E emoji picker (elephant/symbols.toml)
+  elephant-symbols-bin # walker's `.` prefix: arrows, maths, currency (elephant/symbols.toml)
   elephant-calc-bin    # `calc` is in walker's default provider list
   walker-bin
   gh-dash-bin
-  ttf-joypixels
+  ttf-joypixels # the colour emoji font, and what gen-emoji-data.py checks coverage against
   1password
   brave-bin
   orca-slicer-bin

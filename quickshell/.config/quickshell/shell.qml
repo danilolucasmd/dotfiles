@@ -18,6 +18,7 @@ ShellRoot {
 	CalendarPanel {}
 	NotificationsPanel {}
 	MediaPanel {}
+	EmojiPanel {}
 
 	AudioDevicesPanel {}
 	NetworkPanel {}
@@ -89,6 +90,17 @@ ShellRoot {
 
 		function toggle(): void {
 			NotificationsState.toggle();
+		}
+	}
+
+	// super+E. Not a bar module -- there is nothing about the emoji picker worth
+	// a permanent glyph -- so the keybind and the launcher entry are the only
+	// ways in.
+	IpcHandler {
+		target: "emoji"
+
+		function toggle(): void {
+			EmojiState.toggle();
 		}
 	}
 
