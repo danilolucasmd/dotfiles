@@ -602,6 +602,20 @@ stow \
   yazi \
   zsh
 
+# The wallpaper is addressed through one stable path, ~/.local/state/hypr/wallpaper,
+# which hyprland.conf exports as $ACTIVE_WALLPAPER_PATH and both hyprpaper and
+# hyprlock read. The link is runtime state and deliberately not in the repo --
+# it is what the quickshell picker retargets when a wallpaper is chosen -- so a
+# fresh machine has to be given one, and only a fresh machine: a link that is
+# already there points at whatever was last picked and must survive a re-run.
+# Repointed rather than left alone when it dangles, which is what a wallpaper
+# deleted from the repo leaves behind.
+if [[ ! -e "$HOME/.local/state/hypr/wallpaper" ]]; then
+  mkdir -p "$HOME/.local/state/hypr"
+  ln -sfn "$HOME/.config/wallpapers/Pablo Garcia Saldana.jpg" \
+    "$HOME/.local/state/hypr/wallpaper"
+fi
+
 # dbus, claude and herdr are stowed with --no-folding so that
 # ~/.local/share/dbus-1/services, ~/.claude and ~/.config/herdr stay real
 # directories. Each of them is written into by something other than this repo --

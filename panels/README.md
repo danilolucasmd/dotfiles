@@ -28,13 +28,27 @@ opens.
 There is no entry for the launcher itself. It would list, and picking it would
 close the launcher and reopen it, which is a no-op with extra steps.
 
-Icons are Adwaita symbolic names. Adwaita is the system icon theme and ships
-almost nothing but symbolic icons now — the full-colour `weather-clear`,
-`battery`, `audio-speakers` and friends are all gone — so the `-symbolic` suffix
-is required, not a style choice. The launcher resolves them with
-`Quickshell.iconPath(name, true)`, and the `true` is what makes a name the theme
-does not have come back empty rather than as a broken-image path: a row with no
-icon draws a blank slot, which is quieter than a placeholder.
+Icons are symbolic names. The `-symbolic` suffix is required, not a style
+choice: the themes in play ship almost nothing but symbolic icons now, and the
+full-colour `weather-clear`, `battery`, `audio-speakers` and friends are all
+gone. The launcher resolves them with `Quickshell.iconPath(name, true)`, and the
+`true` is what makes a name the theme does not have come back empty rather than
+as a broken-image path: a row with no icon draws a blank slot, which is quieter
+than a placeholder.
+
+The theme a name is resolved *against* is breeze-dark, not Adwaita —
+`env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` sets it for the tray, and
+the launcher is the same process. That is why several entries here draw a blank
+slot: `bluetooth-symbolic`, `x-office-calendar-symbolic` and
+`night-light-symbolic` are Adwaita names breeze-dark does not carry. A new entry
+that wants an icon which actually appears should be checked against
+`/usr/share/icons/breeze-dark` first.
+
+Changing the `Icon=` of an entry that already resolved once is the one edit here
+that a re-stow and a `qs` reload will not show: the resolved path is cached for
+the life of the process, and only `qs kill` and starting it again picks the new
+one up. Everything else about an entry — its name, its comment, its `Exec` — is
+re-read the moment the file is touched.
 
 `StartupNotify=false` matters: a panel is a layer-shell surface and never
 answers a startup notification, so leaving it on would hang a launch cursor for

@@ -26,6 +26,11 @@ ShellRoot {
 	LauncherPanel {}
 	KeybindsPanel {}
 
+	// Not a card either, and not even the shape of one: it covers the screen to
+	// preview a wallpaper at the size it will be used. Reached from the launcher
+	// only -- see WallpaperPanel.qml.
+	WallpaperPanel {}
+
 	AudioDevicesPanel {}
 	NetworkPanel {}
 	BluetoothPanel {}
@@ -121,6 +126,17 @@ ShellRoot {
 
 		function clipboard(): void {
 			LauncherState.toggleClipboard();
+		}
+	}
+
+	// The wallpaper picker. No keybind and no bar module: changing the wallpaper
+	// is a thing done once in a while, so the launcher entry is the only way in
+	// and the only one it was asked for.
+	IpcHandler {
+		target: "wallpaper"
+
+		function toggle(): void {
+			WallpaperState.toggle();
 		}
 	}
 

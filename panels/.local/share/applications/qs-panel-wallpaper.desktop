@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Wallpaper
+Comment=Pick a desktop wallpaper — arrows preview it full screen, Return sets it
+Icon=viewimage-symbolic
+Keywords=quickshell;panel;wallpaper;background;desktop;picker;hyprpaper;
+Exec=qs ipc call wallpaper toggle
+Terminal=false
+StartupNotify=false
+Categories=Settings;DesktopSettings;

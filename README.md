@@ -495,6 +495,56 @@ rebuilt when Unicode ships a release or the font is swapped. The 1500-odd
 entries are parsed on the first open of a session rather than at login, and the
 "Frequently Used" tally lives in `~/.local/state/quickshell/emoji-usage.json`.
 
+The wallpaper picker is the one panel here that is not a card. It covers the
+screen, because a wallpaper cannot be judged in a 360px box: the selection is
+drawn full size, exactly as it will look, with a strip of the whole collection
+floating over the bottom of it. The arrows walk the strip, and so do `h` and `l`
+— there is no search field here, so a bare letter is free to mean that — and it
+scrolls past a fixed point in the middle rather than marching a highlight to the
+edge; Return sets what is under it and Escape leaves with nothing changed, since
+browsing only ever changes the preview. Each step crossfades, which is two image
+layers rather than one: the next wallpaper is decoded into whichever layer is not
+being shown and only comes forward once it is ready, so the one it replaces stays
+on screen underneath for the whole fade. A single layer faded in on `Ready` has
+nothing to draw for the length of a 2560px JPEG decode, and what shows through
+the gap is the wallpaper you already have — the picker flashed it between every
+pair of candidates until this was two layers. It opens on the wallpaper that is
+already up, so the first frame is indistinguishable from the desktop it just
+covered, and the name above the strip says `· current` against it — which is the
+only way to tell, from a preview that fills the screen, whether Return would
+change anything. The bar
+stays up while picking: the wallpaper runs under the bar in real life too, so
+covering it would preview a screen that never exists. Like the night light and
+keep awake it has no keybind, and the launcher entry is the only way in.
+
+The collection is `~/.config/wallpapers`, which is the `wallpapers` stow package
+-- so what the picker offers is exactly what a fresh clone brings, and dropping
+an image in the repo is the whole of adding one.
+
+Making a choice stick is the part with a decision in it. hyprpaper and hyprlock
+both read `$ACTIVE_WALLPAPER_PATH` out of their own config, and a wallpaper has
+to outlive the session, which left rewriting an `env =` line in a checked-in
+config from a picker (runtime state in the repo) or `source`-ing a generated
+fragment (a `source =` of a file that does not exist yet on a fresh clone is a
+config error). It does neither. The var points at one stable path,
+`~/.local/state/hypr/wallpaper`, which is a symlink; choosing a wallpaper
+retargets the link. Nothing in the repo changes, nothing has to be re-applied at
+the next login -- hyprpaper simply follows the link again -- and `hyprctl
+reload` cannot undo it, which a runtime `hyprctl keyword env` would not have
+survived. `install.sh` creates the link on a fresh machine and leaves an
+existing one alone, since that one points at whatever was last picked.
+
+The link deliberately has no extension, so it can point at a `.jpg` or a `.png`
+without being renamed. That is safe because both readers load images through
+hyprgraphics, which sniffs the format with libmagic rather than trusting the
+name, and both canonicalise the path first -- which is also why `hyprctl
+hyprpaper listactive` answers with the real file and the picker can tell which
+one of the collection is up. `scripts/wallpaper.sh` is the whole of the
+plumbing: `list` for what the panel draws, `set` for the link and the one
+`hyprctl hyprpaper wallpaper` that makes it visible without waiting for a login.
+There is no preload and no unload, because hyprpaper 0.8 has dropped both
+requests and loads on demand.
+
 Every panel is also reachable by name from the launcher, for the ones whose
 keybind you do not have in your fingers yet. `panels/` is a stow package of
 desktop entries — one per panel, each a single
