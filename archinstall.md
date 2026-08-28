@@ -35,7 +35,7 @@ behind it. Bold marks the values that are not archinstall's default, or that
 | Filesystem | **btrfs**, default subvolume layout |
 | Disk encryption | your call |
 | Swap | default (gives you zram) |
-| **Bootloader** | **GRUB** — not the systemd-boot default |
+| Bootloader | default (systemd-boot) — `install.sh` migrates it to Limine |
 | Kernel | default (`linux`) |
 | Hostname | anything |
 | Authentication | create a user, type **Superuser (wheel)**; root **Disabled** |
@@ -66,23 +66,33 @@ lives in `core` or `extra`; nothing needs the 32-bit tree.
 - Filesystem: **btrfs**, with the default subvolume layout
 
 Encryption is a preference, not a requirement — `install.sh` behaves the same
-either way. Worth knowing before you pick: GRUB unlocking LUKS means a
-passphrase prompt at boot, handled by GRUB's slow PBKDF2 pass before the kernel
-loads.
+either way.
 
-`install.sh` sets up snapper, snap-pac and grub-btrfs on top of this, so every
-pacman transaction is snapshotted and bootable from the GRUB menu. Picking ext4
-here is supported — the script skips the whole snapshot section when `/` is not
-btrfs — but you lose that safety net.
+**btrfs is the one value here that matters.** `install.sh` builds the whole
+snapshot and recovery story on top of it: snapper, snap-pac and Limine, so that
+every pacman transaction is snapshotted and every snapshot is bootable. Picking
+ext4 is supported — the script skips the entire section when `/` is not btrfs —
+but you lose that safety net completely.
+
+The best-effort layout gives a 1 GiB ESP mounted at `/boot`, which is enough:
+`install.sh` trims the initramfs to fit snapshot kernels into it. If you are
+partitioning by hand anyway, give the ESP 2 GiB and stop thinking about it.
+See `README.md` section 10 for why that number exists.
 
 ### Swap
 - Swap: default
 
 ### Bootloader
-- Bootloader: **GRUB**
+- Bootloader: default (systemd-boot)
 
-grub-btrfs is what puts snapshots in the boot menu, and it only works with GRUB.
-systemd-boot (archinstall's default) has no equivalent.
+Take archinstall's default and let `install.sh` deal with it. It installs Limine
+and `limine-snapper-sync` afterwards, which is what puts snapshots in the boot
+menu paired with the kernel each one was taken with — the thing neither
+systemd-boot nor grub-btrfs does on this layout, because `/boot` is the ESP and
+kernels live outside every snapshot.
+
+The migration keeps the systemd-boot EFI binary and its NVRAM entry in place as
+a fallback, so a first reboot that goes wrong still has somewhere to land.
 
 ### Kernels
 - Kernel: default

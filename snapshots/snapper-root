@@ -1,0 +1,99 @@
+# Managed by dotfiles/install.sh -- see snapshots/README.md
+#
+# Retention for the root subvolume. Every snapshot listed here can become a
+# Limine boot entry, and every distinct kernel behind those entries costs space
+# on a FAT32 ESP that archinstall sizes at 1 GiB. That is the budget these
+# numbers are written against, not disk space -- the filesystem barely notices
+# a snapshot, the boot partition very much does.
+
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+#
+# Deliberately empty, and `btrfs quota disable /` is run by install.sh. Quota
+# accounting costs real time on a filesystem this size and nothing here reads
+# it: the space-aware cleanups below use SPACE_LIMIT/FREE_LIMIT, which work off
+# plain statfs.
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+#
+# The one number keeping the others honest. On a nearly full disk cleanup
+# prunes early rather than letting snapshots fill the filesystem, so the limits
+# below are ceilings, not promises -- a full machine keeps less history than
+# they suggest, and that is the correct failure mode.
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+#
+# install.sh substitutes @@ALLOW_USERS@@ with the installing user: it is the one
+# value in this file that must not be committed, because these dotfiles run on
+# more than one machine. Together with SYNC_ACL it is what lets `snapshot`
+# create, list and delete without sudo, which is what makes the CLAUDE.md rule
+# cheap enough to always follow.
+#
+# Substituted rather than applied afterwards with `snapper set-config`: snapperd
+# caches each config, and set-config writes the whole file back from that cache
+# -- so a set-config call after copying this file silently reverts every other
+# value in it. install.sh stops snapperd before writing for the same reason.
+ALLOW_USERS="@@ALLOW_USERS@@"
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="yes"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+#
+# snap-pac writes a *pair* per pacman transaction, so 20 is ten transactions of
+# history, not twenty. The important ones -- kernel, driver and full-upgrade
+# transactions, tagged in /etc/snap-pac.ini -- are counted separately by
+# NUMBER_LIMIT_IMPORTANT and so survive a run of routine installs.
+NUMBER_MIN_AGE="3600"
+NUMBER_LIMIT="20"
+NUMBER_LIMIT_IMPORTANT="10"
+
+# create hourly snapshots
+#
+# Off for root. snap-pac already covers every pacman transaction and `snapshot`
+# covers everything else worth returning to; an hourly snapshot of / in between
+# those captures nothing but still wants a boot entry and a kernel copy.
+# Timeline snapshots are for /home, where files actually change -- see
+# snapper-home.
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="3600"
+TIMELINE_LIMIT_HOURLY="0"
+TIMELINE_LIMIT_DAILY="0"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_QUARTERLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+#
+# A pacman transaction that changed nothing on disk leaves an identical pair.
+# Dropping those keeps the boot menu readable, which is the whole point of
+# naming snapshots in the first place.
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="3600"

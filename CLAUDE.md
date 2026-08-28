@@ -3,9 +3,9 @@
 Arch + Hyprland, reproduced on a new machine by `git clone` + `./install.sh`.
 Each top-level directory is a GNU stow package whose inner path mirrors `$HOME`
 (`quickshell/.config/quickshell` -> `~/.config/quickshell`). Not every directory
-is a package: `webapps/` is a generator run from `install.sh`, and a package may
-carry a `README.md` of its own, which stow's default ignore list keeps out of
-`$HOME`.
+is a package: `webapps/` is a generator run from `install.sh` and `snapshots/`
+is a set of curated `/etc` files it installs, and a package may carry a
+`README.md` of its own, which stow's default ignore list keeps out of `$HOME`.
 
 `README.md` is the long-form documentation, kept current and written as prose.
 When a change alters something it describes, update it in the same turn.
@@ -14,6 +14,12 @@ Not everything the system needs is a file. Desktop preferences live in dconf, a
 binary database that cannot be symlinked, so `nautilus/dconf.ini` keeps them as
 a curated keyfile that `install.sh` applies with `dconf load /` -- a merge, not
 a replace. Anything else that turns out to be dconf-shaped belongs there too.
+
+`snapshots/` is the same idea for a different reason: snapper rewrites its own
+config file whenever anything calls `set-config`, so symlinking it into the repo
+would have snapper writing into git. Those files are copied, not linked, and the
+machine-specific values in them -- filesystem UUID, root subvolume, the
+installing user -- are derived by `install.sh` at run time rather than committed.
 
 ## Editing here edits the running system
 
@@ -46,6 +52,33 @@ copy to keep in sync. Two consequences worth holding onto:
   command to ask instead. `clipboard.sh list` and `keybinds.py` both print the
   JSON their panels draw, which is where to look when a list is wrong.
 - **kanata** needs `systemctl --user restart kanata` after a keymap edit.
+
+## Before a destructive system change, take a snapshot
+
+Run `snapshot "<what is about to happen>"` first. Never skip it.
+
+It is one command, it needs no sudo, and it takes about a second: `install.sh`
+sets `ALLOW_USERS` and `SYNC_ACL` in the snapper configs precisely so that this
+rule is too cheap to argue with. The description is mandatory because it becomes
+the label in the Limine boot menu, and a menu of bare timestamps is unreadable
+at exactly the hour you need to read it.
+
+Destructive means anything that writes outside this repo and outside `$HOME`:
+`/etc` and `/usr` edits, DKMS rebuilds, bootloader or mkinitcpio work, `usermod`,
+enabling or masking units -- and `./install.sh` itself, which is all of those at
+once.
+
+Two things that look like they need it and do not:
+
+- **`pkg`, `yay` and `pacman` snapshot themselves.** snap-pac's alpm hooks fire a
+  pre/post pair around every transaction whoever started it, so a `snapshot`
+  beforehand only adds a third, worse-described entry to the boot menu.
+- **Editing files in this repo.** That is what git is for.
+
+**`snapshot restore` is not yours to run.** The rule authorises creating restore
+points, not replacing the running system with one; the command enforces this by
+refusing without a terminal, but the prohibition is the point, not the check.
+Tell the user which snapshot to roll back to and let them do it.
 
 ## A change is not done until it is portable
 

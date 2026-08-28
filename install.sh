@@ -24,6 +24,13 @@ command -v sudo >/dev/null || {
   exit 1
 }
 
+# On a btrfs root this script REPLACES THE BOOTLOADER: archinstall leaves you on
+# systemd-boot, and the snapshot section installs Limine over it so that btrfs
+# snapshots become boot entries (see README.md section 10). The systemd-boot EFI
+# binary and its NVRAM entry are left in place as a fallback, but this is the
+# one step here that can cost you a reboot, so it is worth knowing up front.
+echo "==> Note: on btrfs, this migrates the bootloader to Limine. See README.md section 10."
+
 # Everything below assumes the repo is checked out here: hyprland.conf, the
 # stow invocations and the sddm theme permissions all refer to it by path.
 DOTFILES="$HOME/dotfiles"
@@ -161,6 +168,40 @@ pac \
   stow
 
 ############################################################
+# NAME RESOLUTION (prefer IPv4)                            #
+############################################################
+
+# aur.archlinux.org resolves to both A and AAAA records, glibc prefers the
+# IPv6 one by default, and on a connection whose IPv6 path to the AUR does not
+# work every `git clone` and every yay build dies with "Recv failure:
+# Connection reset by peer". That is not hypothetical -- it is what this
+# machine does, and it takes the whole AUR half of the install with it.
+#
+# This used to be `sysctl -w net.ipv6.conf.all.disable_ipv6=1` immediately
+# before each AUR step, which fixed nothing: `-w` does not persist, and
+# `all.disable_ipv6` does not retract an address an interface already holds, so
+# the machine kept its global IPv6 address and kept preferring it.
+#
+# The supported fix is to change the resolver's precedence rather than to
+# switch the protocol off: RFC 3484 says the highest-precedence match wins, so
+# giving the IPv4-mapped range a higher label than the default 10 for ::/0 puts
+# IPv4 first everywhere -- git, curl, pacman, yay -- while leaving IPv6 working
+# for anything that reaches it successfully.
+echo "==> Preferring IPv4 in name resolution"
+sudo tee /etc/gai.conf >/dev/null <<'GAI'
+# Managed by dotfiles/install.sh
+#
+# Prefer IPv4 over IPv6. See the NAME RESOLUTION section of install.sh for why;
+# the short version is that the AUR is unreachable over IPv6 from here and the
+# default precedence made every AUR build fail.
+#
+# Everything else is glibc's default and is left implicit on purpose: this file
+# replaces /etc/gai.conf wholesale, and listing the defaults would only create
+# something to drift.
+precedence ::ffff:0:0/96  100
+GAI
+
+############################################################
 # AUR HELPER (yay)                                         #
 ############################################################
 
@@ -168,8 +209,6 @@ if ! command -v yay >/dev/null 2>&1; then
   echo "==> Installing yay (yay-bin)"
 
   pac base-devel git
-
-  sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
   tmpdir="$(mktemp -d)"
   git clone https://aur.archlinux.org/yay-bin.git "$tmpdir"
@@ -334,10 +373,20 @@ pac \
 # BTRFS SNAPSHOTS                                          #
 ############################################################
 
-# The disk layout from archinstall.md is btrfs with GRUB, so snapshots are
-# available: snapper takes them, snap-pac fires one around every pacman
-# transaction, and grub-btrfs puts them in the boot menu so a bad upgrade is
-# recoverable without the ISO.
+# The recovery story for this system, and the reason it can survive a bad
+# upgrade without an ISO. snapper takes the snapshots, snap-pac fires a pair
+# around every pacman transaction (so `pkg` and `yay` are covered too -- they
+# both end up in libalpm), and Limine puts the root snapshots in the boot menu
+# with the kernel each one was taken with.
+#
+# That last clause is why this is Limine and not GRUB. archinstall mounts the
+# ESP at /boot, so vmlinuz and the initramfs live outside every btrfs snapshot;
+# rolling back with grub-btrfs would boot today's kernel against an old
+# /usr/lib/modules. limine-snapper-sync copies each snapshot's boot files onto
+# the ESP and pairs them back up. It is also what omarchy does.
+#
+# Everything machine-specific here is derived at run time -- filesystem UUID,
+# root subvolume, the installing user. snapshots/ holds only what is portable.
 if [[ "$(findmnt -no FSTYPE /)" == "btrfs" ]]; then
   echo "==> Installing btrfs snapshot tooling"
 
@@ -345,9 +394,9 @@ if [[ "$(findmnt -no FSTYPE /)" == "btrfs" ]]; then
     btrfs-progs \
     snapper \
     snap-pac \
-    grub-btrfs \
     btrfs-assistant \
-    inotify-tools
+    inotify-tools \
+    limine
 
   # create-config fails if the config already exists, which is the re-run case.
   [[ -f /etc/snapper/configs/root ]] ||
@@ -355,8 +404,217 @@ if [[ "$(findmnt -no FSTYPE /)" == "btrfs" ]]; then
   [[ -f /etc/snapper/configs/home ]] ||
     try "snapper home config" sudo snapper -c home create-config /home
 
+  # The curated configs are copied over whatever create-config produced, every
+  # run, so a re-run re-asserts them. They cannot be stow symlinks: snapper
+  # rewrites its own config file whenever anything calls set-config, and that
+  # would have it writing into this repo. Same shape as nautilus/dconf.ini.
+  #
+  # snapperd is stopped first, and ALLOW_USERS is substituted into the file
+  # rather than applied afterwards with `snapper set-config`. Both for the same
+  # reason: snapperd caches each config in memory and set-config writes the
+  # whole file back from that cache, so copying the file and then calling
+  # set-config silently reverts everything except the key just set. It is
+  # dbus-activated, so stopping it costs nothing -- the next snapper call brings
+  # it back, reading the file fresh.
+  try "stop snapperd" sudo systemctl stop snapperd.service
+  for cfg in root home; do
+    if [[ -f "/etc/snapper/configs/$cfg" ]]; then
+      sed "s|@@ALLOW_USERS@@|$USER|" "$DOTFILES/snapshots/snapper-$cfg" |
+        sudo install -m 640 -o root -g root /dev/stdin "/etc/snapper/configs/$cfg"
+    fi
+  done
+
+  sudo install -m 644 -o root -g root "$DOTFILES/snapshots/snap-pac.ini" /etc/snap-pac.ini
+
+  # Quota accounting is expensive on a large filesystem and nothing here reads
+  # it: snapper's space-aware cleanups use SPACE_LIMIT/FREE_LIMIT, which work
+  # off plain statfs. Fails harmlessly when quota was never enabled.
+  try "btrfs quota" sudo btrfs quota disable /
+
   sudo systemctl enable snapper-timeline.timer snapper-cleanup.timer
-  sudo systemctl enable grub-btrfsd.service
+
+  # -- Limine ------------------------------------------------------------
+
+  # Where the ESP actually is. /boot on the archinstall systemd-boot layout this
+  # repo documents, /boot/efi on the GRUB layout older versions of
+  # archinstall.md told you to pick.
+  esp_path="$(bootctl --print-esp-path 2>/dev/null || echo /boot)"
+
+  # A machine that genuinely boots GRUB is left alone. Installing Limine there
+  # would put it first in NVRAM and quietly replace a working bootloader on a
+  # machine nobody is watching -- and that layout usually mounts the ESP at
+  # /boot/efi with /boot inside the root subvolume, which is not what any of
+  # this was built or tested against. Removing GRUB is a decision to make
+  # deliberately, not a side effect of re-running the installer.
+  #
+  # Note this repo's own history: archinstall.md used to specify GRUB, so a
+  # machine set up from these dotfiles before the Limine switch will land here.
+  # Snapshots still work on it -- snapper, snap-pac and `snapshot` are all
+  # configured above. It is only the boot menu that waits.
+  grub_is_live=no
+  [[ -f /boot/grub/grub.cfg || -f "$esp_path/grub/grub.cfg" ]] && grub_is_live=yes
+  pacman -Qq grub >/dev/null 2>&1 && pacman -Qeq grub >/dev/null 2>&1 && grub_is_live=yes
+
+  if [[ "$grub_is_live" == "yes" && "${DOTFILES_FORCE_LIMINE:-}" != "1" ]]; then
+    echo "==> GRUB is this machine's bootloader; leaving it alone"
+    echo "    Snapshots are configured and working, but they will not appear in"
+    echo "    the boot menu. To switch this machine to Limine deliberately:"
+    echo "      sudo pacman -Rns grub grub-btrfs && DOTFILES_FORCE_LIMINE=1 ./install.sh"
+  else
+
+  # Both AUR, and both slow: they compile a native image with gradle against a
+  # GraalVM their PKGBUILD downloads, so expect a long first run. A failure
+  # here costs the boot menu, not the snapshots -- those keep working.
+  #
+  # They cannot be installed with a plain `yay -S`, because Arch's gradle
+  # package is incomplete for this build. Gradle 9 moved its public API into
+  # lib/api/ inside the distribution, and `gradle 9.7.0-1` ships no lib/api
+  # directory at all, so configuring either project dies with:
+  #
+  #   Cannot find module 'gradle-public-api-legacy' in distribution directory
+  #   '/usr/share/java/gradle'.
+  #
+  # The official distribution does ship it. So: vendor the official Gradle,
+  # and rewrite the hardcoded /usr/bin/gradle in each PKGBUILD to point at it.
+  # Nothing pacman owns is touched.
+  gradle_version=9.7.0
+  gradle_sha256=84fbba45c7f4c64abc77460e1c00f541e9f960e3c7ed2538f1ede19eacd873ae
+  gradle_home="$HOME/.local/share/gradle-${gradle_version}"
+
+  if [[ ! -x "$gradle_home/bin/gradle" ]]; then
+    echo "==> Vendoring Gradle ${gradle_version} (Arch's package cannot build these)"
+    gradle_zip="$(mktemp -d)/gradle.zip"
+    if curl -fsSL -o "$gradle_zip" \
+      "https://services.gradle.org/distributions/gradle-${gradle_version}-bin.zip" &&
+      echo "${gradle_sha256}  ${gradle_zip}" | sha256sum -c --quiet -; then
+      mkdir -p "$HOME/.local/share"
+      unzip -q -o "$gradle_zip" -d "$HOME/.local/share"
+    else
+      echo "!! could not fetch or verify Gradle ${gradle_version}"
+    fi
+    rm -rf "$(dirname "$gradle_zip")"
+  fi
+
+  # Build one AUR package from a PKGBUILD patched to use the vendored Gradle.
+  #
+  # Two details that are not obvious and that cost an afternoon each:
+  #  * GRADLE_HOME must be set explicitly. /etc/profile.d/gradle.sh exports it
+  #    as /usr/share/java/gradle, and the official launcher honours it -- so
+  #    without this the vendored Gradle politely uses the broken tree anyway.
+  #  * --no-daemon, because a daemon already started from Arch's distribution
+  #    is reused across builds and fails exactly the same way.
+  build_with_vendored_gradle() {
+    local pkg="$1"
+    local builddir="$HOME/.cache/dotfiles/aur/$pkg"
+
+    pacman -Q "$pkg" >/dev/null 2>&1 && return 0
+    [[ -x "$gradle_home/bin/gradle" ]] || return 1
+
+    rm -rf "$builddir"
+    mkdir -p "$(dirname "$builddir")"
+    git clone --depth 1 "https://aur.archlinux.org/${pkg}.git" "$builddir" || return 1
+
+    sed -i "s|/usr/bin/gradle|env GRADLE_HOME=\"${gradle_home}\" \"${gradle_home}/bin/gradle\" --no-daemon|" \
+      "$builddir/PKGBUILD"
+    # If upstream stops calling /usr/bin/gradle the substitution is a no-op and
+    # the build would silently use the broken one. Fail loudly instead.
+    grep -q "${gradle_home}/bin/gradle" "$builddir/PKGBUILD" || {
+      echo "!! ${pkg}: PKGBUILD no longer calls /usr/bin/gradle; patch needs revisiting"
+      return 1
+    }
+
+    (cd "$builddir" && makepkg -si --noconfirm --needed)
+  }
+
+  for pkg in limine-mkinitcpio-hook limine-snapper-sync; do
+    try "AUR: $pkg" build_with_vendored_gradle "$pkg"
+  done
+
+  if pacman -Q limine-snapper-sync >/dev/null 2>&1; then
+    # Both limine tools and the `snapshot` command must agree on where the ESP
+    # is, so the detected value is written into both configs rather than
+    # auto-detected separately by each of them.
+    sed -e "s|@@ESP_PATH@@|${esp_path}|" \
+      "$DOTFILES/snapshots/limine-snapper-sync.conf" |
+      sudo install -m 644 -o root -g root /dev/stdin /etc/limine-snapper-sync.conf
+
+    # A read-only snapshot cannot be booted by a system that expects to write
+    # to /, so btrfs-overlayfs gives it a writable overlay. Derived from the
+    # live HOOKS rather than shipped as a fixed line, so it composes with
+    # whatever else a given machine needs, and re-running is idempotent.
+    #
+    # kms is dropped on NVIDIA machines only. The hook pulls the in-tree
+    # nouveau driver's firmware into the early CPIO -- GSP blobs for every
+    # chip, ~107 MiB of it -- which is dead weight when the proprietary driver
+    # is in use, and it is charged against the ESP once per kernel generation
+    # that limine-snapper-sync has to keep. On amdgpu/intel, early KMS is
+    # wanted and the firmware is a fraction of the size, so it stays.
+    hooks="$(sed -nE 's/^HOOKS=\((.*)\)$/\1/p' /etc/mkinitcpio.conf | tail -1)"
+    # One package at a time: `pacman -Q a b c` exits non-zero when *any* of them
+    # is missing, so querying the whole list at once would never match.
+    drop_kms=no
+    for driver in nvidia-open-dkms nvidia-open nvidia-dkms nvidia; do
+      pacman -Qq "$driver" >/dev/null 2>&1 && drop_kms=yes && break
+    done
+    new_hooks=""
+    for hook in $hooks; do
+      [[ "$hook" == "kms" && "$drop_kms" == "yes" ]] && continue
+      [[ "$hook" == "btrfs-overlayfs" ]] && continue
+      new_hooks+="$hook "
+      [[ "$hook" == "filesystems" ]] && new_hooks+="btrfs-overlayfs "
+    done
+    sudo mkdir -p /etc/mkinitcpio.conf.d
+    sudo tee /etc/mkinitcpio.conf.d/btrfs-snapshots.conf >/dev/null <<HOOKSCONF
+# Managed by dotfiles/install.sh -- see snapshots/README.md
+# Derived from HOOKS in /etc/mkinitcpio.conf; re-run install.sh to regenerate.
+HOOKS=(${new_hooks% })
+HOOKSCONF
+
+    # Writing the drop-in changes nothing until the images are rebuilt: the
+    # running initramfs keeps whatever HOOKS it was born with, so without this
+    # a read-only snapshot has no btrfs-overlayfs to give it a writable layer
+    # and the ESP keeps paying for firmware nobody loads. Regenerating also
+    # fires limine-mkinitcpio-hook, which is what puts the kernel entries in
+    # limine.conf in the first place.
+    try "regenerate initramfs" sudo mkinitcpio -P
+
+    # The kernel command line, built from the running system. A committed
+    # PARTUUID would boot the wrong disk on the next machine.
+    root_uuid="$(findmnt -no UUID /)"
+    root_subvol="$(findmnt -no OPTIONS / | tr ',' '\n' | sed -n 's/^subvol=\/\?//p' | head -1)"
+    # Everything the running kernel was given except what the bootloader
+    # supplies itself -- so zswap.enabled=0 and friends survive the migration.
+    extra_cmdline="$(tr ' ' '\n' </proc/cmdline |
+      grep -vE '^(BOOT_IMAGE|initrd|root|rootflags|rootfstype|ro|rw)(=|$)' |
+      tr '\n' ' ' | sed 's/ *$//')"
+    cmdline="rw root=UUID=${root_uuid} rootfstype=btrfs rootflags=subvol=${root_subvol}${extra_cmdline:+ $extra_cmdline}"
+
+    sed -e "s|@@CMDLINE@@|${cmdline}|" -e "s|@@ESP_PATH@@|${esp_path}|" \
+      "$DOTFILES/snapshots/limine-entry-tool.conf" |
+      sudo install -m 644 -o root -g root /dev/stdin /etc/limine-entry-tool.conf
+
+    # Writes the boot entries and installs the EFI binary. Non-fatal: a machine
+    # whose ESP is somewhere unexpected should report that and carry on rather
+    # than take the whole install down.
+    try "limine boot entries" sudo limine-update
+
+    sudo systemctl enable limine-snapper-sync.service
+  fi
+
+  fi
+
+  # grub-btrfs was this repo's previous answer, and on an archinstall layout it
+  # never worked: the bootloader is not GRUB, so grub-btrfsd regenerated a
+  # grub.cfg that nothing read. Removed rather than left running, and `grub`
+  # goes with it -- but only when it was an orphaned dependency, which `-Rns`
+  # decides. On a machine that really does boot GRUB, grub-btrfs is doing its
+  # job and both stay: that is the same machine the guard above left alone.
+  if [[ "$grub_is_live" != "yes" ]] && pacman -Q grub-btrfs >/dev/null 2>&1; then
+    echo "==> Removing grub-btrfs (superseded by limine-snapper-sync)"
+    sudo systemctl disable --now grub-btrfsd.service 2>/dev/null || true
+    sudo rm -f /etc/systemd/system/grub-btrfsd.service
+    try "remove grub-btrfs" sudo pacman -Rns --noconfirm grub-btrfs
+  fi
 else
   echo "==> Root is not btrfs, skipping snapshot tooling"
 fi
@@ -449,8 +707,6 @@ sudo usermod -aG docker "$USER"
 # target used to abort the whole script -- taking the dotfiles, the shell and
 # the graphics drivers down with it. Now a casualty is reported and skipped.
 echo "==> Installing AUR packages"
-
-sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 
 aur_packages=(
   ghostty

@@ -804,16 +804,190 @@ Full write-up, including how to verify it: `dbus/README.md`.
 
 ## 10. Btrfs Snapshots
 
-The disk layout in `archinstall.md` is btrfs with GRUB, so `install.sh` installs
-snapper, snap-pac and grub-btrfs and enables the timeline/cleanup timers. A
-snapshot is taken around every pacman transaction and appears in the GRUB menu,
-so a bad upgrade is recoverable without reaching for the ISO.
+This is how the system recovers itself. `install.sh` sets up snapper, snap-pac
+and Limine so that every meaningful change to `/` leaves a restore point, and so
+that those restore points are bootable — pick one from the boot menu and you are
+running last Tuesday's system, with last Tuesday's kernel.
 
-The whole section is skipped if `/` is not btrfs, so the script still works on
-an ext4 install — you just get no snapshots.
+Before anything else: **a snapshot is not a backup.** All of this lives on the
+same filesystem on the same disk. It survives a bad `-Syu`, a botched `/etc`
+edit and an `rm` in the wrong directory, and it survives none of a dead NVMe.
+Off-machine backup is a separate concern and deliberately not this repo's.
 
-`snapper create-config` runs only when the config does not already exist, which
-is what makes re-running the script safe.
+The whole section is skipped if `/` is not btrfs, so the script still works on an
+ext4 install — you just get none of this. `snapper create-config` runs only when
+the config does not already exist, which is what makes re-running safe.
+
+### What takes snapshots
+
+Three things, and between them they cover everything worth returning to.
+
+**Every package transaction.** `snap-pac` ships alpm hooks, so it does not matter
+who calls pacman: `pkg`, which shells out to pacman or yay; yay itself, since
+every AUR build ends in a `pacman -U`; or pacman by hand. All of them go through
+libalpm and all of them leave a pre/post pair described with the command that
+caused it. Nothing in this repo wraps `pkg` — a wrapper would only produce a
+second, worse-described snapshot beside the one already being taken. The one
+honest gap is that a bare `pacman -Sy` installs nothing and so snapshots nothing,
+which is correct rather than missing.
+
+**A timeline on `/home`,** hourly and daily. Not on `/`: snap-pac and `snapshot`
+already cover it, and an hourly snapshot of a root filesystem that did not change
+still costs a boot entry and a kernel copy.
+
+**You, before doing something destructive.** That is the `snapshot` command
+below, and `CLAUDE.md` makes it a standing rule.
+
+The ordering matters and is worth not breaking. The **pre** snapshot is created
+before the transaction, so it is paired with the *old* kernel; `zz-snap-pac-post`
+sorts last among the alpm hooks, after mkinitcpio has regenerated, so the
+**post** snapshot is paired with the *new* one. Rolling back to a pre snapshot
+boots the kernel that was running before the update.
+
+Kernel, graphics, systemd and bootloader transactions are additionally tagged
+`important=yes` in `/etc/snap-pac.ini`, which gives them their own retention
+budget so a run of routine installs cannot age out last week's kernel upgrade.
+
+### The `snapshot` command
+
+```
+snapshot "about to rewrite /etc/foo"   take a named snapshot of /
+snapshot                               list what exists, and what is bootable
+snapshot info                          bootable snapshots and their kernels
+snapshot diff 214                      what changed since snapshot 214
+snapshot restore-file 214 ~/notes.md   copy one path back out of 214
+snapshot restore                       roll the system back (interactive)
+```
+
+Creating and listing need no sudo — `install.sh` sets `ALLOW_USERS` and
+`SYNC_ACL` in the snapper configs for exactly that reason, because a rule that
+costs a password prompt is a rule that gets skipped. The description is
+mandatory: it becomes the label in the boot menu.
+
+A first argument that is not a subcommand is taken as a description, so the
+common case needs no ceremony. `snapshot create "list"` is how you name a
+snapshot after a subcommand, on the day that comes up. `--home` points `list`
+and `diff` at the home config instead.
+
+### Getting back
+
+Reach for these in order — the first one is almost always enough.
+
+**A single file.** `snapshot restore-file <id> <path>` copies it out of the
+snapshot and saves whatever was there as `<path>.before-restore` first. No
+rollback, no reboot, nothing else lost. Because `SYNC_ACL` syncs the ACL onto
+`/home/.snapshots`, you can also just browse `/home/.snapshots/*/snapshot/` as
+yourself and copy things by hand.
+
+**The whole system, from a running system.** `snapshot diff <id>` first to see
+what would be discarded, then `snapshot restore`. It saves the current state as
+its own snapshot before doing anything, so the rollback itself is undoable.
+
+**The whole system, when it will not boot.** Pick the snapshot from the
+**Snapshots** submenu in Limine. It comes up read-only with an overlayfs
+writable layer — that is what the `btrfs-overlayfs` hook is for — so you can log
+in and look around without committing to anything. If it is the one you want,
+run `snapshot restore` from inside it and reboot. This is the upstream flow and
+the one to prefer: you see the system you are about to keep before you keep it.
+
+`snapshot restore` refuses to run without a terminal, deliberately. Snapshot
+creation is passwordless so that scripts and agents can leave restore points
+freely; replacing the running system is not something that should inherit that.
+
+### Why Limine
+
+This repo used to install `grub-btrfs`, and on an archinstall layout it never
+worked — archinstall's bootloader is systemd-boot, so `grub-btrfsd` regenerated
+a `grub.cfg` that nothing read. `install.sh` now removes both it and the `grub`
+it dragged in.
+
+Installing GRUB properly would have fixed the smaller half. The larger half is
+that archinstall mounts the ESP at `/boot`, so the kernel and initramfs sit on
+FAT32, outside every btrfs snapshot; a rollback would pair an old root subvolume
+with today's kernel and an old `/usr/lib/modules` that no longer matches it.
+`limine-snapper-sync` copies each snapshot's boot files onto the ESP as the
+snapshot is made, deduplicated by hash. Omarchy does the same thing, which is
+where the idea came from.
+
+### The one number to keep an eye on
+
+The ESP is 1 GiB on an archinstall layout and holds every snapshot's kernel, so
+it — not disk space — is what limits how far back the boot menu goes. Past
+`LIMIT_USAGE_PERCENT` (75, in `/etc/limine-snapper-sync.conf`) new snapshots
+silently stop getting boot entries: snapper keeps working and nothing in its
+output changes. `snapshot` checks after every create and says so, and
+`limine-snapper-remove <id>..<id>` frees entries up.
+
+To make 1 GiB workable, `install.sh` drops `kms` from `HOOKS` **on NVIDIA
+machines only**, where the hook pulls ~107 MiB of nouveau GSP firmware into the
+early CPIO for a driver that is never loaded. That takes a kernel generation
+from ~157 MiB to ~43 MiB. The cost is that the console runs on the EFI
+framebuffer until `nvidia_drm` loads, which is normal for the proprietary
+driver. On amdgpu or Intel the hook stays.
+
+Full write-up, including the arithmetic: `snapshots/README.md`.
+
+### Two things that get in the way of installing this
+
+Both are upstream problems rather than anything this repo does, and `install.sh`
+works around both.
+
+**The AUR is unreachable over IPv6 from here.** `aur.archlinux.org` publishes
+both A and AAAA records, glibc prefers the IPv6 one, and every `git clone`
+against it dies with `Recv failure: Connection reset by peer` — which takes the
+whole AUR half of the install with it, not just Limine. `install.sh` writes an
+`/etc/gai.conf` that gives IPv4 higher precedence. This replaced two
+`sysctl -w net.ipv6.conf.all.disable_ipv6=1` calls that had been sitting in
+front of each AUR step and fixing nothing: `-w` does not persist, and
+`all.disable_ipv6` does not retract an address an interface already holds.
+
+**Arch's gradle cannot build them.** Gradle 9 moved its public API into
+`lib/api/` inside the distribution, and `gradle 9.7.0-1` ships no `lib/api`
+directory at all, so both packages fail to configure with `Cannot find module
+'gradle-public-api-legacy'`. `install.sh` downloads the official Gradle
+distribution to `~/.local/share/gradle-<version>` (checksum-verified) and
+rewrites the hardcoded `/usr/bin/gradle` in each PKGBUILD to point at it.
+Nothing pacman owns is touched. Two details make that work and are easy to lose:
+`GRADLE_HOME` has to be set explicitly, because `/etc/profile.d/gradle.sh` points
+it at the broken tree and the official launcher honours it; and `--no-daemon` is
+required, because a Gradle daemon already started from Arch's distribution gets
+reused and fails identically.
+
+If either package fails to build, snapshots still work and are still taken —
+they are simply not bootable until it succeeds.
+
+### Re-running install.sh on a machine set up before this
+
+Everything here is safe to re-run, and idempotent. What you get depends on what
+that machine already boots.
+
+**On a machine that boots systemd-boot** (archinstall's default, which is what
+`archinstall.md` now specifies) `install.sh` does the full migration in place:
+Limine is installed, the snapshot menu appears, and the systemd-boot EFI binary
+and NVRAM entry are left behind as a fallback. This is exactly the path this
+machine took.
+
+**On a machine that genuinely boots GRUB** — which is what `archinstall.md`
+specified before this change, so anything set up from these dotfiles earlier
+will be one — `install.sh` deliberately stops short. It configures snapper,
+snap-pac, the retention tuning and the `snapshot` command, and then leaves the
+bootloader alone: replacing a working bootloader as a side effect of re-running
+an installer is not something that should happen on a machine nobody is
+watching, and that layout also mounts the ESP at `/boot/efi` with `/boot` inside
+the root subvolume, which none of this was built against. You get everything
+except the boot menu, and the script says so.
+
+Switching such a machine over is a deliberate act:
+
+```bash
+sudo pacman -Rns grub grub-btrfs
+DOTFILES_FORCE_LIMINE=1 ./install.sh
+```
+
+Do that one from a terminal you can watch, with a live USB within reach.
+
+`grub-btrfs` is only removed on machines that are *not* booting GRUB, where it
+was never doing anything. Where GRUB is real, it stays and keeps working.
 
 ---
 
@@ -1106,8 +1280,10 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`
-- `dbus`, `claude` and `herdr` are stowed with `--no-folding`, everything else
-  plainly
+- `dbus`, `nautilus`, `panels`, `kanata`, `claude`, `caveman` and `herdr` are
+  stowed with `--no-folding`, everything else plainly
+- `webapps/` and `snapshots/` are not stow packages at all -- the first is a
+  generator, the second a set of curated `/etc` files `install.sh` copies
 - When an app has already written a config that stow wants to own, `install.sh`
   moves the original aside as `<name>.pre-stow` rather than failing
 - All non-deterministic or GUI-based steps are documented here on purpose
@@ -1120,6 +1296,9 @@ depends on them and `install.sh` no longer pulls them in:
 ```bash
 sudo pacman -Rns mako dunst rofi rofi-calc anyrun cliphist pcmanfm tmux waybar
 ```
+
+`grub-btrfs` and `grub` belong on that list too, but `install.sh` removes them
+itself -- see section 10 for why they were never doing anything.
 
 If something breaks after a system update, this file is the single source of
 truth for restoring expected behavior.

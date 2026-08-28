@@ -1,0 +1,253 @@
+#!/usr/bin/env bash
+#
+# snapshot -- take, browse and undo btrfs snapshots of this system.
+#
+# The Limine boot menu is the recovery path for a machine that will not come
+# up. This is the one for everything short of that, which is almost everything:
+# naming a restore point before a destructive change, seeing what a transaction
+# actually touched, and pulling a single file back out of yesterday.
+#
+# Creating and listing never need sudo. That is not a convenience -- it is what
+# makes the CLAUDE.md rule ("snapshot before a destructive system change")
+# cheap enough that it actually gets followed, including by scripts and agents.
+# It works because install.sh sets ALLOW_USERS and SYNC_ACL in the snapper
+# configs; see snapshots/README.md.
+#
+# Rolling the system back does NOT inherit that looseness. See restore() below.
+
+set -euo pipefail
+
+readonly LSS_CONF=/etc/limine-snapper-sync.conf
+
+die() { printf 'snapshot: %s\n' "$*" >&2; exit 1; }
+
+# Snapper needs a config name; every subcommand that touches one resolves it
+# here so that `--home` works uniformly.
+CONFIG=root
+snapshots_dir() { [[ $CONFIG == home ]] && echo /home/.snapshots || echo /.snapshots; }
+
+# Pull one key out of limine-snapper-sync's config. Absent file, absent key and
+# absent tool are all fine -- this script has to work during a fresh install,
+# before any of the Limine half exists.
+lss_conf_value() {
+	local key="$1" value=""
+	[[ -r $LSS_CONF ]] || return 1
+	value=$(sed -nE "s/^[[:space:]]*${key}[[:space:]]*=[[:space:]]*\"?([^\"#]*)\"?.*/\1/p" "$LSS_CONF" | tail -1)
+	value="${value%"${value##*[![:space:]]}"}"
+	[[ -n $value ]] && printf '%s\n' "$value"
+}
+
+# Where the ESP is. install.sh writes ESP_PATH into limine-snapper-sync.conf
+# precisely so this does not have to guess, but the fallback still has to be
+# right on a machine where that file does not exist yet -- and a bare /boot is
+# wrong wherever the ESP is mounted at /boot/efi, which is what archinstall
+# produces when GRUB is chosen.
+esp_path() {
+	lss_conf_value ESP_PATH && return 0
+	bootctl --print-esp-path 2>/dev/null && return 0
+	echo /boot
+}
+
+usage() {
+	cat <<'USAGE'
+usage: snapshot [<description>]              take a named snapshot of /
+       snapshot create <description>         the same, spelled out
+       snapshot list [--home]                what snapshots exist
+       snapshot info                         bootable snapshots and their kernels
+       snapshot diff <id> [--home]           what changed since snapshot <id>
+       snapshot restore-file <id> <path>     copy one path back out of <id>
+       snapshot restore                      roll the system back (interactive)
+
+A snapshot is not a backup: it lives on the same disk, so it survives your
+mistakes and none of the disk's.
+USAGE
+}
+
+# Warn when the ESP is too full for new snapshots to get boot entries. This
+# failure is silent by design upstream -- snapper keeps working, the snapshot
+# is still made, it just never appears in the boot menu -- so it is worth a
+# line of output every time a snapshot is created.
+check_esp_headroom() {
+	local esp limit used
+	esp=$(esp_path)
+	[[ -d $esp ]] || return 0
+	limit=$(lss_conf_value LIMIT_USAGE_PERCENT || echo 85)
+	used=$(df --output=pcent "$esp" 2>/dev/null | tail -1 | tr -dc '0-9') || return 0
+	[[ -n $used && -n $limit ]] || return 0
+	if (( used >= limit )); then
+		printf '\n!! %s is %s%% full, over the %s%% limit in %s.\n' \
+			"$esp" "$used" "$limit" "$LSS_CONF" >&2
+		printf '   New snapshots will NOT get boot entries until space is freed.\n' >&2
+		printf '   `limine-snapper-remove <id>..<id>` drops old entries.\n' >&2
+	fi
+}
+
+create() {
+	local description="$*"
+	[[ -n $description ]] || die "a snapshot needs a description -- it becomes the boot menu label"
+
+	local number
+	number=$(snapper -c "$CONFIG" create --print-number --cleanup-algorithm number \
+		--description "$description") ||
+		die "snapper could not create the snapshot (is ALLOW_USERS set? see snapshots/README.md)"
+
+	printf '%s #%s  %s\n' "$CONFIG" "$number" "$description"
+	check_esp_headroom
+}
+
+# Which snapshots Limine can actually boot, read straight out of its config.
+#
+# limine-snapper-list would answer this too, but it re-invokes itself through
+# sudo, and a password prompt in the middle of a plain `snapshot list` is
+# exactly the friction this command exists to avoid. limine.conf is on a vfat
+# ESP and world-readable, and every snapshot entry names its snapshot in the
+# subvol= of its cmdline -- which is stable regardless of how the entries are
+# formatted, unlike the menu labels.
+bootable_ids() {
+	local esp
+	esp=$(esp_path)
+	[[ -r "$esp/limine.conf" ]] || return 1
+	grep -oE '\.snapshots/[0-9]+/snapshot' "$esp/limine.conf" |
+		grep -oE '[0-9]+' | sort -un
+}
+
+list() {
+	snapper -c "$CONFIG" list
+
+	if [[ $CONFIG != root ]]; then
+		printf '\n(only root snapshots become boot entries)\n'
+		return 0
+	fi
+
+	local ids
+	if ! ids=$(bootable_ids) || [[ -z $ids ]]; then
+		printf '\nBootable in Limine: none yet\n'
+		return 0
+	fi
+	printf '\nBootable in Limine: %s\n' "$(printf '%s ' $ids | sed 's/ $//')"
+}
+
+info() {
+	command -v limine-snapper-info >/dev/null 2>&1 ||
+		die "limine-snapper-info not installed -- nothing is bootable yet"
+	limine-snapper-info "$@"
+}
+
+# `0` is snapper's name for the live system, so <id>..0 reads as "what has
+# happened since". This is the question worth asking before any restore.
+diff_since() {
+	local id="${1:-}"
+	[[ $id =~ ^[0-9]+$ ]] || die "diff needs a snapshot id (see \`snapshot list\`)"
+	snapper -c "$CONFIG" status "${id}..0"
+}
+
+# The common recovery, and the one that should be reached for first: no
+# rollback, no reboot, nothing lost but the file you are replacing.
+restore_file() {
+	local id="${1:-}" target="${2:-}"
+	[[ $id =~ ^[0-9]+$ ]] || die "restore-file needs a snapshot id and a path"
+	[[ -n $target ]] || die "restore-file needs a path to restore"
+
+	# An absolute path under /home belongs to the home config, anything else to
+	# root. Resolving it here means the caller never has to think about which
+	# subvolume a file lives on.
+	target=$(realpath -m -- "$target")
+	local config=$CONFIG source
+	[[ $target == /home/* ]] && config=home
+	if [[ $config == home ]]; then
+		source="/home/.snapshots/${id}/snapshot/${target#/home/}"
+	else
+		source="/.snapshots/${id}/snapshot/${target#/}"
+	fi
+
+	[[ -e $source ]] || die "not in snapshot #${id}: $target"
+
+	# Never overwrite without leaving a way back. The saved copy is the reason
+	# this is safe to run without a confirmation prompt.
+	local sudo_maybe=()
+	[[ -w $(dirname -- "$target") ]] || sudo_maybe=(sudo)
+	if [[ -e $target ]]; then
+		local backup="${target}.before-restore"
+		"${sudo_maybe[@]}" cp -a -- "$target" "$backup"
+		printf 'saved current copy to %s\n' "$backup"
+	fi
+
+	"${sudo_maybe[@]}" cp -a -- "$source" "$target"
+	printf 'restored %s from %s #%s\n' "$target" "$config" "$id"
+}
+
+# Rolling the whole root subvolume back is the one irreversible thing here, and
+# it is treated as such.
+#
+# It deliberately refuses to run without a terminal. Snapshot *creation* is
+# passwordless so that scripts and agents can leave restore points freely; that
+# same absence of friction must not extend to replacing the running system.
+# Anything automated can create, never restore.
+restore() {
+	[[ -t 0 && -t 1 ]] ||
+		die "restore is interactive only -- it will not run without a terminal"
+	[[ $CONFIG == root ]] ||
+		die "there is no rollback for /home; use \`snapshot restore-file\` to recover a path"
+
+	command -v limine-snapper-restore >/dev/null 2>&1 ||
+		die "limine-snapper-restore not installed -- use btrfs-assistant, or boot a snapshot first"
+
+	cat <<'WARNING'
+About to roll the root subvolume back to a snapshot.
+
+Everything written to / since that snapshot is discarded -- installed packages,
+config edits, anything outside /home. A reboot is required afterwards.
+
+Read this first if you have not already:
+  * The usual path is to REBOOT into the snapshot from the Limine menu and run
+    `snapshot restore` from inside it. That way you see the system you are
+    about to keep before you keep it.
+  * `snapshot diff <id>` shows what would be discarded.
+WARNING
+
+	printf '\nType "restore" to continue, anything else to abort: '
+	local answer
+	read -r answer
+	[[ $answer == restore ]] || die "aborted"
+
+	# The rollback's own undo. Everyone skips this step by hand, at exactly the
+	# hour they can least afford to have skipped it.
+	local number
+	if number=$(snapper -c root create --print-number --cleanup-algorithm number \
+		--description "pre-restore state" 2>/dev/null); then
+		printf '\nCurrent state saved as root #%s -- restore that to undo this.\n\n' "$number"
+	else
+		printf '\n!! could not snapshot the current state first; continuing anyway.\n\n' >&2
+	fi
+
+	limine-snapper-restore
+}
+
+main() {
+	local args=()
+	for arg in "$@"; do
+		case $arg in
+			--home) CONFIG=home ;;
+			-h|--help) usage; return 0 ;;
+			*) args+=("$arg") ;;
+		esac
+	done
+	set -- "${args[@]+"${args[@]}"}"
+
+	# A bare `snapshot` lists rather than creates: the safest thing a lone word
+	# can do. Anything that is not a known subcommand is a description, so
+	# `snapshot "about to rewrite /etc/foo"` works without ceremony -- and
+	# `snapshot create "list"` is how you name one after a subcommand.
+	case "${1:-list}" in
+		list)         list ;;
+		create)       shift; create "$@" ;;
+		info)         shift; info "$@" ;;
+		diff)         shift; diff_since "$@" ;;
+		restore-file) shift; restore_file "$@" ;;
+		restore)      restore ;;
+		help)         usage ;;
+		*)            create "$@" ;;
+	esac
+}
+
+main "$@"
