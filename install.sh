@@ -272,6 +272,20 @@ pac \
 # nothing had chosen. Enabling it settles that.
 sudo systemctl enable power-profiles-daemon.service
 
+# The charge threshold -- the percentage the firmware stops charging at, which
+# the battery panel's slider sets -- is a root-owned sysfs attribute, so without
+# this every move of that slider is a polkit password prompt. The rule hands
+# write access to `wheel` on every pack that has the attribute, at every plug
+# and unplug, so the panel can set it directly. Reading it never needed the
+# rule; only writing does.
+echo "==> Letting wheel set the battery charge threshold"
+sudo tee /etc/udev/rules.d/99-charge-threshold.rules >/dev/null <<'THRESHOLD'
+# Managed by dotfiles/install.sh -- see quickshell/.config/quickshell/scripts/charge-limit.sh
+ACTION=="add|change", SUBSYSTEM=="power_supply", KERNEL=="BAT*", RUN+="/bin/sh -c 'chgrp wheel /sys%p/charge_control_end_threshold /sys%p/charge_control_start_threshold 2>/dev/null; chmod g+w /sys%p/charge_control_end_threshold /sys%p/charge_control_start_threshold 2>/dev/null'"
+THRESHOLD
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=power_supply
+
 # Hand the lid to Hyprland. Closing it can mean lock, blank, suspend, or
 # nothing at all depending on the external monitor and the power adapter --
 # a decision only the compositor has the facts for, and logind would beat it
