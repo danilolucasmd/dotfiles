@@ -95,6 +95,17 @@ Gradle Limine pair — now build with `makepkg -s` and install with an explicit
 `makepkg --packagelist` reports rather than a `*.pkg.tar.zst` glob that would
 also match leftovers from an earlier build.
 
+**`mkinitcpio` is not `mkinitcpio` on this machine.** `limine-mkinitcpio-hook`
+installs `/usr/local/bin/mkinitcpio`, a wrapper that runs the real one and then
+asks `Would you like to run 'limine-mkinitcpio' now? [Y/n]` for any `-P`. It is
+a bare `read` with no test for whether anything is there to answer, and
+`/usr/local/bin` comes first in sudo's `secure_path`, so the install stopped
+dead on it. The script calls `/usr/bin/mkinitcpio -P` by absolute path. Nothing
+is lost: the wrapper's `limine-mkinitcpio` would run before
+`/etc/limine-entry-tool.conf` is written, building entries from a command line
+the script has not composed yet, and the `limine-update` a few lines later does
+the same work in the right order.
+
 Nothing else in the script prompts either: `chsh` goes through sudo rather than
 asking PAM for the password a second time, and `yay` is called with
 `--answerdiff=None --answerclean=None` because `--noconfirm` does not cover

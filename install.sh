@@ -823,7 +823,25 @@ HOOKSCONF
     # and the ESP keeps paying for firmware nobody loads. Regenerating also
     # fires limine-mkinitcpio-hook, which is what puts the kernel entries in
     # limine.conf in the first place.
-    try "regenerate initramfs" sudo mkinitcpio -P
+    #
+    # /usr/bin/mkinitcpio by absolute path, and that is the whole point of the
+    # line. limine-mkinitcpio-hook ships /usr/local/bin/mkinitcpio, a wrapper
+    # that runs the real one and then, for any -P or -p invocation, asks:
+    #
+    #   ==> Would you like to run 'limine-mkinitcpio' now? [Y/n]:
+    #
+    # It is a bare `read` with no check for whether anything is listening, and
+    # /usr/local/bin comes first in sudo's secure_path, so a plain `sudo
+    # mkinitcpio -P` sits there waiting for a keystroke in the middle of an
+    # install that is supposed to run unattended. Calling the real binary skips
+    # the wrapper and its question.
+    #
+    # Nothing is lost by skipping it. The answer would have been no in any case:
+    # the wrapper's limine-mkinitcpio would run *here*, before
+    # /etc/limine-entry-tool.conf is written a few lines down, so it would build
+    # its entries from a kernel command line this script has not composed yet.
+    # `limine-update` below does the same work in the right order.
+    try "regenerate initramfs" sudo /usr/bin/mkinitcpio -P
 
     # The kernel command line, built from the running system. A committed
     # PARTUUID would boot the wrong disk on the next machine.
