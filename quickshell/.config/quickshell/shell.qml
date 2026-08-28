@@ -31,6 +31,10 @@ ShellRoot {
 	// only -- see WallpaperPanel.qml.
 	WallpaperPanel {}
 
+	// The shutdown confirm, which is the only thing the three power entries in
+	// the launcher put on screen -- see PowerState.qml.
+	PowerPanel {}
+
 	AudioDevicesPanel {}
 	NetworkPanel {}
 	BluetoothPanel {}
@@ -226,6 +230,27 @@ ShellRoot {
 
 		function toggle(): void {
 			NightLightState.toggle();
+		}
+	}
+
+	// Lock, suspend and shut down, reached by name from the launcher and from
+	// nowhere else: there is no bar module and no keybind of their own here
+	// (super+Escape already locks, straight to hyprlock). `shutdown` is the odd
+	// function out and the reason the other two are here at all -- it opens a
+	// confirm card instead of powering off. See PowerState.qml.
+	IpcHandler {
+		target: "power"
+
+		function lock(): void {
+			PowerState.lock();
+		}
+
+		function suspend(): void {
+			PowerState.suspend();
+		}
+
+		function shutdown(): void {
+			PowerState.shutdown();
 		}
 	}
 

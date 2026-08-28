@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Shut down
+Comment=Power the machine off — asks first, since nothing open is saved for you
+Icon=system-shutdown-symbolic
+Keywords=quickshell;shutdown;shut;down;power;off;poweroff;halt;turn;
+Exec=qs ipc call power shutdown
+Terminal=false
+StartupNotify=false
+Categories=System;

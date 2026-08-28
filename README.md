@@ -556,6 +556,31 @@ launcher holds a `HyprlandFocusGrab` of its own while it is up, which clears the
 one an open panel was holding, so the panel is always already closed by the time
 the entry runs. See `panels/README.md`.
 
+Three of those entries open no panel at all: **Lock screen**, **Suspend** and
+**Shut down**. The machine's power policy already lives elsewhere —
+`super+Escape` locks, hypridle blanks and locks on its timers, and a closed lid
+is `lid.sh`'s decision — so what was missing was only a way to reach the three
+deliberate ones by typing their name. Lock and suspend do exactly what they say
+the moment they are picked; suspend does not lock on its way down, because
+hypridle's `before_sleep_cmd` is `hyprlock` and logind runs it before the
+machine goes anywhere. Shut down is the one that asks: it opens a small card
+with Cancel selected, and the selection starts on the harmless button on
+purpose. A launcher row is one fuzzy match and one Return away from whatever
+was typed, which is the right amount of friction for opening a window and the
+wrong amount for taking the machine down with unsaved work on it — a card whose
+default answer was "yes" would be a delay rather than a confirmation. Left,
+Right or Tab moves between the buttons, Return presses the selected one, Escape
+and a click outside both cancel.
+
+All three route through quickshell (`qs ipc call power lock`, `… suspend`,
+`… shutdown`) rather than the first two being plain `Exec` lines, so that what
+the launcher does about power is one file. Nothing is lost by it: the launcher
+asking is quickshell, so a shell that is not running has no row to pick either
+way. There is no hibernate entry. Swap on this machine is zram — RAM pretending
+to be a disk, which is no use to hibernate — and the kernel has no `resume=`,
+so `systemctl hibernate` fails; the entry would list, and picking it would do
+nothing but log an error.
+
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
 one that ships light symbolic icons for a dark bar.

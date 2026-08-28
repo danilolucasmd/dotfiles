@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Lock screen
+Comment=Lock the session now — hyprlock, the same screen the idle timer raises
+Icon=system-lock-screen-symbolic
+Keywords=quickshell;lock;screen;hyprlock;session;secure;away;
+Exec=qs ipc call power lock
+Terminal=false
+StartupNotify=false
+Categories=System;

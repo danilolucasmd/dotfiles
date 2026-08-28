@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Suspend
+Comment=Sleep to RAM — the screen locks on the way down and the session comes back
+Icon=system-suspend-symbolic
+Keywords=quickshell;suspend;sleep;standby;ram;idle;pause;
+Exec=qs ipc call power suspend
+Terminal=false
+StartupNotify=false
+Categories=System;
