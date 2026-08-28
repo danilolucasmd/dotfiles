@@ -1315,7 +1315,163 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 
 ---
 
-## 17. General Notes
+## 17. Fingerprint Unlock
+
+The ThinkPad's reader unlocks **hyprlock and nothing else**. SDDM at boot, `sudo`
+and a TTY login all still want the password, and that is deliberate rather than
+an omission: the password is what stands between a stolen laptop and the session,
+and it is worth typing once a day. The screen you unlock forty times a day is the
+one that earns a shortcut.
+
+Keeping it that narrow costs nothing, because hyprlock does not use PAM for this.
+It speaks to fprintd over DBus directly (`net.reactivated.Fprint`), so the
+`auth:fingerprint` block in `hyprlock.conf` is the whole configuration and
+`/etc/pam.d/` is untouched. Adding `pam_fprintd.so` to `system-auth` would have
+been the other way to do it, and it would have handed the reader to `sudo` and
+SDDM as well.
+
+### How `install.sh` picks a driver
+
+Nothing about the sections above is specific to this laptop, and the install is
+written the same way: it tries to work on whatever reader it meets, and where it
+cannot, it says so by name instead of leaving a silent no-op.
+
+`fprintd` goes on first, because it is the part that is always right — it owns
+the DBus name hyprlock talks to, and libfprint behind it drives most readers on
+the market. Then **the daemon itself is asked whether it found anything**:
+
+```bash
+fprintd-list "$USER"    # "found 1 devices" -> done
+```
+
+That is a better test than any table of USB IDs kept in this repo. It covers
+sensors that never appear in `lsusb` (the SPI ones), and it keeps being right as
+libfprint gains drivers between releases, which a hand-written list does not.
+
+Only when the daemon comes up empty does anything machine-specific happen, and
+then the reader has to be identified. The ID comes from `lsusb` matched against
+**libfprint's own hwdb** (`/usr/lib/udev/hwdb.d/60-autosuspend-libfprint-2.hwdb`),
+which names every device any of its drivers claims — four hundred-odd IDs,
+regenerated on each upgrade, on disk already because fprintd pulled libfprint in.
+It answers "is this thing a fingerprint reader" even for devices libfprint then
+turns out not to drive, which is exactly the case worth naming. A product string
+containing "finger" or "biometric" is the fallback for a sensor too new for it.
+
+From there it is one `case` arm per family libfprint cannot drive. Today there is
+one arm — the Validity 009x below. A reader matching no arm is reported by ID and
+added to the skipped-steps summary that `install.sh` prints at the end, pointing
+back here.
+
+### Readers that need something other than libfprint
+
+| Family | IDs | What it needs |
+| --- | --- | --- |
+| Validity 009x | `06cb:009a`, `138a:0090`, `138a:0097` | `open-fprintd` + `python-validity` (AUR). **Automated** — this is the T480's sensor. |
+| Goodix | `27c6:*` | `libfprint-2-tod1` plus the per-model blob (`libfprint-2-tod1-goodix`, `…-goodix-550a`, and others). Manual: the right package depends on the product ID. |
+| Egis | `1c7a:*` | A separate driver again, and several models have none at all. Manual. |
+| Elan, Upek, AuthenTec, most others | — | Already in libfprint. `fprintd` alone is the whole answer. |
+
+Teaching `install.sh` a new one is adding a `case` arm in the fingerprint
+section and a row here. The reason the Goodix and Egis rows are not arms is that
+guessing wrong installs a proprietary driver for the wrong sensor, and the
+product ID is what decides — so that stays a decision a human makes once.
+
+### Why the T480 needs it
+
+`fprintd` alone fails here in the way that wastes an afternoon: it installs, it
+starts, and then `fprintd-enroll` says
+
+```
+Impossible to enroll: GDBus.Error:net.reactivated.Fprint.Error.NoSuchDevice: No devices available
+```
+
+The sensor is `06cb:009a`, "Synaptics Metallica MIS Touch Fingerprint Reader",
+one of the Validity 009x family. Confusingly libfprint *does* carry a `vfs7552`
+driver whose device table claims that ID — it is in the hwdb, and the driver is
+compiled into the Arch package — and it still does not drive this sensor. The
+device is enumerated by nobody and fprintd has nothing to hand out.
+
+What does drive it is uunicorn's pair: **python-validity** as the driver and
+**open-fprintd** as a drop-in replacement for the fprintd daemon, both from the
+AUR. This is an either/or rather than an addition — `fprintd-clients-git`
+conflicts with `fprintd` and installing it removes the repo package, which is
+also why `install.sh` checks for it before putting `fprintd` back on a re-run.
+Everything above the DBus name is unchanged, which is the whole point of
+open-fprintd: hyprlock, `fprintd-enroll` and the indicator script all still talk
+to `net.reactivated.Fprint` and none of them know the difference.
+
+Two units are enabled that are worth knowing about. `python3-validity.service`
+is enabled even though the udev rule already starts it, because a machine that
+booted with the sensor attached never gets an add event. And the AUR package's
+`python3-validity-suspend-hotfix.service` restarts both the driver and the
+daemon after resume: this laptop suspends itself on battery, and the sensor
+comes back dead without it — open-fprintd's own `resume.py` only re-opens
+devices, which is not enough. `open-fprintd.service` is `Type=dbus` and
+deliberately not enabled; the first fingerprint call activates it.
+
+### Enrolling
+
+Manual, and it has to be — it writes per-user biometric templates and needs the
+finger in the room:
+
+```bash
+fprintd-enroll                 # right index by default; swipe until it says done
+fprintd-enroll -f left-index-finger
+fprintd-list "$USER"           # what is enrolled
+fprintd-delete "$USER"         # start over
+fprintd-verify                 # test outside the lock screen
+```
+
+Enrolment asks polkit for a password once. If it reports no device on a machine
+where the units are running, `sudo journalctl -u python3-validity -b` is where
+the driver says why — a sensor previously paired by Windows Hello has to be
+reset with `validity-sensors-tools-git` before it will pair with anything else.
+
+### The indicator
+
+`hypr/.config/hypr/scripts/fingerprint-icon.sh` prints a fingerprint glyph, or
+prints nothing, and a hyprlock label draws whatever it printed just outside the
+right edge of the password field. Nothing is the case worth having: hyprlock's
+fingerprint auth fails *silently* — it logs that fprintd was unreachable and goes
+on being a password prompt — so on a machine with no reader, without `fprintd`,
+or with no finger enrolled yet, the lock screen has to look exactly like the
+password-only one it did before. The script therefore asks `fprintd-list`, which
+fails when there is no daemon or no device and prints no numbered lines when
+nothing is enrolled — the same question on every machine, whichever driver is
+underneath.
+
+It runs once per lock (`cmd[update:0]`), which is as often as the answer can
+change.
+
+The label is the one thing on the lock screen not set in `$font`, and it has to
+be. hyprlock sizes a label's texture to pango's *logical* extents — the glyph's
+advance width — and JetBrainsMono Nerd Font draws `nf-md-fingerprint` as a 28px
+picture in a 21px cell, so seven pixels of it landed outside the texture and the
+icon appeared with its right edge sliced off. `Symbols Nerd Font Mono` keeps the
+glyph inside its advance, which is what a symbols-only face is for. Any other
+Nerd Font glyph borrowed for a label here is worth checking the same way.
+
+Both the label's position and the input field's size are percentages of the
+monitor — field `20%` wide and centred, glyph centred at `12%` — so the glyph
+stays a fixed gap off the field's edge on the laptop panel and on an external
+screen alike. A pixel offset would have been right on exactly one width.
+
+### Two things that surprise
+
+**Three misses and it stops.** After three non-matching scans hyprlock disables
+fingerprint auth for the rest of that lock and the field says so; the password
+still works. The `retry_delay = 250` is why a badly placed finger usually costs
+one attempt rather than one of those three.
+
+**A fingerprint does not wake the screen.** hypridle blanks the panel 30 seconds
+after locking, and the reader is not an input device as far as Wayland is
+concerned, so touching it on a dark screen unlocks the session without turning
+the panel back on. Any key or the touchpad brings it back. Press a key first and
+the ordinary case — wake, then touch — behaves the way it looks like it should.
+
+---
+
+## 18. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`

@@ -143,7 +143,9 @@ fi
 
 # Only the nerd font actually referenced by the configs (ghostty, quickshell
 # and hyprlock all ask for "JetBrainsMono Nerd Font") plus the symbol-only
-# faces the bar glyphs come from. The `nerd-fonts` group is 69 packages and
+# faces the bar glyphs come from -- and hyprlock's fingerprint indicator, which
+# names "Symbols Nerd Font Mono" outright because the text face draws that
+# glyph wider than its own cell. The `nerd-fonts` group is 69 packages and
 # several GB for fonts nothing here names.
 echo "==> Installing core tools"
 
@@ -162,6 +164,7 @@ pac \
   python \
   fcitx5 \
   fastfetch \
+  usbutils \
   ttf-jetbrains-mono-nerd \
   ttf-nerd-fonts-symbols \
   ttf-nerd-fonts-symbols-mono \
@@ -750,6 +753,157 @@ done
 if pacman -Q docker-desktop >/dev/null 2>&1; then
   systemctl --user enable docker-desktop.service
 fi
+
+############################################################
+# FINGERPRINT READER                                       #
+############################################################
+
+# Unlocks hyprlock and nothing else. hyprlock speaks to fprintd over DBus
+# rather than through PAM, so none of this touches /etc/pam.d and sddm, sudo
+# and a TTY login keep asking for the password -- README section 17 for why
+# that split is the point rather than an oversight.
+#
+# Written to survive meeting a reader that is not this ThinkPad's. `fprintd` is
+# the part that is always right: it owns the DBus name hyprlock talks to, and
+# libfprint behind it drives most readers on the market. So it goes on first,
+# and then *it* is asked whether it found anything -- a better oracle than any
+# table of USB ids kept here, because it covers sensors that never appear in
+# `lsusb` at all (the SPI ones) and it stays correct as libfprint gains
+# drivers between releases.
+#
+# Only when the daemon comes up empty does the machine-specific part begin, and
+# that is one `case` arm per family libfprint cannot drive. Teaching this
+# script a new reader is adding an arm. A reader that matches none of them is
+# reported by id and left for a human rather than silently doing nothing --
+# see README section 17, which is where the families are written down.
+echo "==> Installing fingerprint reader support"
+
+# "found 1 devices" from the client is the whole test, and it is deliberately
+# the client rather than a probe of our own: it asks the same daemon over the
+# same bus that hyprlock will, so a yes here means the lock screen will work.
+#
+# Captured into a variable and matched, rather than piped into `grep -q`: this
+# script runs under `set -o pipefail`, and `grep -q` exits at the first match,
+# which kills fprintd-list with SIGPIPE and hands the pipeline a 141. The test
+# then reports "no reader" on exactly the machines where there is one.
+fingerprint_reader_ready() {
+  local listing
+  listing="$(fprintd-list "$USER" 2>/dev/null || true)"
+  grep -qE '^found [1-9]|^Device at ' <<<"$listing"
+}
+
+# The USB id of an attached reader as "vvvv:pppp", or nothing.
+#
+# libfprint ships a hwdb naming every device any of its drivers claims -- 400
+# odd ids, regenerated on each upgrade -- which is a far better list than one
+# maintained here, and it is already on disk because fprintd pulled libfprint
+# in. It answers "is this thing a fingerprint reader" even for the devices
+# libfprint turns out not to actually drive, which is precisely the case this
+# function exists to name. The product-string match is the fallback for a
+# sensor too new to be in it.
+fingerprint_reader_id() {
+  local hwdb=/usr/lib/udev/hwdb.d/60-autosuspend-libfprint-2.hwdb
+  local id name vid pid
+
+  command -v lsusb >/dev/null || return 1
+
+  while read -r _ _ _ _ _ id name; do
+    vid=${id%:*}
+    pid=${id#*:}
+    # -i because the hwdb writes ids in uppercase and lsusb in lowercase.
+    if [[ -r $hwdb ]] && grep -qiE "^usb:v${vid}p${pid}\*" "$hwdb"; then
+      echo "$id"
+      return 0
+    fi
+    if [[ $name == *[Ff]inger* || $name == *[Bb]iometric* ]]; then
+      echo "$id"
+      return 0
+    fi
+  done < <(lsusb 2>/dev/null)
+
+  return 1
+}
+
+# Unconditionally, even on a machine with no reader at all -- 900 KiB that
+# never runs, against a hardware probe that would have to happen before the
+# library that knows what the hardware is. The exception is a machine already
+# on a replacement for it: open-fprintd's client package conflicts with
+# fprintd, so a re-run must not try to put it back.
+if ! pacman -Q fprintd-clients-git >/dev/null 2>&1; then
+  pac fprintd
+fi
+
+if fingerprint_reader_ready; then
+  echo "==> Fingerprint reader is answering, nothing more to install"
+else
+  fp_id="$(fingerprint_reader_id || true)"
+
+  case "$fp_id" in
+  138a:0090 | 138a:0097 | 06cb:009a)
+    # The Validity 009x family, 06cb:009a being the one in this T480. libfprint
+    # does carry a vfs7552 driver that claims these ids, and it does not work:
+    # the sensor is enumerated by nobody and fprintd answers `fprintd-enroll`
+    # with "No devices available". uunicorn's pair is what drives them --
+    # python-validity as the driver, open-fprintd as a drop-in for the daemon,
+    # same DBus name, so hyprlock never learns the difference.
+    echo "==> Validity 009x sensor ($fp_id), installing python-validity"
+
+    # fprintd-clients-git named explicitly because it is the package carrying
+    # the conflict with fprintd: naming it makes the replacement part of this
+    # transaction rather than something yay discovers halfway through.
+    try "AUR: validity fingerprint stack" yay -S --needed --noconfirm \
+      fprintd-clients-git open-fprintd python-validity
+
+    # python-validity's udev rule starts the driver when the sensor appears,
+    # but a machine that booted with it already attached gets no add event,
+    # which is every boot -- so the unit is enabled too. open-fprintd itself is
+    # Type=dbus and deliberately not enabled: the first call activates it.
+    try "fingerprint driver" sudo systemctl enable --now python3-validity.service
+
+    # This laptop suspends itself on battery (hypr/scripts/lid.sh), and a
+    # Validity sensor comes back from suspend dead until the driver *and* the
+    # daemon are restarted -- open-fprintd's own resume.py only re-opens
+    # devices, so the AUR package's hotfix unit is the half that matters. No
+    # --now on any of them: they are sleep hooks, and starting one now would
+    # fire its restart at install time for nothing.
+    try "fingerprint sleep hooks" sudo systemctl enable \
+      open-fprintd-suspend.service \
+      open-fprintd-resume.service \
+      python3-validity-suspend-hotfix.service
+
+    # The driver brings the sensor up over USB before the daemon has a device
+    # to hand out, and on a cold machine that takes a few seconds -- asking the
+    # instant after `enable --now` reports a failure that fixes itself while
+    # you read it.
+    for _ in {1..10}; do
+      if fingerprint_reader_ready; then break; fi
+      sleep 2
+    done
+
+    fingerprint_reader_ready ||
+      FAILED+=("fingerprint: $fp_id still silent after python-validity, see README section 17")
+    ;;
+  "")
+    echo "==> No fingerprint reader found, nothing more to install"
+    ;;
+  *)
+    # Attached, recognisably a reader, and libfprint will not drive it. The
+    # driver depends on the family -- Goodix wants libfprint-2-tod plus a
+    # per-model blob, Egis wants something else again -- and guessing wrong
+    # installs a proprietary driver for the wrong sensor, so this stops and
+    # says so. Appended to FAILED directly rather than through try(): nothing
+    # ran and failed, but this belongs in the same summary at the end, which is
+    # the one place anybody reads.
+    echo "!! Fingerprint reader $fp_id is attached and libfprint cannot drive it."
+    echo "   README section 17 lists the families and what each one needs."
+    FAILED+=("fingerprint: $fp_id needs a driver this script has no arm for, see README section 17")
+    ;;
+  esac
+fi
+
+# Enrolling is manual on every path and has to be: it writes per-user biometric
+# templates and needs the finger in the room. `fprintd-enroll`, README
+# section 17.
 
 ############################################################
 # NODE SETUP                                               #
