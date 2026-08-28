@@ -2,7 +2,6 @@
 set -euo pipefail
 
 SECONDS=0
-trap 'echo; echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"' EXIT
 
 ############################################################
 #                                                          #
@@ -24,6 +23,40 @@ command -v sudo >/dev/null || {
   exit 1
 }
 
+############################################################
+# ONE PASSWORD, ONCE                                       #
+############################################################
+
+# This script runs for twenty minutes and calls sudo a few hundred times --
+# directly, and through makepkg and yay, which call it themselves. sudo's
+# credential cache expires after 5 minutes of no use, so without this the
+# install stops and asks for the password again at whatever moment a long
+# pacman batch or a long AUR build happens to end. That is the "asked me for
+# the password over and over" complaint, and it is not a real security boundary
+# either: the password is being typed into the same terminal running the same
+# script that already has root.
+#
+# So: authenticate once, up front, and hold the timestamp open with a
+# background loop that touches it every 50 seconds. `sudo -n` never prompts, so
+# a revoked timestamp makes the loop exit quietly rather than fight for a
+# terminal. `kill -0 $$` is what stops the loop from outliving the install when
+# the script is killed rather than exiting.
+echo "==> This install needs sudo. It will ask once, now, and not again."
+sudo -v
+
+while true; do
+  sudo -n true 2>/dev/null || exit
+  sleep 50
+  kill -0 "$$" 2>/dev/null || exit
+done &
+SUDO_KEEPALIVE_PID=$!
+
+# Merged with the timing line rather than stacked as a second EXIT trap: bash
+# keeps one handler per signal, and a second `trap ... EXIT` would silently
+# replace the first.
+trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+  echo; echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"' EXIT
+
 # On a btrfs root this script REPLACES THE BOOTLOADER: archinstall leaves you on
 # systemd-boot, and the snapshot section installs Limine over it so that btrfs
 # snapshots become boot entries (see README.md section 10). The systemd-boot EFI
@@ -40,33 +73,38 @@ DOTFILES="$HOME/dotfiles"
 }
 
 # Steps that must never take the whole install down on their own -- a dead AUR
-# package, a network blip mid-clone, a repo that has not caught up yet. The run
-# stops and asks rather than deciding: skipping is nearly always right, but
-# "the graphics driver failed to build" is not something to find out after the
-# reboot, and only the person watching knows which case this is. With no
-# terminal attached (piped, CI) it skips without asking. Either way the summary
-# at the end lists everything that was skipped.
+# package, a network blip mid-clone, a repo that has not caught up yet.
+#
+# This used to stop and ask "skip it and continue? [Y/n]" on every casualty.
+# It no longer asks anything, because the answer was always yes and the
+# question was always asked while nobody was looking at the screen: an install
+# that pauses on question 3 of 40 and then sits there is worse than one that
+# runs to the end and hands you a list. Everything skipped is printed in the
+# summary at the end, which is the one place it is actually read.
+#
+# What replaced the question is the guard at the point of use. A step whose
+# failure would break *later* steps is not something try() can know about, so
+# each dependant checks for what it needs first -- `pacman -Q <pkg>`,
+# `command -v <tool>` -- and skips itself with one line rather than failing
+# again once per dependant. yay, herdr, kanata, docker-desktop,
+# limine-snapper-sync and the Claude Code CLI are all gated that way. The steps
+# that genuinely cannot be survived (the initial -Syu, stow, Hyprland missing
+# at the end) are still fatal and deliberately not routed through here.
 FAILED=()
 try() {
   local what="$1"
   shift
   "$@" && return 0
-  echo "!! failed: $what"
-  # Ask on the terminal rather than on stdin: this script is also run piped
-  # (`curl ... | bash`), where stdin is the script itself and reading from it
-  # would eat the rest of the install. Opening /dev/tty is the test -- the node
-  # exists in containers that have no controlling terminal to attach to.
-  if { exec 3</dev/tty; } 2>/dev/null; then
-    local answer=""
-    read -rp "   Skip it and continue the install? [Y/n] " answer <&3 || true
-    exec 3<&-
-    if [[ "$answer" == [nN]* ]]; then
-      echo "Aborting at your request."
-      exit 1
-    fi
-  fi
   echo "!! skipped: $what"
   FAILED+=("$what")
+}
+
+# Same thing for a step that never ran because what it needed is not there.
+# It belongs in the same summary: "skipped because yay is missing" is the line
+# that explains the other fifteen.
+skip() {
+  echo "!! skipped: $1"
+  FAILED+=("$1")
 }
 
 # Every pacman install goes through here. The batch runs as one transaction,
@@ -171,32 +209,69 @@ pac \
   stow
 
 ############################################################
-# NAME RESOLUTION (prefer IPv4)                            #
+# IPv6 (off)                                               #
 ############################################################
 
-# aur.archlinux.org resolves to both A and AAAA records, glibc prefers the
-# IPv6 one by default, and on a connection whose IPv6 path to the AUR does not
-# work every `git clone` and every yay build dies with "Recv failure:
-# Connection reset by peer". That is not hypothetical -- it is what this
-# machine does, and it takes the whole AUR half of the install with it.
+# IPv6 is switched off on this machine, on purpose, for the whole system.
 #
-# This used to be `sysctl -w net.ipv6.conf.all.disable_ipv6=1` immediately
-# before each AUR step, which fixed nothing: `-w` does not persist, and
-# `all.disable_ipv6` does not retract an address an interface already holds, so
-# the machine kept its global IPv6 address and kept preferring it.
+# The reason is the AUR: aur.archlinux.org publishes both A and AAAA records,
+# glibc prefers the IPv6 one, and the IPv6 path from here does not work -- every
+# `git clone` and every yay build dies with "Recv failure: Connection reset by
+# peer", which takes the whole AUR half of the install with it. Other things go
+# the same way for the same reason; the AUR is only where it is loudest.
 #
-# The supported fix is to change the resolver's precedence rather than to
-# switch the protocol off: RFC 3484 says the highest-precedence match wins, so
-# giving the IPv4-mapped range a higher label than the default 10 for ::/0 puts
-# IPv4 first everywhere -- git, curl, pacman, yay -- while leaving IPv6 working
-# for anything that reaches it successfully.
-echo "==> Preferring IPv4 in name resolution"
+# Two earlier attempts, both kept here because they are each half a fix and
+# each looks like a whole one:
+#  * `sysctl -w net.ipv6.conf.all.disable_ipv6=1` in front of each AUR step.
+#    `-w` does not persist, so this was undone by the next boot -- and it was
+#    being re-applied per step rather than once, which hid that.
+#  * /etc/gai.conf precedence alone, leaving IPv6 up. That fixes what asks the
+#    resolver which family to prefer, and does nothing for what opens an IPv6
+#    socket without asking.
+#
+# So it goes off at three levels, because each one turns it back on by itself:
+#  1. sysctl, persistently in /etc/sysctl.d, and applied to the interfaces that
+#     already exist -- writing `all.disable_ipv6` does not retract an address an
+#     interface is already holding, which is what the loop below is for.
+#  2. NetworkManager (further down, once it is installed), which is what
+#     actually configures the interfaces after the reboot and would hand out a
+#     fresh IPv6 address on the next connection whatever sysctl says.
+#  3. /etc/gai.conf, so anything that consults the resolver before or outside
+#     those two still prefers IPv4 rather than a route that is not there.
+#
+# Loopback is the deliberate exception. `all.disable_ipv6` covers `lo` too, and
+# taking ::1 away breaks any local daemon that binds it -- which has nothing to
+# do with the problem being solved here. The last line re-enables it, and the
+# order matters: sysctl applies a file top to bottom, so the specific `lo` key
+# has to come after the `all` key it is overriding.
+echo "==> Disabling IPv6"
+sudo tee /etc/sysctl.d/40-disable-ipv6.conf >/dev/null <<'SYSCTL'
+# Managed by dotfiles/install.sh -- see the IPv6 section of install.sh
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+# Loopback stays on: ::1 is not the problem and local daemons bind it.
+net.ipv6.conf.lo.disable_ipv6 = 0
+SYSCTL
+
+# Interfaces that already exist and already hold an address. Done before
+# `sysctl --system` so that the file's `lo` line has the last word.
+for _disable in /proc/sys/net/ipv6/conf/*/disable_ipv6; do
+  # -e as well as the lo test: with no glob match the pattern comes through
+  # literally, which is what a machine that already boots with ipv6.disable=1
+  # looks like.
+  [[ -e "$_disable" && "$_disable" != */lo/* ]] || continue
+  echo 1 | sudo tee "$_disable" >/dev/null 2>&1 || true
+done
+# -q because --system otherwise echoes every key in every file under
+# /etc/sysctl.d, which is a screenful that says nothing.
+try "apply sysctl" sudo sysctl -q --system
+
 sudo tee /etc/gai.conf >/dev/null <<'GAI'
 # Managed by dotfiles/install.sh
 #
-# Prefer IPv4 over IPv6. See the NAME RESOLUTION section of install.sh for why;
-# the short version is that the AUR is unreachable over IPv6 from here and the
-# default precedence made every AUR build fail.
+# Prefer IPv4 over IPv6. See the IPv6 section of install.sh for why; the short
+# version is that the AUR is unreachable over IPv6 from here, and this is the
+# resolver half of switching it off.
 #
 # Everything else is glibc's default and is left implicit on purpose: this file
 # replaces /etc/gai.conf wholesale, and listing the defaults would only create
@@ -208,20 +283,28 @@ GAI
 # AUR HELPER (yay)                                         #
 ############################################################
 
+# Wrapped in try() rather than left to `set -e`: a clone that times out here
+# used to abort the whole install on its first minute. Everything that needs
+# yay checks for it instead (the AUR section below, and the fingerprint stack).
+install_yay() {
+  local tmpdir status
+  tmpdir="$(mktemp -d)"
+  git clone https://aur.archlinux.org/yay-bin.git "$tmpdir" &&
+    (cd "$tmpdir" && makepkg -si --noconfirm --needed)
+  status=$?
+  rm -rf "$tmpdir"
+  return $status
+}
+
+# yay asks two questions of its own that --noconfirm does not cover: whether to
+# show the PKGBUILD diff, and whether to clean an existing build directory.
+# Unanswered they block forever on a machine nobody is watching.
+YAY_FLAGS=(--needed --noconfirm --answerdiff=None --answerclean=None --removemake)
+
 if ! command -v yay >/dev/null 2>&1; then
   echo "==> Installing yay (yay-bin)"
-
   pac base-devel git
-
-  tmpdir="$(mktemp -d)"
-  git clone https://aur.archlinux.org/yay-bin.git "$tmpdir"
-
-  (
-    cd "$tmpdir" || exit 1
-    makepkg -si --noconfirm --needed
-  )
-
-  rm -rf "$tmpdir"
+  try "yay" install_yay
 fi
 
 ############################################################
@@ -679,6 +762,20 @@ pac \
 
 sudo systemctl enable NetworkManager
 
+# NetworkManager is what configures the interfaces after the reboot, and it
+# would put an IPv6 address back on the next connection whatever the sysctl in
+# the IPv6 section says -- the sysctl disables the protocol on the interfaces
+# that exist now, NM creates the configuration for the ones that exist later.
+# Setting the per-connection default here covers both wifi and ethernet without
+# editing individual connection profiles, which are machine state and not in
+# this repo.
+sudo mkdir -p /etc/NetworkManager/conf.d
+sudo tee /etc/NetworkManager/conf.d/10-disable-ipv6.conf >/dev/null <<'NMIPV6'
+# Managed by dotfiles/install.sh -- see the IPv6 section of install.sh
+[connection]
+ipv6.method=disabled
+NMIPV6
+
 sudo systemctl mask \
   systemd-networkd.service \
   systemd-networkd.socket \
@@ -744,9 +841,15 @@ aur_packages=(
   tensaku # the screenshot annotation editor clicking a screenshot notification opens
 )
 
-for pkg in "${aur_packages[@]}"; do
-  try "AUR: $pkg" yay -S --needed --noconfirm "$pkg"
-done
+if command -v yay >/dev/null 2>&1; then
+  for pkg in "${aur_packages[@]}"; do
+    try "AUR: $pkg" yay -S "${YAY_FLAGS[@]}" "$pkg"
+  done
+else
+  # One line instead of sixteen identical failures: without yay none of these
+  # can be attempted, and the summary should say why once.
+  skip "every AUR package (yay is not installed)"
+fi
 
 # docker-desktop ships a user unit; enabling it here rather than checking the
 # .wants symlink into the repo keeps systemd's bookkeeping out of the dotfiles.
@@ -851,8 +954,12 @@ else
     # fprintd-clients-git named explicitly because it is the package carrying
     # the conflict with fprintd: naming it makes the replacement part of this
     # transaction rather than something yay discovers halfway through.
-    try "AUR: validity fingerprint stack" yay -S --needed --noconfirm \
-      fprintd-clients-git open-fprintd python-validity
+    if command -v yay >/dev/null 2>&1; then
+      try "AUR: validity fingerprint stack" yay -S "${YAY_FLAGS[@]}" \
+        fprintd-clients-git open-fprintd python-validity
+    else
+      skip "validity fingerprint stack (yay is not installed)"
+    fi
 
     # python-validity's udev rule starts the driver when the sensor appears,
     # but a machine that booted with it already attached gets no add event,
@@ -912,7 +1019,13 @@ fi
 echo "==> Installing Node.js and packages"
 
 pac nodejs npm
-sudo npm install -g tree-sitter-cli
+# Guarded: npm is only here if the pacman step above landed, and a missing npm
+# under `set -e` would end the install rather than the step.
+if command -v npm >/dev/null 2>&1; then
+  try "tree-sitter-cli" sudo npm install -g tree-sitter-cli
+else
+  skip "tree-sitter-cli (npm is not installed)"
+fi
 
 ############################################################
 # RUST TOOLCHAIN                                           #
@@ -937,12 +1050,30 @@ sudo npm install -g tree-sitter-cli
 # touch PATH.
 echo "==> Installing Rust"
 
+# Arch's `rust` package and rustup's shims own the same paths, so pacman calls
+# them a conflict and asks ":: rustup and rust are in conflict. Remove rust?
+# [y/N]" -- a question --noconfirm answers with the default, which is no, which
+# aborts the transaction. That is why `pacman: rustup` came back as a skipped
+# step on a machine that happened to have `rust` installed, and why `rust
+# stable toolchain` was skipped straight after it: nothing had installed the
+# shims. Removing it first turns both back into no-ops. Nothing in this repo
+# wants the distro toolchain; the whole point of rustup here is updating it
+# independently of the distro.
+if pacman -Qq rust >/dev/null 2>&1; then
+  echo "==> Removing the rust package (rustup replaces it)"
+  try "remove rust" sudo pacman -Rs --noconfirm rust
+fi
+
 pac rustup
 
 # The package ships the shims only. Until a default toolchain is chosen every
 # `cargo` call fails with "no default toolchain configured"; this both picks
 # stable and downloads it, and is a no-op once it is in place.
-try "rust stable toolchain" rustup default stable
+if command -v rustup >/dev/null 2>&1; then
+  try "rust stable toolchain" rustup default stable
+else
+  skip "rust stable toolchain (rustup is not installed)"
+fi
 
 ############################################################
 # TOOLS INSTALLED OUTSIDE PACMAN                           #
@@ -1151,15 +1282,24 @@ stow --no-folding herdr
 # herdr writes ~/.claude/hooks/herdr-agent-state.sh and owns it -- the file says
 # so in its header, and herdr overwrites it on every update. The hook entry that
 # calls it is in the settings.json above; this puts the script itself in place.
-try "herdr Claude integration" herdr integration install claude
+#
+# Both of these need the herdr binary, which comes from herdr-bin in the AUR
+# section -- so when that build was a casualty, they are skipped once with a
+# reason rather than failing twice with "command not found".
+if command -v herdr >/dev/null 2>&1; then
+  try "herdr Claude integration" herdr integration install claude
 
-# Our own herdr plugin: every new workspace or worktree opens with the tab and
-# pane geometry of the one it was created from. Fetched from GitHub into
-# ~/.config/herdr/plugins, which the --no-folding stow above keeps out of this
-# repo. Needs jq, installed with the pacman packages. For development, clone it
-# and `herdr plugin link ~/Code/herdr-clone-layout` against a running server.
-try "herdr clone-layout plugin" herdr plugin install \
-  danilolucasmd/herdr-clone-layout --yes
+  # Our own herdr plugin: every new workspace or worktree opens with the tab
+  # and pane geometry of the one it was created from. Fetched from GitHub into
+  # ~/.config/herdr/plugins, which the --no-folding stow above keeps out of
+  # this repo. Needs jq, installed with the pacman packages. For development,
+  # clone it and `herdr plugin link ~/Code/herdr-clone-layout` against a
+  # running server.
+  try "herdr clone-layout plugin" herdr plugin install \
+    danilolucasmd/herdr-clone-layout --yes
+else
+  skip "herdr Claude integration and plugins (herdr is not installed)"
+fi
 
 ############################################################
 # ZSH + on-my-zsh                                          #
@@ -1172,7 +1312,8 @@ export CHSH=no
 export KEEP_ZSHRC=yes
 
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  try "oh-my-zsh" bash -c 'set -o pipefail
+    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh'
 fi
 
 ############################################################
@@ -1183,18 +1324,22 @@ echo "==> Installing zsh plugins"
 
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 
+# .zshrc names all three in its plugins list, and zsh warns rather than fails
+# for one that is missing -- so a clone that times out costs an autosuggestion,
+# not a login shell. try() rather than a bare clone for the same reason the AUR
+# packages use it: one dead network moment should not end the install.
 if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
-  git clone https://github.com/zsh-users/zsh-autosuggestions \
+  try "zsh-autosuggestions" git clone https://github.com/zsh-users/zsh-autosuggestions \
     "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
 fi
 
 if [[ ! -d "$ZSH_CUSTOM/plugins/fzf-tab" ]]; then
-  git clone https://github.com/Aloxaf/fzf-tab \
+  try "fzf-tab" git clone https://github.com/Aloxaf/fzf-tab \
     "$ZSH_CUSTOM/plugins/fzf-tab"
 fi
 
 if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
-  git clone https://github.com/zsh-users/zsh-syntax-highlighting \
+  try "zsh-syntax-highlighting" git clone https://github.com/zsh-users/zsh-syntax-highlighting \
     "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 fi
 
@@ -1216,8 +1361,14 @@ sudo systemctl enable bluetooth.service
 echo "==> Setting default applications"
 xdg-mime default org.gnome.Nautilus.desktop inode/directory
 
-if [[ "$SHELL" != *zsh ]]; then
-  chsh -s /usr/bin/zsh
+# Through sudo, not as a bare `chsh`: chsh authenticates the user with PAM in
+# its own right, so a plain call asks for the password again -- at the very end
+# of an install that was given one at the start and has held it since. Under
+# sudo it writes the same field in /etc/passwd with nothing to type, and the
+# username has to be named explicitly because sudo's own user is root.
+if [[ "$SHELL" != *zsh ]] && command -v zsh >/dev/null 2>&1; then
+  echo "==> Making zsh the login shell"
+  try "default shell" sudo chsh -s /usr/bin/zsh "$USER"
 fi
 
 ############################################################
@@ -1261,6 +1412,11 @@ echo "========================================================"
 if ((${#FAILED[@]})); then
   echo " Setup complete, but these steps were skipped:"
   printf '   - %s\n' "${FAILED[@]}"
+  echo
+  # Nothing above stopped to ask, so this list is the only record of it. A
+  # re-run is safe and idempotent, and picks up whatever has since been fixed
+  # upstream -- which is usually all that a skipped AUR build needs.
+  echo " Nothing was asked while these failed. Re-running install.sh retries them."
   echo
 fi
 echo " Reboot and log into the Hyprland session."

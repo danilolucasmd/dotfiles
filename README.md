@@ -38,18 +38,34 @@ Two things that are load-bearing:
 - **`~/dotfiles`.** `install.sh` refuses to run anywhere else, and
   `hyprland.conf` and the SDDM theme refer to the path directly.
 
-`install.sh` is safe to re-run. Steps that can fail on their own — an AUR
-package that stopped building, a package that has not landed in the repos yet, a
-clone that timed out — stop and ask whether to skip and carry on. Answering yes
-(the default) continues the install and adds the step to a list the script
-prints at the end; answering `n` aborts there, which is what you want when the
-thing that failed is a graphics driver rather than a nicety. Run with no
-terminal attached, it skips without asking.
+**It asks for your password once, at the very start, and never again.** sudo's
+credential cache expires after five minutes of not being used, which on a
+twenty-minute install means it lapses in the middle of every long AUR build, so
+the script authenticates up front and holds the timestamp open with a
+background refresh for as long as it runs. Nothing else in it prompts either:
+`chsh` goes through sudo rather than asking PAM for the password a second time,
+and `yay` is called with `--answerdiff=None --answerclean=None` because
+`--noconfirm` does not cover those two questions.
+
+`install.sh` is safe to re-run, and **it never stops to ask you anything.**
+Steps that can fail on their own — an AUR package that stopped building, a
+package that has not landed in the repos yet, a clone that timed out — are
+skipped, recorded, and printed as a list at the end. This used to be a `[Y/n]`
+prompt per casualty; the answer was always yes, and the question was always
+asked at the moment nobody was watching the screen. Re-running retries every
+skipped step, which is usually all a broken AUR build needs.
+
+What replaced the prompt is a guard in front of anything that *depends* on a
+step: the AUR loop checks for `yay`, the herdr integration checks for `herdr`,
+the Rust toolchain checks that `rustup` landed. A missing package skips its
+dependants once, with a reason in the list, rather than failing again once per
+dependant. The handful of steps that genuinely cannot be survived — the first
+`pacman -Syu`, `stow`, Hyprland missing at the end — are still fatal.
 
 Package installs are batched into one `pacman` transaction, and a batch is
-all-or-nothing — so a failed batch is retried one package at a time, and the
-question you get is about the single package that is actually broken rather
-than the whole list.
+all-or-nothing — so a failed batch is retried one package at a time, and what
+lands in the list is the single package that is actually broken rather than the
+whole batch.
 
 ---
 
@@ -974,11 +990,35 @@ works around both.
 **The AUR is unreachable over IPv6 from here.** `aur.archlinux.org` publishes
 both A and AAAA records, glibc prefers the IPv6 one, and every `git clone`
 against it dies with `Recv failure: Connection reset by peer` — which takes the
-whole AUR half of the install with it, not just Limine. `install.sh` writes an
-`/etc/gai.conf` that gives IPv4 higher precedence. This replaced two
-`sysctl -w net.ipv6.conf.all.disable_ipv6=1` calls that had been sitting in
-front of each AUR step and fixing nothing: `-w` does not persist, and
-`all.disable_ipv6` does not retract an address an interface already holds.
+whole AUR half of the install with it, not just Limine. Other things fail the
+same way for the same reason; the AUR is only where it is loudest.
+
+**So IPv6 is switched off on this machine, deliberately, for the whole system.**
+Two earlier attempts each looked like a whole fix and were half of one:
+`sysctl -w net.ipv6.conf.all.disable_ipv6=1` in front of each AUR step, which
+`-w` undoes at the next boot; and an `/etc/gai.conf` precedence rule with IPv6
+left up, which fixes everything that asks the resolver which family to prefer
+and nothing that opens an IPv6 socket without asking. `install.sh` now does all
+three, because each one is put back by the others:
+
+- `/etc/sysctl.d/40-disable-ipv6.conf` sets `all` and `default`, applied on the
+  spot to every interface that already exists — writing `all.disable_ipv6` does
+  not retract an address an interface is already holding.
+- `/etc/NetworkManager/conf.d/10-disable-ipv6.conf` sets `ipv6.method=disabled`
+  as the default for every connection, because NetworkManager is what
+  configures the interfaces after the reboot and would hand out a fresh address
+  whatever sysctl says.
+- `/etc/gai.conf` still prefers IPv4, for anything reached before or outside
+  those two.
+
+Loopback is the deliberate exception: `all.disable_ipv6` covers `lo` too, and
+taking `::1` away breaks local daemons that bind it for no benefit here, so the
+sysctl file re-enables `lo` on its last line. Order matters there — sysctl
+applies a file top to bottom, so the specific key has to come after the `all`
+key it overrides.
+
+To put IPv6 back on a machine where it works, delete those three files and
+reboot.
 
 **Arch's gradle cannot build them.** Gradle 9 moved its public API into
 `lib/api/` inside the distribution, and `gradle 9.7.0-1` ships no `lib/api`
@@ -1089,6 +1129,12 @@ Details that are easy to get wrong:
   It is not there to prop up the installer's cargo fallback: that fallback
   clones from the same GitHub the download just failed to reach, so it only
   helps a target with no published asset.
+- **`rust` and `rustup` conflict, and `--noconfirm` answers that question with
+  no.** Arch's `rust` package owns the same paths as rustup's shims, so on a
+  machine that has it `pacman -S rustup` asks whether to remove `rust` and then
+  aborts on the default answer — which showed up as `pacman: rustup` and `rust
+  stable toolchain` both landing in the skipped list. `install.sh` removes
+  `rust` first, so both steps become no-ops instead.
 - **`herdr plugin link` needs a running herdr server**; `herdr plugin install`
   does not.
 
