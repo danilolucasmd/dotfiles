@@ -39,13 +39,66 @@ Two things that are load-bearing:
   `hyprland.conf` and the SDDM theme refer to the path directly.
 
 **It asks for your password once, at the very start, and never again.** sudo's
-credential cache expires after five minutes of not being used, which on a
-twenty-minute install means it lapses in the middle of every long AUR build, so
-the script authenticates up front and holds the timestamp open with a
-background refresh for as long as it runs. Nothing else in it prompts either:
-`chsh` goes through sudo rather than asking PAM for the password a second time,
-and `yay` is called with `--answerdiff=None --answerclean=None` because
-`--noconfirm` does not cover those two questions.
+credential cache expires after five minutes of *not being used*, which on a
+twenty-minute install means it lapses in the middle of every long AUR build. So
+after that one authentication the script writes a NOPASSWD rule for your user
+to `/etc/sudoers.d/99-dotfiles-install`, and removes it again on the way out —
+the trap covers `EXIT`, `INT`, `TERM` and `HUP`, and is armed before either rule
+is written rather than after, so there is no window where a Ctrl-C leaves one
+behind. The file is checked with `visudo -c` before it is installed, because an
+invalid file in `/etc/sudoers.d` makes sudo refuse to run at all.
+
+**The one case no trap covers is `SIGKILL`, a power cut, or a reboot mid-run** —
+both rules survive that, and the machine then has passwordless sudo until
+something removes them. A re-run clears them before writing its own and prints a
+warning saying it found them; failing that, `sudo rm -f
+/etc/sudoers.d/99-dotfiles-install /etc/polkit-1/rules.d/49-dotfiles-install.rules`
+by hand. If an install dies badly, that is the thing to check.
+
+That means that for the length of the install, anything running as you can
+become root without a password. It is a real widening, and it is deliberate:
+the script already has root, on a machine that has just been installed and has
+nothing on it yet. Keeping sudo's timestamp warm with a background `sudo -n`
+loop was the previous attempt and is not reliable — one refresh that does not
+land ends the loop silently, and the prompts come back with nothing on screen
+to explain them.
+
+**sudo is not the only thing that asks.** Several tools here don't run a binary
+as root at all — they ask a system daemon to do something over D-Bus, and that
+goes through **polkit**, which has its own rules and knows nothing about sudo's
+timestamp or the NOPASSWD rule. On a TTY a polkit prompt names itself:
+
+```
+==== AUTHENTICATING FOR net.reactivated.Fprint.device.verify ===
+Authentication is required to ...
+```
+
+That action id after `====` is the only reliable way to tell the two apart. So
+the script writes the matching polkit rule,
+`/etc/polkit-1/rules.d/49-dotfiles-install.rules`, allowing this user's actions
+for the length of the run, and the same trap removes it. It is the safer half
+of the pair: a rule that returns nothing falls through to the next file, so it
+can only ever add permission, and a broken rules file is logged and skipped
+rather than bricking authorization the way a broken sudoers file does. It is
+written after the Wayland package batch rather than at the top, because
+`/etc/polkit-1/rules.d` is created by the `polkit` package and a hand-made copy
+of that directory is one polkitd declines to read.
+
+**`makepkg --noconfirm` is narrower than it reads.** The man page scopes it to
+confirmation "when resolving dependencies" — the install that `-i` performs
+afterwards is a separate `pacman -U` that makepkg drives itself, and that is
+where a `[Y/n]` and a password prompt appeared in the middle of the Limine
+builds, inside what looks from the script like one command that already has
+`--noconfirm` on it. So the two hand-rolled builds — `yay` and the vendored-
+Gradle Limine pair — now build with `makepkg -s` and install with an explicit
+`sudo pacman -U --noconfirm --needed`, against the exact paths
+`makepkg --packagelist` reports rather than a `*.pkg.tar.zst` glob that would
+also match leftovers from an earlier build.
+
+Nothing else in the script prompts either: `chsh` goes through sudo rather than
+asking PAM for the password a second time, and `yay` is called with
+`--answerdiff=None --answerclean=None` because `--noconfirm` does not cover
+those two questions.
 
 `install.sh` is safe to re-run, and **it never stops to ask you anything.**
 Steps that can fail on their own — an AUR package that stopped building, a
@@ -1034,6 +1087,28 @@ reused and fails identically.
 
 If either package fails to build, snapshots still work and are still taken —
 they are simply not bootable until it succeeds.
+
+### What still compiles, and why the install takes as long as it does
+
+Most of a fresh install is downloads. The exceptions, in order of how much of
+the wall clock they own:
+
+- **`limine-mkinitcpio-hook` and `limine-snapper-sync`** — the two above. Gradle
+  builds a GraalVM native image for each, after downloading a JDK to do it with.
+  This is the single longest thing the script does, and it is why the vendored
+  Gradle apparatus exists at all.
+- **`rtl8188gu-dkms-git`** — a kernel module, so DKMS compiles it against the
+  running kernel and will do so again on every kernel upgrade. Unavoidable by
+  construction; there is nothing to prebuild.
+- **`tensaku`** (Rust) and **`wifitui`** (Go) — no `-bin` variant exists in the
+  AUR for either.
+
+Everything else that used to compile no longer does. `ghostty`, `btop`,
+`bluetui` and `wiremix` all landed in `[extra]` and moved to the pacman list —
+one Zig build and two Rust builds gone. `ghostty` is not optional there: its AUR
+package was deleted when the repo package appeared. The rest of the AUR list is
+already `-bin`, or a repackaged upstream binary (`1password`, `docker-desktop`,
+`brave-bin`, `orca-slicer-bin`), and downloads rather than builds.
 
 ### Re-running install.sh on a machine set up before this
 

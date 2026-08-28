@@ -29,33 +29,122 @@ command -v sudo >/dev/null || {
 
 # This script runs for twenty minutes and calls sudo a few hundred times --
 # directly, and through makepkg and yay, which call it themselves. sudo's
-# credential cache expires after 5 minutes of no use, so without this the
-# install stops and asks for the password again at whatever moment a long
-# pacman batch or a long AUR build happens to end. That is the "asked me for
-# the password over and over" complaint, and it is not a real security boundary
-# either: the password is being typed into the same terminal running the same
-# script that already has root.
+# credential cache expires after 5 minutes of *not being used* and is keyed to
+# the terminal, so an install left alone stops and asks for the password again
+# at whatever moment a long AUR build happens to end.
 #
-# So: authenticate once, up front, and hold the timestamp open with a
-# background loop that touches it every 50 seconds. `sudo -n` never prompts, so
-# a revoked timestamp makes the loop exit quietly rather than fight for a
-# terminal. `kill -0 $$` is what stops the loop from outliving the install when
-# the script is killed rather than exiting.
+# The first attempt at this was a background loop running `sudo -n true` every
+# 50 seconds to keep the timestamp warm. It is not reliable, and the way it
+# fails is silent: any single refresh that does not succeed -- a sudoers with
+# `timestamp_timeout=0`, a ticket invalidated by something else, a tool that
+# runs its own `sudo -k` -- ends the loop for good, and every sudo call after
+# that asks again with nothing on screen to say why. That is the "it still asks
+# from time to time" symptom.
+#
+# So the timestamp is not what is held open. For the length of the run, and
+# only that, this user gets a NOPASSWD rule in /etc/sudoers.d, and the trap
+# takes it away again. Nothing can expire, so nothing can prompt.
+#
+# The honest description of that: for those twenty minutes, anything running as
+# this user can become root without a password. It is a real widening, accepted
+# here for one specific reason -- this script is *already* the thing with root,
+# on a machine that has just been installed and has nothing on it yet, and the
+# password it would otherwise ask for goes into the same terminal running the
+# same script. It is not accepted as a convenience, which is why it is removed
+# on the way out instead of left behind.
+SUDOERS_DROPIN="/etc/sudoers.d/99-dotfiles-install"
+
+# The other thing that asks for a password here, and it is not sudo. Several of
+# the tools this script runs do not execute a binary as root at all -- they ask
+# a system daemon to do something over D-Bus, and D-Bus authorisation goes
+# through polkit, which keeps its own rules and knows nothing about sudo's
+# timestamp or the NOPASSWD rule above. On a TTY it announces itself:
+#
+#   ==== AUTHENTICATING FOR net.reactivated.Fprint.device.verify ===
+#   Authentication is required to ...
+#
+# in the middle of an install that has already been given the password once.
+# The line after ==== is the action id, and it is the only reliable way to tell
+# a polkit prompt from a sudo one.
+#
+# Same treatment and the same lifetime as the sudoers rule: for the length of
+# the run this user's polkit actions are allowed without a prompt, and the trap
+# takes the rule away with everything else. Two things make this the safer half
+# of the pair -- a rule that returns nothing falls through to the next file, so
+# this only ever adds permission and can never lock anything out, and a broken
+# rules file is logged and skipped rather than making the system unusable the
+# way a broken sudoers file does.
+#
+# 49- so it is read before polkit's own 50-default.rules. polkitd watches the
+# directory, so there is nothing to reload.
+POLKIT_DROPIN="/etc/polkit-1/rules.d/49-dotfiles-install.rules"
+
+# Called after the pac batch that installs polkit, not here: /etc/polkit-1 is
+# created by that package with an ownership polkitd cares about, and
+# pre-creating it by hand only produces a directory it declines to read.
+install_polkit_rule() {
+  [[ -d /etc/polkit-1/rules.d ]] || return 0
+  sudo tee "$POLKIT_DROPIN" >/dev/null <<POLKIT
+// Managed by dotfiles/install.sh -- temporary, removed when the install ends.
+// See the ONE PASSWORD, ONCE section of install.sh.
+polkit.addRule(function (action, subject) {
+  if (subject.user == "$USER") {
+    return polkit.Result.YES;
+  }
+});
+POLKIT
+}
+
+# INT/TERM/HUP as well as EXIT: bash runs the EXIT trap on a signal only when
+# it has a handler for it, and a Ctrl-C that left passwordless sudo behind is
+# exactly the failure this block exists to not have. Removing the rules is
+# itself a sudo call, and it works because the rules are what authorise it.
+#
+# The timing line lives in here rather than in a trap of its own: bash keeps
+# one handler per signal, so a second `trap ... EXIT` would silently replace
+# this one.
+cleanup() {
+  sudo rm -f "$SUDOERS_DROPIN" "$POLKIT_DROPIN" 2>/dev/null || true
+  echo
+  echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"
+}
+
+# Armed *before* either rule is written, not after. A trap installed afterwards
+# leaves a window -- short, but real -- in which a Ctrl-C between writing the
+# file and arming the handler leaves passwordless sudo on the machine
+# permanently. `rm -f` on a file that was never created is a no-op, so arming
+# early costs nothing.
+trap cleanup EXIT INT TERM HUP
+
 echo "==> This install needs sudo. It will ask once, now, and not again."
 sudo -v
 
-while true; do
-  sudo -n true 2>/dev/null || exit
-  sleep 50
-  kill -0 "$$" 2>/dev/null || exit
-done &
-SUDO_KEEPALIVE_PID=$!
+# The one case the trap cannot cover: a run killed with SIGKILL, or a power cut,
+# or a reboot in the middle. Both rules survive that, and passwordless sudo left
+# on a machine indefinitely is the failure that actually matters here -- so a
+# re-run clears them before it writes its own, and says so, because a stale rule
+# means the machine has been sitting with no sudo password since whenever that
+# run died.
+for stale in "$SUDOERS_DROPIN" "$POLKIT_DROPIN"; do
+  if sudo test -e "$stale"; then
+    echo "!! $stale was left behind by an install that did not finish cleanly."
+    echo "   Removing it now. Until this run ends it is back in place."
+  fi
+done
+sudo rm -f "$SUDOERS_DROPIN" "$POLKIT_DROPIN"
 
-# Merged with the timing line rather than stacked as a second EXIT trap: bash
-# keeps one handler per signal, and a second `trap ... EXIT` would silently
-# replace the first.
-trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
-  echo; echo "Install finished in $((SECONDS / 60))m $((SECONDS % 60))s"' EXIT
+# Validated before it is installed, never after: a syntactically invalid file
+# in /etc/sudoers.d makes sudo refuse to run *at all*, which on a fresh machine
+# with no root password is a genuinely bad afternoon. visudo checks the
+# candidate in a temporary file, and only one that passes is put in place.
+sudoers_candidate="$(mktemp)"
+printf '%s ALL=(ALL:ALL) NOPASSWD: ALL\n' "$USER" >"$sudoers_candidate"
+if sudo visudo -cqf "$sudoers_candidate"; then
+  sudo install -m 440 -o root -g root "$sudoers_candidate" "$SUDOERS_DROPIN"
+else
+  echo "!! could not write a valid sudoers rule; sudo will ask for the password as usual"
+fi
+rm -f "$sudoers_candidate"
 
 # On a btrfs root this script REPLACES THE BOOTLOADER: archinstall leaves you on
 # systemd-boot, and the snapshot section installs Limine over it so that btrfs
@@ -286,12 +375,30 @@ GAI
 # Wrapped in try() rather than left to `set -e`: a clone that times out here
 # used to abort the whole install on its first minute. Everything that needs
 # yay checks for it instead (the AUR section below, and the fingerprint stack).
+#
+# Build and install split in two for the same reason as the Limine builds
+# further down: makepkg's --noconfirm only covers dependency resolution, and the
+# `pacman -U` that `-i` runs afterwards is where the [Y/n] and the password
+# prompt come from. See the comment on build_with_vendored_gradle.
 install_yay() {
   local tmpdir status
+  local built=()
   tmpdir="$(mktemp -d)"
-  git clone https://aur.archlinux.org/yay-bin.git "$tmpdir" &&
-    (cd "$tmpdir" && makepkg -si --noconfirm --needed)
+  (
+    cd "$tmpdir" || exit 1
+    git clone https://aur.archlinux.org/yay-bin.git . &&
+      makepkg -s --noconfirm --needed
+  )
   status=$?
+  if ((status == 0)); then
+    mapfile -t built < <(cd "$tmpdir" && makepkg --packagelist)
+    if ((${#built[@]})); then
+      sudo pacman -U --noconfirm --needed "${built[@]}"
+      status=$?
+    else
+      status=1
+    fi
+  fi
   rm -rf "$tmpdir"
   return $status
 }
@@ -351,6 +458,13 @@ pac \
   polkit-kde-agent \
   quickshell \
   breeze-icons
+
+# The polkit half of "ask once and never again" -- see the ONE PASSWORD, ONCE
+# section for why it exists and why it can only be written here, once the batch
+# above has created /etc/polkit-1/rules.d. Everything from this point on that
+# talks to a system daemon over D-Bus (fprintd, snapper, systemd) is covered.
+echo "==> Allowing this user's polkit actions for the length of the install"
+install_polkit_rule
 
 # power-profiles-daemon is D-Bus activated, but the quickshell battery panel
 # asks systemd whether it is active before offering the profile buttons -- an
@@ -425,11 +539,21 @@ sudo systemctl enable sddm
 # repos where those were three AUR builds.
 echo "==> Installing pacman packages"
 
+#
+# ghostty, btop, bluetui and wiremix are here rather than in the AUR list
+# because they are all in [extra] now. Each one was a source build every time
+# this script ran on a new machine -- ghostty in Zig, bluetui and wiremix in
+# Rust -- and is a download from a mirror instead. ghostty's AUR package no
+# longer exists at all; it was dropped when the repo package landed.
 pac \
   stow \
   neovim \
   lazygit \
   github-cli \
+  ghostty \
+  btop \
+  bluetui \
+  wiremix \
   fzf \
   ripgrep \
   fd \
@@ -623,7 +747,30 @@ if [[ "$(findmnt -no FSTYPE /)" == "btrfs" ]]; then
       return 1
     }
 
-    (cd "$builddir" && makepkg -si --noconfirm --needed)
+    # Build and install as two steps rather than one `makepkg -si`.
+    #
+    # makepkg's `--noconfirm` is narrower than it looks: the man page says it
+    # covers confirmation "when resolving dependencies", and the install that
+    # `-i` performs afterwards is a separate `pacman -U` that makepkg drives
+    # itself. That is where the [Y/n] and the password prompt in the middle of
+    # the Limine builds come from -- inside a step that from here looks like
+    # one command with --noconfirm already on it.
+    #
+    # Doing the install ourselves means the flags are ours: --noconfirm, and a
+    # sudo that the NOPASSWD rule from the top of the script covers. --needed so
+    # a re-run that rebuilt an identical version does not reinstall it.
+    #
+    # `makepkg --packagelist` prints the exact paths that this PKGBUILD will
+    # produce -- more than one for a split package -- which is what makes this
+    # exact rather than a *.pkg.tar.zst glob that would also match whatever an
+    # earlier build left in the directory.
+    (cd "$builddir" && makepkg -s --noconfirm --needed) || return 1
+
+    local built=()
+    mapfile -t built < <(cd "$builddir" && makepkg --packagelist)
+    [[ ${#built[@]} -gt 0 ]] || return 1
+
+    sudo pacman -U --noconfirm --needed "${built[@]}"
   }
 
   for pkg in limine-mkinitcpio-hook limine-snapper-sync; do
@@ -822,8 +969,19 @@ sudo usermod -aG docker "$USER"
 # the graphics drivers down with it. Now a casualty is reported and skipped.
 echo "==> Installing AUR packages"
 
+# ghostty, btop, bluetui and wiremix used to be here and are not any more: all
+# four landed in [extra], and they are installed with the pacman packages
+# further up. That is four source builds -- ghostty's Zig one and two Rust ones
+# -- traded for four downloads. ghostty is the one that had to move rather than
+# merely wanted to: its AUR package was deleted when the repo package appeared,
+# so `yay -S ghostty` now resolves to [extra] anyway and the entry here was
+# doing nothing but confusing the reader.
+#
+# What is left is genuinely AUR: our own tools, the repackaged proprietary
+# ones, and three that still compile -- rtl8188gu-dkms-git because a kernel
+# module has to be built against the running kernel, tensaku and wifitui
+# because neither has a -bin variant. README section 10 has the accounting.
 aur_packages=(
-  ghostty
   rtl8188gu-dkms-git
   hunk-bin
   herdr-bin
@@ -832,10 +990,7 @@ aur_packages=(
   1password
   brave-bin
   orca-slicer-bin
-  bluetui
   wifitui
-  wiremix
-  btop
   docker-desktop
   kanata-bin
   tensaku # the screenshot annotation editor clicking a screenshot notification opens
