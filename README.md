@@ -147,12 +147,13 @@ them regardless. `power-profiles-daemon` is there for the battery panel's
 profile switch — quickshell talks to it over D-Bus, and the panel hides that
 section entirely when the daemon is not running.
 
-Eight jobs still want a script in `quickshell/.config/quickshell/scripts/`,
+Nine jobs still want a script in `quickshell/.config/quickshell/scripts/`,
 because no service exposes them: weather, package updates, screen-recording
 state, coding-agent usage, network counters, system counters,
-backlight-to-monitor discovery, and matching a notification against the window
-list to find the app that sent it. `updates.sh` shells out to
-`checkupdates`, which is why `pacman-contrib` is in the package list.
+backlight-to-monitor discovery, the battery facts UPower does not carry, and
+matching a notification against the window list to find the app that sent it.
+`updates.sh` shells out to `checkupdates`, which is why `pacman-contrib` is in
+the package list.
 
 The centre group is the weather and the clock, with three more things anchored
 to its edges rather than laid out in it: the night light glyph on the left, the
@@ -255,6 +256,44 @@ connect themselves the moment they leave the case. It stopped being reasonable
 the moment anything else needed connecting. `buds` is still installed and still
 the only thing that knows per-bud battery and ANC mode; it is a terminal
 command again rather than something the bar launches.
+
+The battery module is the charge glyph and the percentage, and clicking it (or
+`super+shift+B`) opens a panel that says what the percentage is a percentage
+*of*. This machine has two packs that wear at different rates, so each gets its
+own meter and, under it, six readings: charge in watt-hours, health, cycle
+count, capacity against the design figure, cell voltage, and what that pack in
+particular is drawing or taking. The pair explains itself that way — the SMP
+pack has done 1738 cycles and holds 17.5 of its 24 Wh, the LGC 89 cycles and
+13.2 of 23.9 — which is the difference between "the battery is old" and knowing
+which one to replace.
+
+UPower carries about half of that. Percentage, health, change rate and the time
+estimates come from it; the cycle count, the watt-hour figures, the voltage and
+the charge threshold exist only in `/sys/class/power_supply`, so
+`battery-info.sh` reads them and prints a line of JSON per pack. It polls every
+three seconds with the panel open and every minute with it closed, since the
+cycle count and the threshold move on the order of days. Firmware that reports
+charge in µAh rather than energy in µWh is converted against the pack's design
+voltage, so the panel has one unit to print.
+
+The panel's slider sets the charge threshold: the percentage the firmware stops
+charging at, from 20% to 100%, defaulting to 80%. A lithium pack ages fastest
+across the top of its charge, and a laptop that lives on the cable spends all
+day there; giving up the last fifth costs an hour of runtime and is the single
+thing on this panel that changes how fast the packs wear out. The chosen figure
+is written to every pack that has the attribute, and saved to
+`$XDG_STATE_HOME/quickshell/charge-limit.json` so a reboot that clears the EC
+does not quietly stop applying it. Where the limit is under 100% the meter
+above carries a mark at it, which is what explains a machine that reads 80% on
+the cable and never moves.
+
+`charge_control_end_threshold` is root-owned, so `install.sh` drops
+`/etc/udev/rules.d/99-charge-threshold.rules` to hand `wheel` write access to
+it at every plug and unplug. Without the rule the panel still shows the
+threshold and can still set it — `charge-limit.sh` falls back to one `pkexec`
+for the whole gesture — but every move of the slider is a password prompt, and
+the saved figure is not re-applied at login, since a shell that opened a polkit
+dialog at every boot would be worse than one that left the setting alone.
 
 The performance module is also one glyph, and it carries no number at all: it
 is white while nothing is wrong, amber when a subsystem is saturated or warm,
