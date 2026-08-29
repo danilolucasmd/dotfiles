@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Restart
+Comment=Reboot the machine — asks first, since nothing open is saved for you
+Icon=system-reboot-symbolic
+Keywords=quickshell;restart;reboot;reset;boot;power;cycle;
+Exec=qs ipc call power reboot
+Terminal=false
+StartupNotify=false
+Categories=System;

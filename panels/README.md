@@ -13,13 +13,15 @@ in but the *only* way in — the bar glyph it turns on can only turn it off agai
 Keep awake can be toggled either way from its mug, but it has no keybind, so the
 launcher is the only thing here that reaches it without the bar.
 
-`qs-lock.desktop`, `qs-suspend.desktop` and `qs-shutdown.desktop` drop the
-infix for the same reason and go a step further: two of the three are not
-quickshell's business at all, and would have worked as `Exec=hyprlock` and
-`Exec=systemctl suspend` with nothing in the shell behind them. They point at
-`qs ipc call power …` anyway because the third one has to — shutting down asks
-first, which is a card, and PowerState.qml says why the other two came along
-rather than being left as shell-outs that look nothing like their neighbours.
+`qs-lock.desktop`, `qs-suspend.desktop`, `qs-reboot.desktop` and
+`qs-shutdown.desktop` drop the infix for the same reason and go a step further:
+two of the four are not quickshell's business at all, and would have worked as
+`Exec=hyprlock` and `Exec=systemctl suspend` with nothing in the shell behind
+them. They point at `qs ipc call power …` anyway because the other two have to —
+restarting and shutting down ask first, which is a card (the same card, retitled
+for whichever was picked), and PowerState.qml says why lock and suspend came
+along rather than being left as shell-outs that look nothing like their
+neighbours.
 There is no `qs-hibernate.desktop`: swap here is zram and the kernel has no
 `resume=`, so the row would be one that fails every time it is picked.
 

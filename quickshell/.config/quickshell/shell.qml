@@ -233,11 +233,12 @@ ShellRoot {
 		}
 	}
 
-	// Lock, suspend and shut down, reached by name from the launcher and from
-	// nowhere else: there is no bar module and no keybind of their own here
-	// (super+Escape already locks, straight to hyprlock). `shutdown` is the odd
-	// function out and the reason the other two are here at all -- it opens a
-	// confirm card instead of powering off. See PowerState.qml.
+	// Lock, suspend, restart and shut down, reached by name from the launcher
+	// and from nowhere else: there is no bar module and no keybind of their own
+	// here (super+Escape already locks, straight to hyprlock). `shutdown` and
+	// `reboot` are the odd functions out and the reason the other two are here
+	// at all -- they open a confirm card instead of taking the machine down.
+	// See PowerState.qml.
 	IpcHandler {
 		target: "power"
 
@@ -247,6 +248,10 @@ ShellRoot {
 
 		function suspend(): void {
 			PowerState.suspend();
+		}
+
+		function reboot(): void {
+			PowerState.reboot();
 		}
 
 		function shutdown(): void {

@@ -3,21 +3,28 @@ import QtQuick.Layouts
 import qs
 import qs.components
 
-// The shutdown confirm, and the only thing PowerState ever draws.
+// The shutdown and restart confirm, and the only thing PowerState ever draws.
 //
 // Locking and suspending are undone by typing a password and by opening the
-// lid; a poweroff is undone by whatever was open not having been saved. So the
-// launcher's Shut down row opens this instead of running anything, and the card
-// is deliberately the plainest one in the shell: a question, what it costs, and
-// two buttons.
+// lid; a poweroff or a reboot is undone by whatever was open not having been
+// saved. So the launcher's Shut down and Restart rows open this instead of
+// running anything, and the card is deliberately the plainest one in the shell:
+// a question, what it costs, and two buttons.
 Panel {
 	id: root
 
-	// 0 is Cancel, 1 is Shut down. The selection starts on Cancel and not on
-	// the button the row was reaching for, which is the whole confirmation:
-	// a stray fuzzy match answered with a reflexive second Return has to land
-	// on the harmless one, or the card is only a delay.
+	// 0 is Cancel, 1 is the destructive one. The selection starts on Cancel and
+	// not on the button the row was reaching for, which is the whole
+	// confirmation: a stray fuzzy match answered with a reflexive second Return
+	// has to land on the harmless one, or the card is only a delay.
 	property int cursor: 0
+
+	// Which action is being asked about, latched at open time rather than bound
+	// to PowerState.pending: answering the card clears `pending` first, and a
+	// live binding would relabel the buttons in the instant between that and the
+	// window going away.
+	property string action: "shutdown"
+	readonly property bool rebooting: action === "reboot"
 
 	cardWidth: 300
 	// Lower than a bar panel's 8px. Nothing raised this from a module up there,
@@ -38,8 +45,10 @@ Panel {
 		target: root
 
 		function onVisibleChanged() {
-			if (root.visible)
+			if (root.visible) {
 				root.cursor = 0;
+				root.action = PowerState.pending;
+			}
 		}
 	}
 
@@ -68,7 +77,7 @@ Panel {
 	BarText {
 		Layout.fillWidth: true
 
-		text: "Shut down?"
+		text: root.rebooting ? "Restart?" : "Shut down?"
 		font.weight: Font.DemiBold
 		horizontalAlignment: Text.AlignHCenter
 	}
@@ -94,7 +103,7 @@ Panel {
 		}
 
 		Button {
-			label: "Shut down"
+			label: root.rebooting ? "Restart" : "Shut down"
 			selected: root.cursor === 1
 			// The only red control in the shell, and it earns it: this is the
 			// one button here that cannot be taken back.
