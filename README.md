@@ -569,7 +569,7 @@ What it holds while it is on is a single logind inhibitor lock,
 `systemd-inhibit --what=idle` wrapped around a command that never finishes.
 hypridle watches logind's `BlockInhibited` property and skips every listener it
 has while an idle lock is held, so one lock is the whole policy: no `hyprlock`
-at 300s, no `dpms off` at 330s, and no idle suspend at 600s either, since that
+at 900s, no `dpms off` at 930s, and no idle suspend at 1200s either, since that
 suspend is something hypridle asks `lid.sh` for rather than something logind
 does on its own. Nothing in `hypridle.conf` knows the toggle exists.
 
