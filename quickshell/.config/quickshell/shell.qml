@@ -80,9 +80,8 @@ ShellRoot {
 		}
 	}
 
-	// alt+space is a Hyprland bind rather than an xkb option now, so that
-	// holding alt after it can put the layout picker up: `cycle` on every
-	// press, `release` when alt comes back up.
+	// alt+space is a Hyprland bind rather than an xkb option: `cycle` flips the
+	// layout, and the picker panel reads the same list `toggle` raises.
 	IpcHandler {
 		target: "keyboard"
 
@@ -92,10 +91,6 @@ ShellRoot {
 
 		function cycle(): void {
 			KeyboardState.cycle();
-		}
-
-		function release(): void {
-			KeyboardState.release();
 		}
 	}
 

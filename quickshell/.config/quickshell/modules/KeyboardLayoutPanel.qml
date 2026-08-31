@@ -10,27 +10,13 @@ Panel {
 	id: root
 
 	readonly property var layouts: KeyboardState.layouts
-	// Watched rather than read straight from the singleton: a window has an
-	// `active` of its own, so the follow below needs a name that is ours.
-	readonly property int liveIndex: KeyboardState.activeIndex
 
 	// The keyboard cursor. The pointer moves it too, so there is only ever one
 	// highlighted row however you arrived at it.
 	property int cursor: 0
 
 	open: KeyboardState.panelOpen
-	revealed: KeyboardState.revealed
 	onDismissed: KeyboardState.close()
-	// The whole reason this panel takes the keyboard the moment alt+space is
-	// pressed rather than when it becomes visible: a modifier coming back up is
-	// not something Hyprland dispatches a bind for, so the surface holding the
-	// keyboard is the only thing that hears it.
-	onKeyReleased: event => {
-		if (KeyboardState.held && (event.key === Qt.Key_Alt || event.key === Qt.Key_Meta)) {
-			KeyboardState.release();
-			event.accepted = true;
-		}
-	}
 	// Opening puts the cursor on the layout in use, which is where you are
 	// counting from when you go looking for another one.
 	onOpenChanged: {
@@ -38,12 +24,6 @@ Panel {
 			cursor = Math.max(0, KeyboardState.activeIndex);
 	}
 	onLayoutsChanged: cursor = Math.max(0, Math.min(cursor, layouts.length - 1))
-	// alt+space moves the layout itself rather than a selection, so while it is
-	// driving the highlight just follows.
-	onLiveIndexChanged: {
-		if (KeyboardState.held)
-			cursor = KeyboardState.activeIndex;
-	}
 	onKeyPressed: event => {
 		if (press(event.key))
 			event.accepted = true;
@@ -118,12 +98,12 @@ Panel {
 			Layout.fillWidth: true
 			visible: root.layouts.length > 0
 
-			text: KeyboardState.held ? "alt+space next" : "j/k move · enter select"
+			text: "j/k move · enter select"
 			elide: Text.ElideRight
 		}
 
 		BarText {
-			text: KeyboardState.held ? "release alt to keep" : "esc close"
+			text: "esc close"
 		}
 	}
 

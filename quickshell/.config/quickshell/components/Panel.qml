@@ -19,10 +19,6 @@ PanelWindow {
 	id: root
 
 	property bool open: false
-	// Whether the card is drawn. A panel that is mapped but not yet revealed is
-	// invisible and click-through, but it holds the keyboard — which is the
-	// only way to hear a modifier come back up (see the layout HUD).
-	property bool revealed: true
 	// Every panel is the same width, so opening two in turn does not read as
 	// two unrelated pieces of UI. Overridable, but only one thing overrides it:
 	// the launcher, which is not a card raised from a bar module but a window
@@ -43,9 +39,6 @@ PanelWindow {
 	// Anything the panel itself did not claim, for content that has keys of its
 	// own (the calendar walks months with the arrows).
 	signal keyPressed(var event)
-	// Releases go out unclaimed: only the layout HUD wants them, and only to
-	// learn that alt is no longer down.
-	signal keyReleased(var event)
 
 	visible: open
 	// Reopening always puts the keyboard back on the card. Content that takes
@@ -81,18 +74,10 @@ PanelWindow {
 	implicitWidth: card.implicitWidth
 	implicitHeight: card.implicitHeight
 
-	// An unrevealed card is not an invisible click target; the focus grab still
-	// dismisses on a click outside, it just is not swallowed here first.
-	mask: revealed ? null : blank
-
 	// `data` spelled out rather than left to the default property, which the
 	// alias above has already spoken for — these are the panel's own frame, not
 	// the content going inside it.
 	data: [
-		Region {
-			id: blank
-		},
-
 		// Clicking anywhere outside dismisses, and the keyboard comes here
 		// while the panel is up so Escape and R land. Without the grab each
 		// panel would be a window you had to remember to close.
@@ -113,8 +98,6 @@ PanelWindow {
 			border.width: 1
 			border.color: Theme.tooltipBorder
 
-			opacity: root.revealed ? 1 : 0
-
 			focus: true
 			Keys.onEscapePressed: root.dismissed()
 			Keys.onPressed: event => {
@@ -123,7 +106,6 @@ PanelWindow {
 				else
 					root.keyPressed(event);
 			}
-			Keys.onReleased: event => root.keyReleased(event)
 
 			ColumnLayout {
 				id: layout

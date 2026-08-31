@@ -53,37 +53,19 @@ Singleton {
 	}
 
 	property bool panelOpen: false
-	// Set while alt is still down after an alt+space. The panel is a HUD then:
-	// it shows itself, and letting go of alt puts it away.
-	property bool held: false
-	// Whether the card is actually drawn. A hold puts the window up on the
-	// first press but shows nothing for the first moment — Hyprland dispatches
-	// keybinds on a modifier being *pressed* but never on it being released
-	// (measured, including `bindri`), so the only way to hear alt come back up
-	// is to be the surface holding the keyboard when it does. A tap-and-let-go
-	// therefore maps a window nobody sees.
-	property bool revealed: false
 
 	// What the bar draws. The fallback keeps the badge right in the moment
 	// before the first read lands, and if the read ever fails.
 	readonly property string code: layouts[activeIndex]?.code ?? (keymap.toLowerCase().includes("intl") ? "BR" : "US")
 
-	// The module was clicked, so this is a panel to interact with rather than a
-	// HUD: any hold still on the books ends here, which is also what stops a
-	// missed alt release from leaving the panel ungrabbable.
+	// The module was clicked, or the launcher entry ran: the picker is a panel
+	// to interact with, and the only way it ever comes up.
 	function toggle(): void {
-		linger.stop();
-		held = false;
-		revealed = true;
 		panelOpen = !panelOpen;
 	}
 
 	// Dismissed by a click outside, or by Escape.
 	function close(): void {
-		linger.stop();
-		watchdog.stop();
-		held = false;
-		revealed = false;
 		panelOpen = false;
 	}
 
@@ -101,45 +83,21 @@ Singleton {
 		run("next");
 	}
 
-	// alt+space, which is a Hyprland bind now rather than xkb's
+	// alt+space, which is a Hyprland bind rather than xkb's
 	// grp:alt_space_toggle — the toggle happened inside libxkbcommon, where
-	// nothing could hang a panel off it.
+	// nothing could hang the picker panel off the same layout list.
 	//
-	// The switch is immediate, as it has always been; the HUD only says which
-	// layout you have landed on, so a quick tap behaves exactly like before.
+	// A flip and nothing else: holding alt down used to raise the picker as a
+	// HUD, and the window that put up was in the way of a switch you do without
+	// looking. The picker is on the bar module and in the launcher instead.
 	function cycle(): void {
 		if (layouts.length === 0)
 			return;
 
 		// Optimistic: the reading comes back from hyprctl a moment later, and
-		// the highlight should not lag behind a key you are holding down.
+		// the badge should not lag behind the key.
 		activeIndex = (activeIndex + 1) % layouts.length;
 		run(String(activeIndex));
-
-		// Up from the first press, drawn or not: the window is what hears alt
-		// come back up.
-		panelOpen = true;
-		watchdog.restart();
-
-		if (held) {
-			// Second press in the same hold: you are browsing the list, so
-			// stop waiting and show it.
-			linger.stop();
-			revealed = true;
-		} else {
-			held = true;
-			if (!revealed)
-				linger.restart();
-		}
-	}
-
-	// Alt came back up, which the panel reports because it is the one holding
-	// the keyboard. Only a hold of our own is put away — the panel may be open
-	// because the module was clicked, and an alt pressed over that is somebody
-	// else's chord.
-	function release(): void {
-		if (held)
-			close();
 	}
 
 	function run(target: string): void {
@@ -235,27 +193,6 @@ Singleton {
 		path: "/usr/share/X11/xkb/rules/evdev.lst"
 
 		onLoaded: root.readNames(text())
-	}
-
-	// A tap-and-let-go alt+space is the common case and wants no window at all,
-	// so the HUD waits to see whether alt is still down.
-	Timer {
-		id: linger
-
-		// Long enough that a flip you do without looking shows nothing, short
-		// enough that staying on the key feels like it answered you.
-		interval: 300
-		onTriggered: root.revealed = true
-	}
-
-	// Insurance, not part of the design: the HUD holds the keyboard while it is
-	// up, so a hold that somehow never ends must not wedge it there. Longer
-	// than anyone holds alt on purpose.
-	Timer {
-		id: watchdog
-
-		interval: 10000
-		onTriggered: root.close()
 	}
 
 	Process {
