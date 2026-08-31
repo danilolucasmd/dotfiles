@@ -117,6 +117,36 @@ PanelWindow {
 			implicitWidth: root.cardWidth
 			implicitHeight: layout.implicitHeight + root.pad * 2
 
+			// The width change animated here rather than left to the
+			// compositor, which is the whole point of holding the surface at
+			// `surfaceWidth`. Hyprland animates a resize by scaling the
+			// surface's buffer into the box it is interpolating, so the card
+			// arrives stretched and a copy of its old self hangs past the edge
+			// until the animation ends. Animating the card *inside* a surface
+			// that never resizes is a real relayout every frame: the rows
+			// reflow, the text re-elides, and there is no second copy to smear.
+			//
+			// Only the launcher ever changes width, so this is dead weight on
+			// every other panel -- and Behaviors do not fire while a component
+			// is still being built, so none of them animate up from nothing on
+			// first open.
+			Behavior on implicitWidth {
+				// Only while the panel is up. The launcher's width follows its
+				// mode, and its mode follows a query that is set *before* the
+				// window is shown -- so opening the apps launcher straight
+				// after the clipboard one had the card arrive 900 wide and
+				// visibly shed the difference. Off while hidden, the same
+				// change lands instantly and the panel opens at the width it
+				// meant to open at; on while visible, typing or deleting the
+				// `:` that switches mode still animates.
+				enabled: root.visible
+
+				NumberAnimation {
+					duration: 180
+					easing.type: Easing.OutCubic
+				}
+			}
+
 			radius: 10
 			color: Theme.tooltipBg
 			border.width: 1
