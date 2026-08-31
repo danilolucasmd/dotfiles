@@ -25,6 +25,18 @@ PanelWindow {
 	// summoned into the middle of the screen, and reads as its own kind of
 	// thing on purpose.
 	property int cardWidth: 360
+	// The width of the surface the card is drawn on, which is the card's own
+	// unless a panel says otherwise. The launcher does: its card is 620 wide in
+	// most modes and 900 in the clipboard, and a layer-shell surface that
+	// changes size while it is on screen is one Hyprland animates by scaling
+	// its buffer into the box -- the old, wider card left smeared past the edge
+	// of the new one for the length of the animation. Held at the widest it
+	// will ever need, the surface never resizes and there is nothing to smear;
+	// the card changes width inside it, which is a repaint and not a resize.
+	//
+	// The cost is the strip of surface either side of a narrow card, which
+	// `mask` below hands back to whatever is underneath.
+	property int surfaceWidth: cardWidth
 	readonly property int pad: 14
 
 	default property alias content: layout.data
@@ -71,8 +83,16 @@ PanelWindow {
 	exclusiveZone: 0
 	color: "transparent"
 
-	implicitWidth: card.implicitWidth
+	implicitWidth: root.surfaceWidth
 	implicitHeight: card.implicitHeight
+
+	// Only the card takes clicks. Without this the empty surface beside a
+	// narrow card would swallow them: the compositor would hand them to a
+	// window that draws nothing there, and the focus grab would read them as
+	// clicks *inside* the panel and refuse to dismiss it.
+	mask: Region {
+		item: card
+	}
 
 	// `data` spelled out rather than left to the default property, which the
 	// alias above has already spoken for — these are the panel's own frame, not
@@ -89,6 +109,10 @@ PanelWindow {
 
 		Rectangle {
 			id: card
+
+			// Centred on the surface, which only means anything when the two
+			// are different widths -- see `surfaceWidth`.
+			x: (root.width - width) / 2
 
 			implicitWidth: root.cardWidth
 			implicitHeight: layout.implicitHeight + root.pad * 2

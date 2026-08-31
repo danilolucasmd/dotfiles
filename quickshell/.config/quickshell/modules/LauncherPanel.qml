@@ -32,6 +32,10 @@ Panel {
 	// carrying the extra 280px through every other mode, where there is nothing
 	// to put in them.
 	cardWidth: LauncherState.mode === "clipboard" ? 900 : 620
+	// The surface stays at the clipboard's width whichever mode is up, so
+	// typing or deleting a `:c` changes the card and not the window under it.
+	// See `surfaceWidth` in Panel.qml for what a resizing surface costs.
+	surfaceWidth: 900
 
 	// Centred, both ways. Panel anchors its top edge and lets the compositor
 	// centre the other axis; unsetting that anchor leaves neither edge anchored,
