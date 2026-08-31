@@ -35,13 +35,12 @@ Panel {
 
 	// Centred, both ways. Panel anchors its top edge and lets the compositor
 	// centre the other axis; unsetting that anchor leaves neither edge anchored,
-	// which is what makes layer-shell centre the surface outright.
+	// which is what makes layer-shell centre the surface outright. The launcher
+	// is summoned from anywhere by a keybind and has no bar module it should
+	// appear to hang from, unlike every other panel here.
 	//
-	// The cost is that the card grows from its middle, so narrowing a query
-	// past eight results walks the search field down a little as the list
-	// shrinks under it. Worth it: the launcher is summoned from anywhere by a
-	// keybind and has no bar module it should appear to hang from, unlike every
-	// other panel here.
+	// A card centred on a fixed point only stays still if it is a fixed size,
+	// which is the other half of why `rowsHeight` is a constant.
 	anchors.top: false
 
 	// The line under the list. Per mode, because the keys are per mode, and an
@@ -55,14 +54,15 @@ Panel {
 			web: "Return search"
 		})[LauncherState.mode]
 
-	// Eight rows and no taller, then it scrolls. Shorter when the results are,
-	// so a single hit is a small card rather than a screenful of nothing under
-	// it -- except in clipboard mode, where the pane beside the list has to
-	// stay a preview rather than becoming a stripe when two entries matched.
-	readonly property int rowsHeight: {
-		const natural = Math.min(list.contentHeight, 8 * 46);
-		return LauncherState.mode === "clipboard" ? Math.max(natural, 300) : natural;
-	}
+	// Eight rows, always, however few of them are filled. Sizing the list to
+	// its results instead -- which is what this did -- meant the card resized
+	// on every keystroke that narrowed the list, and a layer-shell surface that
+	// resizes while it is on screen is one Hyprland animates by scaling its
+	// buffer into the box: the old, taller card left smeared under the new one
+	// for the length of the animation. A card that never changes height is
+	// never animated, and the search field stops walking down the screen as the
+	// list empties under it besides.
+	readonly property int rowsHeight: 8 * 46
 
 	// The entry the preview pane is drawing, looked up in full: the row record
 	// the list draws is flattened for one delegate to handle every mode, and
@@ -243,15 +243,29 @@ Panel {
 	RowLayout {
 		Layout.fillWidth: true
 		Layout.preferredHeight: root.rowsHeight
-		visible: LauncherState.results.length > 0
 
 		spacing: 12
+
+	// The list and the line that stands in for it when nothing matched, in one
+	// slot rather than one after the other: a "no results" line of its own
+	// below the list would be height the card gains and loses, which is the
+	// resize this is all arranged to avoid.
+	Item {
+		Layout.fillWidth: true
+		Layout.fillHeight: true
+
+		BarText {
+			anchors.centerIn: parent
+			visible: LauncherState.results.length === 0
+
+			text: LauncherState.query === "" ? "" : `No results for \u201c${LauncherState.term}\u201d`
+			color: Theme.dim
+		}
 
 	ListView {
 		id: list
 
-		Layout.fillWidth: true
-		Layout.fillHeight: true
+		anchors.fill: parent
 
 		clip: true
 		boundsBehavior: Flickable.StopAtBounds
@@ -363,6 +377,8 @@ Panel {
 		}
 	}
 
+	}
+
 	// The preview. The list can only ever show an entry folded onto one line --
 	// cliphist's own listing collapses the newlines, and a row is 46px besides
 	// -- so two entries that begin the same way are indistinguishable in it.
@@ -451,25 +467,11 @@ Panel {
 
 	}
 
-	// Nothing matched. Said plainly rather than left as an empty card, which
-	// reads as the launcher having broken rather than as an answer.
-	BarText {
-		Layout.fillWidth: true
-		Layout.topMargin: 10
-		Layout.bottomMargin: 10
-		visible: LauncherState.results.length === 0
-
-		text: LauncherState.query === "" ? "" : `No results for “${LauncherState.term}”`
-		color: Theme.dim
-		horizontalAlignment: Text.AlignHCenter
-	}
-
 	// A rule, not the bar's Divider -- that one is a vertical hairline between
 	// bar modules and knows nothing about spanning a card.
 	Rectangle {
 		Layout.fillWidth: true
 		Layout.topMargin: -4
-		visible: LauncherState.results.length > 0
 
 		implicitHeight: 1
 		color: Theme.tooltipBorder

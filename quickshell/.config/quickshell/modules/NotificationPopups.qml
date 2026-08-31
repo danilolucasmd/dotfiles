@@ -68,8 +68,8 @@ PanelWindow {
 		// clicking the notification itself means.
 		readonly property var actions: (modelData.actions ?? []).filter(a => a.identifier !== "default")
 
-		// Flipped on after the first frame, so the card grows and fades in
-		// instead of appearing.
+		// Flipped on after the first frame, so the card fades in instead of
+		// appearing.
 		property bool shown: false
 		property bool closing: false
 		property bool expired: false
@@ -81,7 +81,16 @@ PanelWindow {
 		}
 
 		width: ListView.view ? ListView.view.width : 0
-		height: shown && !closing ? content.implicitHeight + 20 : 0
+		// Full height from the first frame, and it keeps it right through the
+		// fade out. Animating the height as well -- growing on arrival,
+		// collapsing on the way out -- is what made this look broken: the card
+		// is clipped, so a collapsing one eats its own text from the bottom up
+		// while it is still visible, and every height the card passes through
+		// is a layer-shell resize that Hyprland animates by scaling the buffer
+		// into the box, leaving a smear of the old card over the new one.
+		// Opacity is the one thing that can change here without the surface
+		// changing size.
+		height: content.implicitHeight + 20
 		opacity: shown && !closing ? 1 : 0
 		clip: true
 
@@ -92,16 +101,9 @@ PanelWindow {
 
 		Component.onCompleted: shown = true
 
-		Behavior on height {
-			NumberAnimation {
-				duration: 160
-				easing.type: Easing.OutCubic
-			}
-		}
-
 		Behavior on opacity {
 			NumberAnimation {
-				duration: card.closing ? 220 : 140
+				duration: 180
 				easing.type: Easing.OutCubic
 			}
 		}
@@ -118,8 +120,12 @@ PanelWindow {
 			id: reap
 
 			// Taking the card out of the list destroys it, so that has to
-			// happen after the fade rather than instead of it.
-			interval: 240
+			// happen after the fade rather than instead of it -- the 180 above
+			// plus a frame to land on. The card is at full height when it goes,
+			// so the stack under it does jump up rather than sliding; it jumps
+			// into space nothing is drawn in any more, which is the trade for
+			// never resizing the surface under a visible card.
+			interval: 220
 			onTriggered: NotificationsState.closePopup(card.modelData, card.expired)
 		}
 
