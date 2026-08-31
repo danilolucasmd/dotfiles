@@ -583,7 +583,6 @@ pac \
   nautilus \
   sushi \
   gvfs-mtp \
-  pika-backup \
   video-trimmer \
   adw-gtk-theme \
   qt5ct \
