@@ -9,3 +9,13 @@ menu_bar = true
 agent_notes = true
 prompt_save_view_preferences = true
 transparent_background = false
+
+[keybindings]
+# ctrl+d / ctrl+u for half-page scrolling, alongside the default bare d / u.
+# Each entry replaces a command's key list outright, so the defaults are
+# repeated here to keep them working. Keep these comments below the table
+# header: quitting with prompt_save_view_preferences on makes hunk insert
+# saved top-level keys directly above the first [table], and anything it
+# writes between a comment and its header would orphan the comment.
+"hunk.review.halfPageDown" = ["d", "ctrl+d"]
+"hunk.review.halfPageUp" = ["u", "ctrl+u"]

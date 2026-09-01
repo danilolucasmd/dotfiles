@@ -25,7 +25,7 @@ CLI_PACKAGES=(
   fzf-tab
   gitleaks
   lazygit
-  modem-dev/tap/hunk
+  hunk
   neovim
   node
   nvm
