@@ -51,3 +51,59 @@ After generating a document, grep for `—`, `–`, and ` - ` before handing it 
 When writing PR descriptions (or other markdown for the user to paste), do not hard-wrap paragraph text at a fixed column. Keep each paragraph on a single line and let it soft-wrap in the editor.
 
 The user reflows/removes line breaks from generated markdown before using it, so pre-wrapped text is extra work to undo. Produce PR description bodies with one line per paragraph and per list item; do not insert manual newlines mid-paragraph even if lines get long.
+
+## PR descriptions: title and body in two separate code blocks
+
+Always emit a PR description as two fenced code blocks, never one combined block: first a block containing only the title line, then a separate block containing the Markdown body. The user copies the title and the body into different fields.
+
+Title format is `[TICKET-123] Title of the PR`, with the ticket ID taken from the branch name (branch `ddias/vend-2414-...` gives `[VEND-2414]`). No Conventional Commit type or scope prefix, even when a repository guide asks for one.
+
+Use exactly this body template:
+
+````md
+<!-- Keep prose under 250 words; most pull requests need much less. -->
+
+## Context
+
+<!-- Why is this change needed? Keep only context that affects the review decision. -->
+
+## What Changed
+
+<!--
+Use 1-4 reviewer-level bullets. Cover behavior, contracts, and tradeoffs;
+do not list files.
+-->
+
+<!--
+Add `## Call Stack / Flow` only for a non-obvious path across several components.
+Show the entrypoint, decisions, and side effect in a 5-10 line text tree.
+-->
+
+## Validation
+
+<!--
+What behavior did you observe beyond CI? If none, say why.
+Add concise media for visible UI changes.
+-->
+
+<!-- Optional footer, no heading: `Fix ENG-1234` and related links. -->
+````
+
+Rules for filling it in:
+
+- Keep the HTML comments in the emitted body as ongoing guidance, unless the user asks for them stripped.
+- Keep prose under 250 words total. The user wants brevity over exhaustive explanation.
+- Under "What Changed", use 1 to 4 reviewer-level bullets covering behavior, contracts, and tradeoffs. Never list files.
+- Add `## Call Stack / Flow` only when a runtime path crosses several components in a non-obvious way, as a short text tree going from entrypoint to decisions to side effect.
+- Under "Validation", say what was observed beyond CI, or why nothing further was needed. Add concise media for visible UI changes.
+- Do not invent sections beyond this template unless asked.
+
+Hard-wrap rules for the body are in the section above.
+
+## Comments: only for what the code cannot say
+
+Keep comments short, and do not write one at all when the name already says it. A well-named variable, function, or type needs no restatement; `/** Vendor ID */` above `vendorId` is noise.
+
+Comment only what the code cannot express: why a non-obvious choice was made, a constraint imposed from elsewhere in the system, or a decision that looks wrong until explained. One or two lines usually covers it. Reserve multi-paragraph doc blocks for genuinely subtle contracts, never for narrating an implementation a reader can see.
+
+If a comment feels necessary because the name is unclear, rename instead.
