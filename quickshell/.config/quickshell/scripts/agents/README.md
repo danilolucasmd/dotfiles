@@ -58,15 +58,26 @@ directory walk is fine here.
 
 ```json
 {
-  "byDay": [ { "label": "Mon", "tokens": 4339533 } ],
-  "byModel": [ { "label": "Opus 5", "tokens": 423386972 } ],
-  "total": 423386972
+  "byDay": [ { "label": "Mon", "tokens": 4339533, "cost": 3.87 } ],
+  "byModel": [ { "label": "Opus 5", "tokens": 423386972, "cost": 121.94 } ],
+  "total": 423386972,
+  "totalCost": 121.94
 }
 ```
 
 `byDay` is seven entries, oldest first, the last labelled `Today`; the panel
 draws them in the order given and bolds the last. `byModel` is sorted
 descending. Both cover the same seven days, so the two sections add up.
+
+`cost` is USD and optional — leave it out, along with `totalCost`, and the panel
+draws `$0.00`, so an agent that cannot price itself is better off omitting the
+tokens verb than reporting half of it. It is a list price rather than a bill: a
+subscription does not itemise, so what the panel is showing is what the week
+would have cost on the API, which is the only unit in which one day, or one
+model, can be weighed against another. Whether cache reads and writes are priced
+at their own multiples of the input rate is the provider's business, but they
+should be — on Claude Code they are over 90% of the tokens and a tenth of the
+input price.
 
 Printing nothing is allowed and means the agent cannot report this — the panel
 drops both sections and keeps the limits.

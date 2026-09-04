@@ -228,6 +228,74 @@ do_limits() {
     <<<"$reading"
 }
 
+# ------------------------------------------------------------------ cost ----
+
+# What a million tokens costs, in USD. These are the public API list rates, so
+# the dollars the panel draws are "what this week would have cost on the API" --
+# a subscription is a flat monthly fee and has no per-token price to report
+# against. That is still the number worth seeing: it is the only way to compare
+# a day against another day, or Opus against Haiku, in a unit that is not
+# "percent of an allowance Anthropic does not publish".
+#
+# Only input and output are listed, because cache tokens are the same three
+# multiples of the input rate on every model: a 5-minute cache write is 1.25x
+# input, a 1-hour write 2x, and a cache read 0.1x. Pricing them at the plain
+# input rate is not a rounding error -- Claude Code is over 90% cache reads on a
+# normal session, so it would overstate the week by nearly ten times.
+#
+# Fast mode is exactly double the standard rate on the models that offer it, so
+# it is a multiplier here rather than a second table; `usage.speed` says which
+# one a message ran at. The 1M-context premium is deliberately not modelled: it
+# only applies to the requests inside a `[1m]` session that actually exceed 200K
+# input tokens, and Claude Code does not record enough per-request context to
+# tell which those were.
+#
+# An unrecognised model falls back to its family's current rate rather than to
+# zero. A model released after this was written is far likelier to be priced
+# like the rest of its family than to be free, and a confident $0.00 in the
+# panel is a worse answer than a slightly stale rate.
+price_defs='
+  def rates($model; $fast):
+    ($model | sub("\\[[^\\]]*\\]$"; "") | sub("-[0-9]{8}$"; "")) as $m
+    | ({ "claude-fable-5":   [10, 50],
+         "claude-mythos-5":  [10, 50],
+         "claude-opus-5":    [5, 25],
+         "claude-opus-4-8":  [5, 25],
+         "claude-opus-4-7":  [5, 25],
+         "claude-opus-4-6":  [5, 25],
+         "claude-opus-4-5":  [5, 25],
+         "claude-opus-4-1":  [15, 75],
+         "claude-opus-4":    [15, 75],
+         "claude-sonnet-5":  [2, 10],
+         "claude-sonnet-4-6": [3, 15],
+         "claude-sonnet-4-5": [3, 15],
+         "claude-sonnet-4":   [3, 15],
+         "claude-haiku-4-5":  [1, 5],
+         "claude-3-5-haiku":  [0.8, 4]
+       }[$m]
+       // (if   ($m | test("fable|mythos")) then [10, 50]
+          elif ($m | test("opus"))   then [5, 25]
+          elif ($m | test("sonnet")) then [2, 10]
+          elif ($m | test("haiku"))  then [1, 5]
+          else [0, 0] end))
+    | if $fast then [(.[0] * 2), (.[1] * 2)] else . end;
+
+  # Micro-dollars, so the row stays an integer all the way through awk. A
+  # rate is USD per million tokens and the cost is tokens x rate / 1e6 USD,
+  # which is tokens x rate micro-dollars -- the two conversions cancel and
+  # there is no division to lose precision to.
+  def cost($model; $u):
+    rates($model; (($u.speed // "") == "fast")) as $r
+    | (($u.cache_creation.ephemeral_1h_input_tokens // 0)) as $c1h
+    | ([(($u.cache_creation_input_tokens // 0) - $c1h), 0] | max) as $c5m
+    | ( (($u.input_tokens // 0) * $r[0])
+      + ($c5m * $r[0] * 1.25)
+      + ($c1h * $r[0] * 2)
+      + (($u.cache_read_input_tokens // 0) * $r[0] * 0.1)
+      + (($u.output_tokens // 0) * $r[1]) )
+    | round;
+'
+
 # ---------------------------------------------------------------- tokens ----
 
 # What the windows above cost, from the transcripts rather than from any
@@ -252,6 +320,16 @@ do_tokens() {
 
   local horizon=$(( now - keep_days * 86400 ))
   local stamps="$store/stamps.tsv" rows="$store/rows.tsv"
+
+  # The store is a cache of parsed rows, so a change to the row format -- or to
+  # the price table, which is baked into each row -- has to throw it away. It
+  # costs one full reparse, and the alternative is a week of the panel drawing
+  # yesterday's prices against today's.
+  local schema="$store/schema" version="2:$(printf '%s' "$price_defs" | cksum | cut -d" " -f1)"
+  if [ "$(cat "$schema" 2>/dev/null)" != "$version" ]; then
+    rm -f "$rows" "$stamps"
+    printf '%s\n' "$version" >"$schema"
+  fi
 
   local -a files
   mapfile -t files < <(find "$root" -name '*.jsonl' \
@@ -287,16 +365,18 @@ do_tokens() {
     # a message with no id cannot be deduplicated, so both are dropped rather
     # than double-counted. `<synthetic>` is Claude Code's own placeholder for a
     # message no model produced.
-    jq -r --arg path "$f" --argjson horizon "$horizon" '
+    jq -r --arg path "$f" --argjson horizon "$horizon" "$price_defs"'
       select(.type == "assistant" and .message.usage != null)
       | select((.message.id // "") != "")
       | select((.message.model // "") | startswith("<") | not)
       | ((.timestamp // "")[0:19] | strptime("%Y-%m-%dT%H:%M:%S") | mktime) as $at
       | select($at >= $horizon)
       | .message.usage as $u
-      | [ $path, .message.id, $at, (.message.model // "?"),
+      | (.message.model // "?") as $model
+      | [ $path, .message.id, $at, $model,
           (($u.input_tokens // 0) + ($u.output_tokens // 0)
-           + ($u.cache_creation_input_tokens // 0) + ($u.cache_read_input_tokens // 0)) ]
+           + ($u.cache_creation_input_tokens // 0) + ($u.cache_read_input_tokens // 0)),
+          cost($model; $u) ]
       | @tsv' "$f" 2>/dev/null
   done >>"$rows.new"
 
@@ -343,21 +423,29 @@ do_tokens() {
       ts = $3 + 0
       if (ts < S[1]) next
       for (i = n; i >= 1; i--)
-        if (ts >= S[i]) { day[i] += $5 + 0; break }
-      model[pretty($4)] += $5 + 0
+        if (ts >= S[i]) { day[i] += $5 + 0; daycost[i] += $6 + 0; break }
+      p = pretty($4)
+      model[p] += $5 + 0
+      modelcost[p] += $6 + 0
     }
     END {
-      for (i = 1; i <= n; i++) printf "D\t%s\t%d\n", L[i], day[i]
-      for (m in model) printf "M\t%s\t%d\n", m, model[m]
+      for (i = 1; i <= n; i++) printf "D\t%s\t%d\t%d\n", L[i], day[i], daycost[i]
+      for (m in model) printf "M\t%s\t%d\t%d\n", m, model[m], modelcost[m]
     }' "$rows" \
   | jq -Rsc '
+      # Back out of micro-dollars, to two decimal places -- the panel prints
+      # cents and a float carried further only invites 3.9299999999.
+      def usd: (. / 1e4 | round) / 100;
       [ split("\n")[] | select(length > 0) | split("\t") ] as $r
-      | { byDay: [ $r[] | select(.[0] == "D") | { label: .[1], tokens: (.[2] | tonumber) } ],
+      | { byDay: [ $r[] | select(.[0] == "D")
+                   | { label: .[1], tokens: (.[2] | tonumber), cost: (.[3] | tonumber | usd) } ],
           # Descending, because the panel is answering "what is this costing"
           # and the answer is the top bar.
-          byModel: ( [ $r[] | select(.[0] == "M") | { label: .[1], tokens: (.[2] | tonumber) } ]
+          byModel: ( [ $r[] | select(.[0] == "M")
+                       | { label: .[1], tokens: (.[2] | tonumber), cost: (.[3] | tonumber | usd) } ]
                      | sort_by(-.tokens) ) }
-      | .total = ([ .byModel[].tokens ] | add // 0)'
+      | .total = ([ .byModel[].tokens ] | add // 0)
+      | .totalCost = (([ $r[] | select(.[0] == "M") | (.[3] | tonumber) ] | add // 0) | usd)'
 }
 
 case "${1:-limits}" in

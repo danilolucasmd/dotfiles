@@ -16,6 +16,16 @@ import qs.components
 // What is spending it, by model. The last two come from the transcripts rather
 // than from any endpoint: a percentage of an allowance Anthropic does not
 // publish cannot be compared against yesterday, and token counts can.
+//
+// Those two sections can count in tokens or in dollars, which `d` and a click
+// on either heading swap between. Two columns at once was the first attempt and
+// it cost the bars a third of their width for a number most glances do not
+// want: a token is not a unit anyone has intuition for, but the price is a list
+// price laid over the same reading rather than a second measurement, so the
+// panel offers it instead of the count rather than beside it. It is not a bill
+// either -- the subscription is a flat fee and does not itemise -- so it reads
+// as the worth of the week rather than as money owed, and it is the honest way
+// to weigh Opus against Haiku, or today against Tuesday, in one number.
 Panel {
 	id: root
 
@@ -34,6 +44,10 @@ Panel {
 		case Qt.Key_Right:
 		case Qt.Key_L:
 			AgentUsageState.cycle(1);
+			break;
+		case Qt.Key_D:
+		case Qt.Key_Dollar:
+			AgentUsageState.toggleUnit();
 			break;
 		default:
 			return;
@@ -145,7 +159,14 @@ Panel {
 	// question is "was yesterday heavy", and a bar chart answers that with the
 	// shape before the numbers are read at all.
 	Section {
-		label: "Tokens by day"
+		// The heading names the unit, so the toggle is legible from the panel
+		// rather than only from the numbers changing shape.
+		label: AgentUsageState.showCost ? "Spend by day" : "Tokens by day"
+		// The seven-day total, which is the number the panel is most often
+		// opened for. It rides the heading rather than taking a row of its own
+		// because it is the sum of the rows directly beneath it -- printed
+		// again at the bottom it would read as an eighth day.
+		trailing: root.value(root.tokens.total ?? 0, root.tokens.totalCost ?? 0)
 		visible: root.byDay.length > 0
 
 		Repeater {
@@ -165,7 +186,11 @@ Panel {
 	// selected for work that did not need it is invisible in the daily totals
 	// and obvious here.
 	Section {
-		label: "Tokens by model"
+		label: AgentUsageState.showCost ? "Spend by model" : "Tokens by model"
+		// The same total as the day section's, which is the point -- the two
+		// splits of one week should be seen to agree. It is repeated here
+		// rather than dropped because this section is often the only one read.
+		trailing: root.value(root.tokens.total ?? 0, root.tokens.totalCost ?? 0)
 		visible: root.byModel.length > 0
 
 		Repeater {
@@ -213,7 +238,7 @@ Panel {
 		}
 
 		BarText {
-			text: AgentUsageState.agents.length > 1 ? "←→ agent · r · esc" : "r refresh · esc close"
+			text: AgentUsageState.agents.length > 1 ? "←→ agent · d · r · esc" : "d $ · r refresh · esc"
 		}
 	}
 
@@ -241,6 +266,24 @@ Panel {
 		if (n >= 1e3)
 			return `${(n / 1e3).toFixed(1)}K`;
 		return `${n}`;
+	}
+
+	// Whichever of the two a row or a heading should be showing. Every call
+	// site is handed both numbers rather than the chosen one, so the toggle is
+	// read in exactly one place and a section can never end up drawing its
+	// rows in one unit and its total in the other.
+	function value(tokens: int, cost: real): string {
+		return AgentUsageState.showCost ? money(cost) : abbrev(tokens);
+	}
+
+	// "$4.21" / "$121.50" / "$1.2K". Cents are kept up to a thousand dollars
+	// because a single model row can be worth pennies and a bare "$0" would
+	// read as "free" rather than as "not much"; past that the cents are noise
+	// next to a number that wide, and the column is 56px.
+	function money(usd: real): string {
+		if (usd >= 1000)
+			return `$${(usd / 1000).toFixed(1)}K`;
+		return `$${usd.toFixed(2)}`;
 	}
 
 	// "42s" / "7m" / "3h" / "5d" / "2w" — deliberately coarse, because the number
@@ -286,17 +329,63 @@ Panel {
 		id: section
 
 		property string label
+		// An optional summary of the group, set against the right edge of the
+		// heading line. Only the token sections use it, and only for a figure
+		// that is a property of the whole group rather than of any row.
+		property string trailing
 
 		default property alias body: rows.data
 
 		Layout.fillWidth: true
 		spacing: 8
 
-		BarText {
-			text: section.label.toUpperCase()
-			color: Theme.dim
-			font.pixelSize: 10
-			font.letterSpacing: 1
+		// A plain Item rather than the RowLayout itself, because the click
+		// target has to cover the whole heading and an anchored child of a
+		// layout is undefined behaviour. So the layout takes the Item, and the
+		// row and the MouseArea are anchored inside it.
+		Item {
+			Layout.fillWidth: true
+			implicitHeight: heading.implicitHeight
+
+			RowLayout {
+				id: heading
+
+				anchors.fill: parent
+				spacing: 8
+
+				BarText {
+					text: section.label.toUpperCase()
+					color: Theme.dim
+					font.pixelSize: 10
+					font.letterSpacing: 1
+				}
+
+				Item {
+					Layout.fillWidth: true
+				}
+
+				BarText {
+					visible: text !== ""
+
+					text: section.trailing
+					color: AgentUsageState.showCost ? Theme.green : Theme.fg
+					font.pixelSize: 11
+					font.weight: Font.DemiBold
+				}
+			}
+
+			// The whole heading is the button, not just the total: it is the
+			// widest thing in the section that means nothing on its own, and a
+			// hit target the size of a seven-character number is one nobody
+			// finds. Only the sections that set a trailing take the click —
+			// the limits meters have no second unit to offer.
+			MouseArea {
+				anchors.fill: parent
+				enabled: section.trailing !== ""
+				cursorShape: Qt.PointingHandCursor
+
+				onClicked: AgentUsageState.toggleUnit()
+			}
 		}
 
 		ColumnLayout {
@@ -518,14 +607,18 @@ Panel {
 			}
 		}
 
-		// Also fixed, and right-aligned, so the counts form a column that can
-		// be read down. They are all the same order of magnitude on any normal
-		// week, which makes the digits themselves a second comparison.
+		// Fixed and right-aligned, so the values form a column that can be read
+		// down. They are all the same order of magnitude on any normal week,
+		// which makes the digits themselves a second comparison. The width is
+		// the wider unit's — "$121.94" rather than "147.2M" — so that toggling
+		// moves nothing but the text: sized to its own content, every bar in
+		// the panel would grow or shrink on each press, which reads as the
+		// data having changed.
 		BarText {
-			Layout.preferredWidth: 52
+			Layout.preferredWidth: 56
 
-			text: root.abbrev(row.modelData.tokens)
-			color: row.emphasised ? Theme.fg : Theme.dim
+			text: root.value(row.modelData.tokens, row.modelData.cost ?? 0)
+			color: row.emphasised ? (AgentUsageState.showCost ? Theme.green : Theme.fg) : Theme.dim
 			font.weight: row.emphasised ? Font.DemiBold : Font.Normal
 			horizontalAlignment: Text.AlignRight
 		}

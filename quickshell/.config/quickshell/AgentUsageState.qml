@@ -41,6 +41,22 @@ Singleton {
 	// shut and the parse has never been paid for.
 	readonly property var tokens: (history.data.agents ?? ({}))[agent.id ?? ""] ?? ({})
 
+	// Which unit the two token sections are counting in. Both numbers are in
+	// the same reading, so this is only ever a choice of which one to draw —
+	// one column at a time rather than two, because the card is 360px wide and
+	// a bar squeezed between a count and a price is a bar with nothing left to
+	// say. Tokens are the default: they are what the agent actually reports,
+	// and the price is a list price laid over them.
+	//
+	// Deliberately not persisted. It is a way of looking at the panel for a
+	// moment, not a setting, and a panel that opened in whichever unit was
+	// last glanced at would make the number on screen need reading twice.
+	property bool showCost: false
+
+	function toggleUnit(): void {
+		showCost = !showCost;
+	}
+
 	// Whether there is a number to put on the bar at all. An agent that is
 	// installed but silent is worth a panel and not worth a bar module.
 	readonly property bool available: agent.available ?? false
@@ -92,6 +108,9 @@ Singleton {
 
 	function close(): void {
 		panelOpen = false;
+		// Back to tokens for the next open, for the same reason the choice is
+		// not persisted: this is a glance, not a preference.
+		showCost = false;
 	}
 
 	// Step the selection along the agent list, wrapping. The panel's left/right

@@ -479,10 +479,35 @@ for Claude Code, plus a per-model weekly window on the plans that have them —
 each marked with how much of the window has *elapsed*, so the gap between the
 fill and the mark is whether you are spending faster than it refills, and
 annotated with where that rate lands at reset. **Tokens by day** is the last
-seven days as a bar each, weekday-labelled and today emphasised. **Tokens by
-model** is the same seven days split the other way, which is where a habit shows
-that the daily totals hide: an expensive model left selected for work that did
-not need it.
+seven days as a bar each, weekday-labelled and today emphasised, with the
+seven-day total on the heading. **Tokens by model** is the same seven days split
+the other way, which is where a habit shows that the daily totals hide: an
+expensive model left selected for work that did not need it.
+
+Both token sections count in tokens or in dollars, and `d` — or a click anywhere
+on either heading — swaps between them; the headings say which, and the panel is
+back on tokens the next time it opens. It is one column rather than two because
+the card is 360px wide and a bar squeezed between a count and a price is a bar
+with nothing left to say. The value column is sized to the wider unit either
+way, so a press moves nothing but the text: sized to its own content, every bar
+would grow or shrink on each toggle, which reads as the data having changed.
+
+Tokens are the default because they are what the agent actually reports; the
+price is a list price laid over the same reading, offered because a token is not
+a unit anyone has intuition for and a dollar is. It is not a bill — a
+subscription is a flat monthly fee and does not itemise — so it reads as the
+worth of the week rather than as money owed, and it is the only way to weigh
+Opus against Haiku, or today against Tuesday, in one number. The rates live in
+`scripts/agents/claude-code.sh` and are per model,
+with cache tokens priced as multiples of the input rate rather than listed
+separately: every model charges 1.25x input for a 5-minute cache write, 2x for a
+1-hour one and 0.1x for a read. That distinction is the whole of the arithmetic
+— Claude Code is over 90% cache reads on a normal session, so pricing them at
+the plain input rate would overstate the week by nearly ten times. Fast mode is
+double, which `usage.speed` records per message. A model the table has not heard
+of falls back to its family's current rate rather than to zero, since a model
+released after the table was written is likelier to be priced like the rest of
+its family than to be free.
 
 The two token sections exist because a percentage cannot be compared against
 yesterday — Anthropic reports a share of an allowance it does not publish, so
@@ -497,6 +522,11 @@ session copies its history into the new transcript, and the 7218 rows across
 eight days here are only 3826 distinct messages. Summing the files as they lie
 overstates every figure by nearly half. The whole thing runs only while the
 panel is open.
+
+The parsed rows are a cache, and the price of each one is baked into it, so the
+store carries a schema stamp that includes a checksum of the price table: edit a
+rate and the next run throws the store away and reparses. It costs one 1.2s
+pass, and the alternative is a week of the panel drawing yesterday's prices.
 
 Nothing in the panel is written against Claude Code. `scripts/agents/` holds one
 script per agent, each answering a cheap `limits` and an expensive `tokens`
