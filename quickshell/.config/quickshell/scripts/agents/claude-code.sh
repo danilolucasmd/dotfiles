@@ -177,12 +177,35 @@ do_limits() {
   # A plan the account is on rather than a plan this script knows about: the
   # tier string is where the multiplier lives ("...max_20x..."), and it is only
   # ever shown, so an unrecognised one degrades to the bare subscription name.
+  #
+  # The account profile in .claude.json is asked for first because it is the
+  # only one of the two that follows an upgrade: .credentials.json is written
+  # when the OAuth token is issued and keeps saying "pro" until the token is
+  # refreshed, which can be weeks after the plan changed. The profile carries a
+  # `profileFetchedAt` and is refetched on startup, so an upgrade shows up on
+  # the next launch. Credentials stay as the fallback for the window before the
+  # first profile fetch lands.
   local plan=""
-  if [ -r "$creds" ]; then
-    local sub tier
+  local sub tier
+  if [ -r "$state" ]; then
+    # organizationType is "claude_max" / "claude_pro"; the user tier overrides
+    # the organization one where a seat sets it, which is why it is asked for
+    # first rather than merged.
+    sub=$(jq -r '.oauthAccount.organizationType // empty
+                 | sub("^claude_"; "")' "$state" 2>/dev/null)
+    tier=$(jq -r '.oauthAccount.userRateLimitTier
+                  // .oauthAccount.organizationRateLimitTier // empty' \
+                 "$state" 2>/dev/null)
+  fi
+  if [ -z "$sub" ] && [ -r "$creds" ]; then
     sub=$(jq -r '.claudeAiOauth.subscriptionType // empty' "$creds" 2>/dev/null)
     tier=$(jq -r '.claudeAiOauth.rateLimitTier // empty' "$creds" 2>/dev/null)
-    plan=${sub^^}
+  fi
+  plan=${sub^^}
+  # The multiplier is a suffix on a name, so it is only appended when there is
+  # a name to suffix -- a tier with no subscription beside it would otherwise
+  # render as a leading space and a bare "5X".
+  if [ -n "$plan" ]; then
     case "$tier" in
       *20x*) plan="$plan 20X" ;;
       *5x*)  plan="$plan 5X" ;;
