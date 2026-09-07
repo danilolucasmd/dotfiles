@@ -243,11 +243,22 @@ mkdir -p \
 # DEBLOAT DEFAULT PACKAGES                                 #
 ############################################################
 
+# mako and dunst are not merely unused: both ship a D-Bus service file claiming
+# org.freedesktop.Notifications, so the first notification fired during login --
+# before quickshell has finished starting and taken the name itself -- activates
+# whichever of them is installed, and it holds the name for the rest of the
+# session. The symptom is notifications that render in the daemon's own style
+# (icons, its own palette, its own corner) instead of the bar's, seemingly at
+# random, because it depends on what fired first at boot. Uninstalling is the
+# only fix that sticks; masking the units leaves the .service files behind for
+# dbus-daemon to activate directly.
 echo "==> Removing unwanted packages"
 sudo pacman -Rns --noconfirm \
   kitty \
   dolphin \
-  wofi ||
+  wofi \
+  mako \
+  dunst ||
   true
 
 ############################################################

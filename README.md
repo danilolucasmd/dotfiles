@@ -745,9 +745,17 @@ outright: the popups, the bell in the bar and the history panel (`super+N`, or
 click the bell) are one thing rather than three.
 
 **mako is gone** — package, config and stow entry. Only one process can own the
-bus name, so this was an either/or, and mako had no history of its own. If mako
-is still installed from an earlier run, `sudo pacman -Rns mako` removes it;
-`install.sh` no longer pulls it in.
+bus name, so this was an either/or, and mako had no history of its own.
+
+Removing the package is not housekeeping, it is the whole point. mako and dunst
+each ship a `/usr/share/dbus-1/services/*.service` file claiming
+`org.freedesktop.Notifications`, so a notification fired during login — before
+quickshell has finished starting and taken the name — activates whichever of
+them is installed, and it keeps the name until the session ends. That is what a
+notification drawn with an icon, in someone else's palette, after a reboot and
+not otherwise, actually is. `install.sh` now uninstalls both in its debloat
+step; masking the systemd units is not enough, since dbus-daemon can activate
+the binary from the `.service` file without them.
 
 The popups sit in the corner with per-urgency border colours (low grey, normal
 peach, critical red), critical ones stay up until they are dealt with, timeouts
@@ -1497,11 +1505,13 @@ Superseded packages that may still be installed from earlier runs. Nothing
 depends on them and `install.sh` no longer pulls them in:
 
 ```bash
-sudo pacman -Rns mako dunst rofi rofi-calc anyrun cliphist pcmanfm tmux waybar
+sudo pacman -Rns rofi rofi-calc anyrun cliphist pcmanfm tmux waybar
 ```
 
-`grub-btrfs` and `grub` belong on that list too, but `install.sh` removes them
-itself -- see section 10 for why they were never doing anything.
+`mako` and `dunst` belong on that list too, but `install.sh` removes them itself
+-- they would otherwise steal the notification bus name from quickshell at
+login, see section 6. `grub-btrfs` and `grub` are the same case, removed by
+`install.sh` -- see section 10 for why they were never doing anything.
 
 Fingerprint unlock was here and is gone: it made fresh installs fail in ways the
 reader was never worth. A machine that ran the old `install.sh` still has the
