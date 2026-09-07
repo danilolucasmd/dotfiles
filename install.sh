@@ -971,7 +971,16 @@ echo "==> Installing Docker"
 # docker-desktop build the casualty instead. Let docker-desktop supply them.
 pac docker
 
-sudo systemctl enable docker.service
+# The socket, not the service. docker.socket is an idle listener on
+# /var/run/docker.sock costing nothing until something connects, and it
+# `Triggers=docker.service`, so the first `docker` command starts the daemon
+# and every one after it finds it already up. Enabling docker.service instead
+# runs dockerd and containerd from boot -- about 200 MB resident and a
+# container restore pass -- on every session, including the many that never
+# touch a container. The disable is for machines installed before this changed:
+# the script is re-runnable, and enabling the socket does not undo the service.
+sudo systemctl disable docker.service
+sudo systemctl enable docker.socket
 # Takes effect at the next login, which the reboot at the end covers.
 sudo usermod -aG docker "$USER"
 
@@ -1021,11 +1030,31 @@ else
   skip "every AUR package (yay is not installed)"
 fi
 
-# docker-desktop ships a user unit; enabling it here rather than checking the
-# .wants symlink into the repo keeps systemd's bookkeeping out of the dotfiles.
+# docker-desktop ships a user unit wanted by graphical-session.target, and
+# left enabled it costs about 5 GB of RSS from login: com.docker.backend, an
+# Electron UI, and a qemu VM given 8 GB that measured 3.3 GB resident on a
+# machine that had not run a container all session. Docker Desktop is a GUI
+# app, so it is launched from the launcher like any other -- its .desktop entry
+# starts the unit -- and the disable is what stops it also being a boot
+# service. Explicitly disabled rather than merely not enabled because this
+# script is re-runnable and has to undo the enable it used to do.
+#
+# systemd's bookkeeping is deliberately left in /etc rather than a .wants
+# symlink stowed from here: the state is one flag, and a repo that owned it
+# would have to own the whole user unit directory to express it.
 if pacman -Q docker-desktop >/dev/null 2>&1; then
-  systemctl --user enable docker-desktop.service
+  systemctl --user disable docker-desktop.service
 fi
+
+# docker-desktop points the CLI at its own socket by writing a `desktop-linux`
+# context and making it current, which is the right answer only while Desktop
+# is running. With Desktop no longer a boot service, that context leaves
+# `docker ps` failing to connect instead of socket-activating the system
+# daemon, so the CLI is pointed back at /var/run/docker.sock. Launching Docker
+# Desktop switches the context back to its own and does not switch it away
+# again on quit -- re-run this line, or `docker context use default`, after a
+# session that used it.
+try "docker context" docker context use default
 
 ############################################################
 # NODE SETUP                                               #
