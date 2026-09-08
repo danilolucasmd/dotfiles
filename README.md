@@ -912,10 +912,11 @@ An alarm clock appears in the bar, just left of the weather, for as long as
 anything is pending, and clicking it opens the same list. A glyph and nothing
 else: the module being on screen at all is the whole message, where the bell
 further along stays put through an empty history and needs a number to say which
-state it is in. Hovering it says what the next reminder is and how long is left,
-which is the thing worth knowing and the thing a glyph has no room for; it is
-blue, otherwise unused in the bar, and turns peach in the last minute — the same
-colour the list panel paints a countdown about to run out.
+state it is in. No hover tooltip either: what it would have said is a countdown,
+and a countdown that vanishes the moment you look away from it is worse than
+none — the panel one click away holds every one of them and keeps ticking. The
+glyph is blue, otherwise unused in the bar, and turns peach in the last minute —
+the same colour the list panel paints a countdown about to run out.
 
 `super+ctrl+N` is the other half: what is still pending, with the countdown and
 the clock time on each — `j`/`k` to move, `d` to drop one, `D` for the lot, `n`

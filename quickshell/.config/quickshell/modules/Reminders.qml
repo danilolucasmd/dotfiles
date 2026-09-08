@@ -18,18 +18,11 @@ BarItem {
 
 	active: ReminderState.count > 0
 	highlighted: ReminderState.listOpen
-	// The countdown, which is the thing actually worth knowing and the thing
-	// the glyph has no room for. Rebuilt every second along with the clock in
-	// ReminderState, so a tooltip left open counts down while it is up.
-	tooltip: {
-		const next = ReminderState.reminders[0];
-		if (!next)
-			return "";
 
-		const head = `${next.text} in ${ReminderState.countdown(next.due)}`;
-		const rest = ReminderState.count - 1;
-		return rest > 0 ? `${head} · ${rest} more` : head;
-	}
+	// No hover tooltip: it said what the next reminder was and how long was
+	// left, which is a countdown -- and a countdown that vanishes the moment
+	// you look away from it is worse than no countdown at all. The panel one
+	// click away holds every one of them and keeps ticking.
 
 	onClicked: ReminderState.toggleList()
 
@@ -37,8 +30,7 @@ BarItem {
 		// The glyph alone, no badge. The module being on screen at all is the
 		// whole message -- unlike the bell, which stays put through an empty
 		// history and needs a number to say which state it is in. How many
-		// there are, and when the first one lands, is what the tooltip and the
-		// panel are for.
+		// there are, and when the first one lands, is the panel's job.
 		text: "󰀠"
 		// Blue is otherwise unused in the bar, so this reads as its own thing
 		// rather than as a quieter notification badge; peach is what the list
