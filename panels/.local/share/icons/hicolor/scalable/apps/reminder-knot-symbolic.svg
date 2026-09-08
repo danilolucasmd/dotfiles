@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The string tied round a finger, which is the picture everyone already has for
+  "remember this" and which no icon theme ships: breeze-dark offers alarms,
+  clocks and calendars, and all three say something else.
+
+  Drawn for 28px, which is the only size it is ever seen at (the launcher's icon
+  slot; see LauncherPanel.qml). That is what every choice here is about. Earlier
+  versions drew the whole hand, with a fist under the raised finger and knuckle
+  bumps along its top, and at 28px all of it collapsed into one white blob: the
+  fist read as a bottle and the string as a label on it. So the hand is gone
+  and the finger runs off the bottom edge instead, which says "there is a hand
+  down there" without spending any pixels on one, and every remaining shape is
+  at least two pixels wide at the size it is drawn.
+
+  The string is a solid band with a gap either side of it rather than an outline,
+  for the same reason: an outline needs a dark colour behind it, and the icon is
+  drawn on the launcher's card and on its highlighted row, which are two
+  different greys. A gap is a hole in the fill, so it works on both.
+
+  #fcfcfc is breeze-dark's own symbolic colour. The launcher draws an icon as a
+  plain Image with no recolouring, so a real symbolic icon in currentColor would
+  come out black.
+
+  No double hyphen anywhere in this comment, deliberately: XML forbids one inside
+  a comment, and an SVG that will not parse is drawn by Qt as a magenta
+  checkerboard rather than as an error anybody sees.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- The finger, and the two gaps that let the string read across it. -->
+  <path fill="#fcfcfc" fill-rule="evenodd" d="M8.8 24V6.6a3.2 3.2 0 0 1 6.4 0V24zM7.6 9.2h8.8v1.9H7.6zM7.6 14h8.8v1.9H7.6z"/>
+  <!-- The string, wider than the finger so it reads as tied round it. -->
+  <path fill="#fcfcfc" d="M7.2 11.1h9.6v2.9H7.2z"/>
+  <!-- The bow: one loop either side, each taller than the band at its far end. -->
+  <path fill="#fcfcfc" d="M9.2 12.55 3.9 8.35c-.85-.67-2.1-.07-2.1 1v6.4c0 1.07 1.25 1.67 2.1 1z"/>
+  <path fill="#fcfcfc" d="m14.8 12.55 5.3-4.2c.85-.67 2.1-.07 2.1 1v6.4c0 1.07-1.25 1.67-2.1 1z"/>
+</svg>

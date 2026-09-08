@@ -439,6 +439,13 @@ try "1Password signing key" gpg --keyserver keyserver.ubuntu.com \
 # HYPRLAND + WAYLAND STACK + QUICKSHELL                    #
 ############################################################
 
+# libnotify and sound-theme-freedesktop are both here for the reminders:
+# quickshell is the notification daemon, but a reminder coming due has to arrive
+# as a real notification for it to land in the history with everything else, and
+# notify-send is what sends it (scripts/reminder-notify.sh). The sound theme is
+# where the reminder chime (complete.oga) comes from -- the one sound in this
+# config that is not in ~/dotfiles/sounds, because there is no sense checking in
+# a copy of a file a packaged theme already has.
 echo "==> Installing Hyprland and Wayland stack"
 
 pac \
@@ -466,7 +473,9 @@ pac \
   polkit \
   polkit-kde-agent \
   quickshell \
-  breeze-icons
+  breeze-icons \
+  libnotify \
+  sound-theme-freedesktop
 
 # The polkit half of "ask once and never again" -- see the ONE PASSWORD, ONCE
 # section for why it exists and why it can only be written here, once the batch

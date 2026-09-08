@@ -106,12 +106,26 @@ Variants {
 				anchors.verticalCenter: parent.verticalCenter
 			}
 
-			// The night light glyph gets the other side of the centre group,
-			// anchored for the same reason: both of these are indicators that
-			// appear and vanish mid-session, and the clock is the one thing on
-			// the bar whose position the eye actually relies on.
-			NightLight {
+			// The other side of the centre group gets the two indicators that
+			// belong to nothing in the clusters, anchored for the same reason:
+			// both appear and vanish mid-session, and the clock is the one
+			// thing on the bar whose position the eye actually relies on.
+			//
+			// Reminders takes the slot against the weather glyph and the night
+			// light is pushed outboard of it, so the two of them grow leftward
+			// away from the clock. That does mean a reminder arriving shifts
+			// the night light glyph, which is the trade: one of the two has to
+			// move when the other appears, and it may as well be the one that
+			// is only ever on screen after dark.
+			Reminders {
+				id: reminders
+
 				anchors.right: centre.left
+				anchors.verticalCenter: parent.verticalCenter
+			}
+
+			NightLight {
+				anchors.right: reminders.left
 				anchors.verticalCenter: parent.verticalCenter
 			}
 

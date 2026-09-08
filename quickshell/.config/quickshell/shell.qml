@@ -26,6 +26,12 @@ ShellRoot {
 	LauncherPanel {}
 	KeybindsPanel {}
 
+	// Same again, and for the same reason: neither writing a reminder nor
+	// reading the pending list is worth a permanent glyph in the bar. Two
+	// windows over one singleton -- see ReminderState.qml.
+	ReminderPanel {}
+	ReminderListPanel {}
+
 	// Not a card either, and not even the shape of one: it covers the screen to
 	// preview a wallpaper at the size it will be used. Reached from the launcher
 	// only -- see WallpaperPanel.qml.
@@ -99,6 +105,27 @@ ShellRoot {
 
 		function toggle(): void {
 			NotificationsState.toggle();
+		}
+	}
+
+	// super+shift+N and super+ctrl+N. One target, two panels: `toggle` writes a
+	// reminder, `list` shows what is pending. `snooze` is the odd one out and
+	// is not bound to anything -- it is how reminder-notify.sh hands a pressed
+	// snooze button back to the shell, minutes as a string because that is what
+	// an IPC argument is.
+	IpcHandler {
+		target: "reminder"
+
+		function toggle(): void {
+			ReminderState.toggle();
+		}
+
+		function list(): void {
+			ReminderState.toggleList();
+		}
+
+		function snooze(message: string, minutes: string): void {
+			ReminderState.snooze(message, minutes);
 		}
 	}
 

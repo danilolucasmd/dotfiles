@@ -19,3 +19,5 @@
 	program = /opt/1Password/op-ssh-sign
 [commit]
 	gpgsign = true
+[credential]
+	helper = /usr/lib/git-core/git-credential-libsecret

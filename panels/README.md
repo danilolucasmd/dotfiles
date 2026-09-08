@@ -56,6 +56,22 @@ slot: `bluetooth-symbolic`, `x-office-calendar-symbolic` and
 that wants an icon which actually appears should be checked against
 `/usr/share/icons/breeze-dark` first.
 
+One icon here is not a theme name at all. `reminder-knot-symbolic` is drawn in
+this repo, under `.local/share/icons/hicolor/scalable/apps/`, because the
+picture a reminder wants -- a finger with a string tied round it -- is one no
+theme ships: breeze-dark has alarms, clocks and calendars, and every one of them
+says something else. hicolor rather than a directory of our own because hicolor
+is the fallback every icon theme inherits (`Inherits=breeze,hicolor` in
+breeze-dark's `index.theme`), so a name dropped in there resolves without
+anything being told about it. It is stowed by the same `stow --no-folding
+panels` as the desktop entries. It is drawn for 28px, which is the only size it
+is ever seen at: the whole hand, fist and knuckles included, collapsed into one
+white blob there and read as a bottle with a label, so what is left is the
+finger running off the bottom edge with the string tied round it. The colour is
+`#fcfcfc`, breeze-dark's own symbolic colour, because the launcher draws an icon
+as a plain `Image` with no recolouring and a real symbolic icon in
+`currentColor` would come out black on a #2a2a2a card.
+
 Changing the `Icon=` of an entry that already resolved once is the one edit here
 that a re-stow and a `qs` reload will not show: the resolved path is cached for
 the life of the process, and only `qs kill` and starting it again picks the new

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Reminders panel
+Comment=Reminders still pending, and the countdown on each — Super+Ctrl+N
+Icon=alarm-symbolic
+Keywords=quickshell;panel;reminders;pending;countdown;alarm;
+Exec=qs ipc call reminder list
+Terminal=false
+StartupNotify=false
+Categories=Utility;

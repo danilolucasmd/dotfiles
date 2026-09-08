@@ -235,11 +235,15 @@ matching a notification against the window list to find the app that sent it.
 `updates.sh` shells out to `checkupdates`, which is why `pacman-contrib` is in
 the package list.
 
-The centre group is the weather and the clock, with three more things anchored
-to its edges rather than laid out in it: the night light glyph on the left, the
-keep-awake mug and then the recording dot on the right. The glyph and the dot
-come and go mid-session, and anchoring is what keeps the clock from sliding
-sideways when they do; the mug is always there, and is what the dot anchors to.
+The centre group is the weather and the clock, with four more things anchored
+to its edges rather than laid out in it: the reminder alarm clock and then the
+night light glyph on the left, the keep-awake mug and then the recording dot on
+the right. All but the mug come and go mid-session, and anchoring is what keeps
+the clock from sliding sideways when they do; the mug is always there, and is
+what the dot anchors to. On the left the reminder glyph takes the slot against
+the weather and pushes the night light outboard of it, so the pair grow leftward
+away from the clock — one of the two has to move when the other appears, and it
+may as well be the one that is only ever on screen after dark.
 
 The right cluster is split in two. Media, keyboard layout, volume, network,
 bluetooth, battery, display, performance, agent usage, updates and
@@ -700,7 +704,17 @@ desktop entries — one per panel, each a single
 `Exec=qs ipc call <target> <function>`, which is exactly what the matching
 `bindd` runs — symlinked into `~/.local/share/applications`, where
 `DesktopEntries` finds them with nothing to restart. Searching `panel` or
-`quickshell` lists the lot. `toggle` is the right verb even from a launcher: the
+`quickshell` lists the lot. Icons are symbolic names from breeze-dark, with one
+exception drawn in this repo and stowed into `~/.local/share/icons/hicolor`: the
+reminder's finger with a string tied round it, because the picture that says
+"remember this" is one no theme ships — breeze-dark has alarms, clocks and
+calendars, and every one of them says something else. It is drawn for the 28px
+slot it appears in and nothing larger: the hand it started as, fist and knuckles
+and all, was one white blob at that size and read as a bottle with a label, so
+what survived is the finger running off the bottom edge and the string tied
+round it.
+
+`toggle` is the right verb even from a launcher: the
 launcher holds a `HyprlandFocusGrab` of its own while it is up, which clears the
 one an open panel was holding, so the panel is always already closed by the time
 the entry runs. See `panels/README.md`.
@@ -847,6 +861,75 @@ Claude Code's own notifications go through `preferredNotifChannel: "ghostty"` in
 `claude/.claude/settings.json` — ghostty's native channel, which needs no
 forwarding. herdr's toasts go to the system with `[ui.toast] delivery = "system"`
 in its config.
+
+### Reminders
+
+A reminder is a notification sent to your own future self, and that is
+deliberately all it is — no calendar, no repeat, no date. The question it
+answers is "not now, but in a bit", which nothing else here answered: the
+calendar panel is a read-only view of the month, and a `sleep 600 && notify-send`
+typed at a prompt dies with the terminal it was typed in.
+
+`super+shift+N` opens a small card that asks two questions in one field —
+the message, Return, then how many minutes, Return, and it is gone. One field
+asked twice rather than a form with two boxes and a Tab between them, because
+the whole point is that it takes four keystrokes and does not need looking at.
+The second step echoes the message back above the box (a bare "how many
+minutes?" with nothing on screen saying what for is a question you have to
+remember the answer to) and offers 5m / 15m / 30m / 1h / 3h as chips for the
+mouse. Escape at the second step goes back to the message rather than throwing
+it away; the second Escape closes. On the notification key on purpose, and `R`
+went to the screen recorder long ago — the keybind sheet doubles as a discovery
+surface, and one letter meaning two things there is worse than a letter that
+means neither.
+
+When it comes due it arrives as an ordinary notification, because it *is* one:
+`scripts/reminder-notify.sh` sends it with `notify-send`, quickshell receives its
+own reminder over D-Bus like any other, and it lands in the history panel with
+everything else. It plays one chime and it does not go away on its own —
+`--hint=string:category:reminder` is what `NotificationsState.popupTimeout` reads
+to give it no timeout, at normal urgency. Sending it as *critical* would have
+bought the same stickiness by claiming an emergency and painted it in the colour
+kept for one. The chime is `complete.oga` from `sound-theme-freedesktop` rather
+than that theme's obvious-sounding `alarm-clock-elapsed.oga`, which is six
+seconds of a clock ringing over and over: the popup is already sticky, so the
+sound only has to say "look up", and every ring after the first is the
+notification nagging about itself.
+
+The popup carries the same five delays as snooze buttons. That is why the
+notification is sent by a script and not from QML: `notify-send -A` implies
+`--wait`, so the process stays alive for as long as the popup is up — which
+here can be hours — and prints the chosen button's name when it goes. Rather
+than keep a `Process` object alive per live notification, the script is fired
+and forgotten with `Quickshell.execDetached` and comes back in through the front
+door: `qs ipc call reminder snooze`, the same IPC any keybind uses. Nothing has
+to be tracked on the QML side, and a shell reloaded in the meantime still hears
+the snooze, because `qs ipc` finds whatever instance is running when the button
+is pressed. A snooze is a new reminder carrying the same text, which is also
+what puts it back in the list with a fresh countdown.
+
+An alarm clock appears in the bar, just left of the weather, for as long as
+anything is pending, and clicking it opens the same list. A glyph and nothing
+else: the module being on screen at all is the whole message, where the bell
+further along stays put through an empty history and needs a number to say which
+state it is in. Hovering it says what the next reminder is and how long is left,
+which is the thing worth knowing and the thing a glyph has no room for; it is
+blue, otherwise unused in the bar, and turns peach in the last minute — the same
+colour the list panel paints a countdown about to run out.
+
+`super+ctrl+N` is the other half: what is still pending, with the countdown and
+the clock time on each — `j`/`k` to move, `d` to drop one, `D` for the lot, `n`
+to write another. Without it a reminder is invisible between being set and going
+off, and something invisible that you are relying on is something you end up
+setting twice.
+
+The list is `~/.local/state/quickshell/reminders.json` and survives a reboot,
+which is why nothing here is a QML timer counting down from when the shell
+started: a reminder is due when the wall clock says so, and one that came due
+while the machine was asleep or shut down fires on the first tick after it comes
+back. Late, but a timer would have lost it silently. The clock only ticks while
+something is pending, so an idle machine with no reminders set does not run it
+at all.
 
 ---
 

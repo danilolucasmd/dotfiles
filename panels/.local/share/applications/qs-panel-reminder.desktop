@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Reminder
+Comment=Remind me about something in a few minutes — Super+Shift+N
+Icon=reminder-knot-symbolic
+Keywords=quickshell;panel;reminder;remind;remember;alarm;timer;snooze;
+Exec=qs ipc call reminder toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

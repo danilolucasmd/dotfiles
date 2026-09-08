@@ -86,6 +86,14 @@ Singleton {
 	function popupTimeout(notif: var): int {
 		if (notif.urgency === NotificationUrgency.Critical)
 			return 0;
+		// A reminder is the one notification here that was *asked for*, and a
+		// reminder you did not happen to be looking at five seconds ago is a
+		// reminder that did not work. It stays up until it is dealt with, at
+		// normal urgency -- the alternative was sending it as critical, which
+		// would have got the same stickiness by claiming an emergency and
+		// painted it in the colour kept for one. See scripts/reminder-notify.sh.
+		if ((notif.hints?.category ?? "") === "reminder")
+			return 0;
 		return isFleeting(notif) ? 2000 : 5000;
 	}
 
