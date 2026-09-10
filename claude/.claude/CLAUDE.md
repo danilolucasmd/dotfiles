@@ -20,6 +20,20 @@ Showing PR review comments, describing a fix, resolving merge conflicts, or an a
 
 Even "fixing" a mistaken git operation (e.g. unstaging what was wrongly staged) is itself an unrequested git operation — don't do it; tell the user and let them decide. If a merge/rebase left files unmerged, resolve the file contents but do NOT `git add` to clear the unmerged state unless asked — describe the state instead.
 
+## "Rebase the stack" means restack and push the branches above this one
+
+When the user asks to "rebase the stack", they are working in a stacked-PR chain and have **already committed and pushed** the branch they are on. The ask is about the branches *above* it:
+
+1. For each branch that sits on the current one, in order from the bottom up: check it out and rebase it onto its parent.
+2. Push each rebased branch with `--force-with-lease`.
+3. Leave the working tree checked out on the **last** branch of the stack, which is where the user tests. Report the old and new tips.
+
+Use `git rebase --onto <new parent tip> <old parent tip>` whenever the parent's history was rewritten, since a plain `git rebase <parent>` will try to replay the parent's pre-rebase commits by their old SHAs.
+
+If the user asks for this while on the base branch of the stack, rebase and push **every** branch above it, all the way up the chain.
+
+Do not re-verify the current branch or re-run its checks; the user has already handled it. Do run a typecheck on each rebased branch, and resolve conflicts by keeping both sides' behavior unless one clearly supersedes the other.
+
 ## "Comments" means Hunk review comments
 
 When the user says they "added comments", "made comments", "left comments", or "commented" (and asks to fix/address them), they almost always mean inline review comments in a **Hunk diff session** — not code comments, PR comments, or anything else.
@@ -100,10 +114,23 @@ Rules for filling it in:
 
 Hard-wrap rules for the body are in the section above.
 
-## Comments: only for what the code cannot say
+## Comments: default to none, and keep the rest to one line
 
-Keep comments short, and do not write one at all when the name already says it. A well-named variable, function, or type needs no restatement; `/** Vendor ID */` above `vendorId` is noise.
+Write no comment unless a reader who already understands the code would still be confused. The bar is genuine unclarity, not "this seems worth explaining".
 
-Comment only what the code cannot express: why a non-obvious choice was made, a constraint imposed from elsewhere in the system, or a decision that looks wrong until explained. One or two lines usually covers it. Reserve multi-paragraph doc blocks for genuinely subtle contracts, never for narrating an implementation a reader can see.
+When one earns its place, one line. Two at the absolute most, never a paragraph. If it needs more, the code needs a better name or a smaller function.
 
-If a comment feels necessary because the name is unclear, rename instead.
+Only these justify a comment:
+
+- Why a non-obvious choice was made, when the obvious one is wrong
+- A constraint imposed from elsewhere in the system that the code cannot show
+- A subtle contract on an exported value
+
+Do not write, and delete on sight:
+
+- Restatements of the next line, or narration of structure ("renders X, then Y")
+- Labels for things already named (`/** Vendor ID */` above `vendorId`)
+- A component or function description that its name already carries
+- Test comments that repeat the assertion below them
+
+If a comment feels necessary because the name is unclear, rename instead. When editing existing code, cut comments that fail this bar rather than matching their density.
