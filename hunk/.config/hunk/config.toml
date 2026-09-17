@@ -1,5 +1,5 @@
-theme = "github-dark-default" # any built-in theme id, auto, or custom
-mode = "auto"        # auto, split, stack
+theme = "github-dark-default"
+mode = "stack"
 vcs = "git"          # git, jj, sl
 watch = false
 exclude_untracked = false
@@ -7,6 +7,10 @@ line_numbers = true
 wrap_lines = false
 agent_notes = false
 transparent_background = false
+hunk_headers = true
+menu_bar = true
+copy_decorations = false
+cursor_line = "row"
 
 [keybindings]
 # 0.19 moved half-page scrolling to bare d/u; keep the ctrl variants too.

@@ -750,6 +750,59 @@ nothing but log an error.
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
 one that ships light symbolic icons for a dark bar.
 
+### Which sink comes back when the earbuds leave
+
+Picking an output in the audio panel writes PipeWire's
+`default.configured.audio.sink`, and WirePlumber keeps every value it has ever
+been handed as a most-recently-used stack in
+`~/.local/state/wireplumber/default-nodes`, head first. What it does with that
+stack is the surprise. In `default-nodes/state-default-nodes.lua` a stored
+device scores `priority.session + 20001 - i`, where `i` is its slot, so being
+one slot fresher is worth a single point while the hardware's own priority
+differs by tens. The stack order is decorative and the raw priority decides.
+Put the earbuds in their case and the output does not go back to what was
+playing before them; it goes to the highest-priority device ever selected on the
+machine. Here that was the onboard S/PDIF at 736, which nothing is plugged into,
+beating the NVidia HDMI output at 696 that had been the default for hours.
+
+The `wireplumber` package fixes it with one added hook,
+`wireplumber/.local/share/wireplumber/scripts/default-nodes/mru-default-node.lua`,
+which reads the stack WirePlumber is already keeping and selects the first entry
+that is currently available. That is the definition of "the last one I used",
+and it names no card and no PCI address, so audio hardware can be swapped
+without the fix quietly ceasing to apply. The alternative considered first was a
+`monitor.alsa.rules` entry demoting this board's S/PDIF by node name, and it was
+rejected for exactly that reason.
+
+The hook is additive: nothing upstream is disabled, and it declines to choose in
+the two cases where upstream is already right. If the configured device is still
+present this is not a fallback at all but a normal selection, and
+`find-selected-default-node` owns it. If nothing in the stack is available, a
+machine whose audio hardware just changed entirely has no most-recently-used
+answer to give, and `find-best-default-node`'s hardware ranking is left to
+stand. Sinks, sources and cameras are all covered, because the stack is kept per
+device type and the argument for outputs is the argument for inputs.
+
+Note where the two files sit. WirePlumber finds configuration under
+`XDG_CONFIG_HOME` but scripts under `XDG_DATA_HOME`, so the component
+declaration is `wireplumber/.config/wireplumber/wireplumber.conf.d/50-mru-default-node.conf`
+and the script it names is under `wireplumber/.local/share/wireplumber/scripts`.
+Putting the script beside the declaration is the obvious guess and it fails
+hard: wireplumber exits 78 with `Could not locate script`, and since the
+component is declared `required`, audio stays down until the path is right.
+
+Two ways to see it working without waiting for a bluetooth device. `wpctl status`
+lists the sinks and `pw-cli info <id> | grep priority.session` prints the numbers
+being compared. For the fallback itself, a throwaway sink stands in for the
+earbuds:
+
+```bash
+pactl load-module module-null-sink sink_name=mru_test
+wpctl set-default <mru_test id>            # it is now the head of the stack
+pactl unload-module <module id>            # "unplug" it
+pactl get-default-sink                     # the sink used before it, not the loudest-ranked one
+```
+
 ---
 
 ## 6. Notifications
