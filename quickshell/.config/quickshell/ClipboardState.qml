@@ -21,8 +21,11 @@ import qs
 Singleton {
 	id: root
 
-	// [{ id, kind: "text"|"image", preview, path?, width?, height?, size? }],
-	// newest first. Empty until the first load; see `reload`.
+	// [{ id, kind: "text"|"image", preview, app, at, ext?, path?, width?,
+	// height?, size? }], newest first. Empty until the first load; see
+	// `reload`. `app` and `at` are the note scripts/clipboard.sh takes at copy
+	// time -- cliphist stores neither -- and are "" and 0 for anything copied
+	// before it started taking them.
 	property var entries: []
 
 	// Whether the wl-paste watchers are up. False is a deliberate pause rather
@@ -43,6 +46,12 @@ Singleton {
 	// text costs a `decode` and is only ever fetched for the one row the cursor
 	// is on. Images need none of this -- their file is already on disk.
 	property string previewText: ""
+
+	// { chars, words, bytes, truncated } for the same entry, which is the rest
+	// of what the decode came back with. Counts over the whole entry and not
+	// over the 4KB `previewText` holds; null counts mean the entry was past the
+	// script's cap and nothing honest can be said about them.
+	property var previewInfo: ({})
 
 	// Which entry `previewText` belongs to -- the row the cursor is on now.
 	property int previewId: -1
@@ -65,6 +74,7 @@ Singleton {
 		// nothing here is worth keeping across one.
 		previewId = -1;
 		previewText = "";
+		previewInfo = {};
 	}
 
 	// Onto the clipboard and into the window that had focus. Fire-and-forget:
@@ -99,6 +109,7 @@ Singleton {
 
 		previewId = id;
 		previewText = "";
+		previewInfo = {};
 		previewDebounce.restart();
 	}
 
@@ -153,8 +164,19 @@ Singleton {
 
 		stdout: StdioCollector {
 			onStreamFinished: {
-				if (root.decodingId === root.previewId)
-					root.previewText = text;
+				// A decode the cursor has already moved off, dropped rather
+				// than drawn under whatever row it reached in the meantime.
+				if (root.decodingId !== root.previewId)
+					return;
+
+				try {
+					const info = JSON.parse(text);
+					root.previewText = info.text ?? "";
+					root.previewInfo = info;
+				} catch (e) {
+					root.previewText = "";
+					root.previewInfo = {};
+				}
 			}
 		}
 	}

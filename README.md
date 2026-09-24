@@ -1508,7 +1508,9 @@ app above all of it. Both live in
 
 `cliphist` is a store, not a daemon: it is fed by two `wl-paste --watch`
 processes, one for text and one for images, because `wl-paste` watches a single
-MIME type at a time and an image on the clipboard is not offered as text.
+MIME type at a time and an image on the clipboard is not offered as text. What
+they run is `scripts/clipboard.sh store`, not `cliphist store` directly, and the
+difference is one note taken beside the copy: the class of the focused window.
 Starting them is `scripts/clipboard.sh watch` in `hyprland.conf`, which clears
 its own stale watchers first so that running it again is how `ctrl+P` resumes a
 paused history — cliphist has no pause of its own, so pausing is stopping the
@@ -1524,13 +1526,37 @@ is fetched for the row the cursor is on rather than for the hundred it walked
 past, debounced by 90ms so that holding Down does not fork per row and capped at
 4KB because the pane is for recognising an entry, not reading it.
 
+Under the preview is an information block, the same one Raycast's clipboard
+history carries: the application the copy came from with its icon, the content
+type, and then either the dimensions and weight of an image or the character,
+word and line counts of a block of text, with the time it was copied last. It is
+the half of the pane that tells three near-identical screenshots apart without
+reading the picture. The counts are over the whole entry rather than over the
+4KB the pane draws, which is why the `preview` subcommand decodes to a temporary
+file and answers in JSON: one decode, two questions. Past 1MiB it stops counting
+and says so rather than reporting the size of the part it looked at.
+
+The application and the timestamp are the two things cliphist has no field for,
+so they are kept beside it: one small JSON file per entry under
+`~/.cache/quickshell/clipboard/meta/<id>.json`, written by `store` after the
+copy has landed and merged back into the listing by `list`. One file per id and
+not one table, because the two watchers are separate processes and a pair of
+concurrent copies would interleave into a corrupt document. The window is read
+just after the store rather than at the moment `ctrl+C` was pressed (there is no
+such thing to ask for), so copying and immediately switching windows mislabels
+the entry, and an entry copied before any of this existed has no application row
+at all rather than one reading "unknown".
+
 Everything the panel does to an entry is a subcommand of that same script,
 because an entry is addressed by a cliphist id and `cliphist delete` will not
 take one: it wants the whole listing line back on stdin. `list` also decodes any
 image it has not seen into `~/.cache/quickshell/clipboard/<id>.<ext>` — the
 bytes only come back through `decode`, and the panel cannot draw a thumbnail
 without a file to point an `Image` at. Ids are never reused, so a cached file
-can only ever be the entry it was named for. `ctrl+O` opens an image in tensaku,
+can only ever be the entry it was named for, and the same pass drops the
+thumbnail and the note of every id the listing no longer has: cliphist evicts
+silently at its own `max-items`, and a cache that only ever grew would hold
+every image copied since the machine was installed. `ctrl+O` opens an image in tensaku,
 which is the same annotation editor a screenshot notification opens (section 6),
 and it works because that decode already happened.
 

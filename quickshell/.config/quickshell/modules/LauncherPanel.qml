@@ -73,6 +73,125 @@ Panel {
 	// the pane wants the dimensions and the byte size that flattening dropped.
 	readonly property var previewEntry: LauncherState.mode !== "clipboard" ? null : (ClipboardState.entries.find(e => e.id === LauncherState.current?.ref) ?? null)
 
+	// The information block under the preview: {label, value, icon} per row, in
+	// the order they are drawn. Built as a list rather than laid out by hand
+	// because an image entry and a text one share only their first two rows and
+	// the last, and two hand-written blocks would drift apart.
+	//
+	// A row whose value is not known is not added at all -- an "Application"
+	// reading "unknown" for every entry copied before the note-taking existed
+	// is a column of noise, and the block is short enough to change shape
+	// without the pane jumping.
+	readonly property var info: {
+		const e = previewEntry;
+		if (!e)
+			return [];
+
+		const rows = [];
+
+		if (e.app) {
+			// The desktop entry behind the window class, for the name a human
+			// would use and its icon. heuristicLookup is what forgives the case
+			// and the reverse-DNS id, the same as in windows mode.
+			const app = DesktopEntries.heuristicLookup(e.app);
+			rows.push({
+				label: "Application",
+				value: app?.name ?? e.app,
+				icon: app?.icon ?? ""
+			});
+		}
+
+		if (e.kind === "image") {
+			rows.push({
+				label: "Content type",
+				value: `Image (${e.ext.toUpperCase()})`,
+				icon: ""
+			});
+			rows.push({
+				label: "Dimensions",
+				value: `${e.width}×${e.height}`,
+				icon: ""
+			});
+			rows.push({
+				label: "Image size",
+				value: e.size,
+				icon: ""
+			});
+		} else {
+			const i = ClipboardState.previewInfo;
+			rows.push({
+				label: "Content type",
+				// What the entry is for, when that is something other than
+				// prose: a link is the one worth calling out, because it is the
+				// entry you most often have several near-identical copies of.
+				value: /^\w+:\/\/\S+$/.test(ClipboardState.previewText.trim()) ? "Link" : "Text",
+				icon: ""
+			});
+			// Absent while the decode is in flight, and null for an entry past
+			// the script's 1MiB cap, where the only honest count is none.
+			if (i.chars != null) {
+				rows.push({
+					label: "Characters",
+					value: String(i.chars),
+					icon: ""
+				});
+				rows.push({
+					label: "Words",
+					value: String(i.words),
+					icon: ""
+				});
+				// Only when there is more than one: the list folds an entry
+				// onto a single line, so "12 lines" is the fact the list hid,
+				// and "1 line" is not a fact at all.
+				if (i.lines > 1)
+					rows.push({
+						label: "Lines",
+						value: String(i.lines),
+						icon: ""
+					});
+			}
+			if (i.bytes !== undefined)
+				rows.push({
+					label: "Text size",
+					value: root.humanSize(i.bytes, i.truncated === true),
+					icon: ""
+				});
+		}
+
+		// 0 is an entry copied before the note-taking, not the epoch.
+		if (e.at)
+			rows.push({
+				label: "Copied",
+				value: root.stamp(e.at),
+				icon: ""
+			});
+
+		return rows;
+	}
+
+	// cliphist's own units for an image, applied to a text entry so the two
+	// kinds of entry do not report their weight in two different ways. `atLeast`
+	// is the capped decode: the number is a floor, and saying so beats quoting
+	// 1.0 MB for a 40MB paste.
+	function humanSize(bytes: int, atLeast: bool): string {
+		const units = ["B", "KiB", "MiB"];
+		let v = bytes;
+		let u = 0;
+		while (v >= 1024 && u < units.length - 1) {
+			v /= 1024;
+			u++;
+		}
+		return `${u === 0 ? v : v.toFixed(1)} ${units[u]}${atLeast ? "+" : ""}`;
+	}
+
+	// A clock for today and a date for anything older. The history is walked
+	// back days at a time, and "14:32" against six other 14:32s says nothing.
+	function stamp(epoch: int): string {
+		const d = new Date(epoch * 1000);
+		const sameDay = d.toDateString() === new Date().toDateString();
+		return Qt.formatDateTime(d, sameDay ? "HH:mm" : "MMM d, HH:mm");
+	}
+
 	function step(delta: int): void {
 		const n = LauncherState.results.length;
 		if (n === 0)
@@ -409,26 +528,6 @@ Panel {
 			anchors.margins: 10
 			spacing: 8
 
-			// What this is, in the terms the list could not spare the room for:
-			// the pixel dimensions and weight of an image, the line count of a
-			// block of text that the list showed as one line.
-			BarText {
-				Layout.fillWidth: true
-
-				text: {
-					const e = root.previewEntry;
-					if (!e)
-						return "";
-					if (e.kind === "image")
-						return `Image · ${e.width}×${e.height} · ${e.size}`;
-					const lines = ClipboardState.previewText === "" ? 0 : ClipboardState.previewText.split("\n").length;
-					return lines > 1 ? `Text · ${lines} lines` : "Text";
-				}
-				color: Theme.dim
-				font.pixelSize: 10
-				elide: Text.ElideRight
-			}
-
 			Image {
 				Layout.fillWidth: true
 				Layout.fillHeight: true
@@ -465,6 +564,83 @@ Panel {
 				elide: Text.ElideRight
 				maximumLineCount: Math.max(1, Math.floor(height / (font.pixelSize * 1.35)))
 				verticalAlignment: Text.AlignTop
+			}
+
+			// Everything about the entry that is not the entry: where it came
+			// from, what it is, how big. Raycast's clipboard history has the
+			// same block and it is the half of the pane that answers "which of
+			// these three screenshots is the one I want" without reading the
+			// picture -- the application and the time do that on their own.
+			//
+			// Under the preview rather than over it so that the preview keeps
+			// the top of the pane whichever kind of entry is up: this block is
+			// four rows for an image and up to six for text, and a preview that
+			// started at a different height per entry would jump as the cursor
+			// walked the list.
+			Rectangle {
+				Layout.fillWidth: true
+				visible: root.info.length > 0
+
+				implicitHeight: 1
+				color: Theme.tooltipBorder
+			}
+
+			ColumnLayout {
+				Layout.fillWidth: true
+				visible: root.info.length > 0
+
+				spacing: 3
+
+				Repeater {
+					model: root.info
+
+					RowLayout {
+						required property var modelData
+
+						Layout.fillWidth: true
+						spacing: 8
+
+						BarText {
+							text: modelData.label
+							color: Theme.dim
+							font.pixelSize: 11
+						}
+
+						// The gap, so the value sits against the right edge and
+						// the values line up as a column of their own however
+						// long the labels beside them are.
+						Item {
+							Layout.fillWidth: true
+						}
+
+						Image {
+							visible: modelData.icon !== ""
+
+							Layout.preferredWidth: 14
+							Layout.preferredHeight: 14
+
+							// `check`, so a class the icon theme has nothing for
+							// leaves the slot empty rather than drawing a broken
+							// image beside a perfectly good name.
+							source: modelData.icon !== "" ? Quickshell.iconPath(modelData.icon, true) : ""
+							fillMode: Image.PreserveAspectFit
+							sourceSize.width: 28
+							asynchronous: true
+							smooth: true
+						}
+
+						BarText {
+							// A window title is not in here, but an application
+							// name can still be long; the label must not be the
+							// thing that gets pushed off the row.
+							Layout.maximumWidth: 240
+
+							text: modelData.value
+							font.pixelSize: 11
+							elide: Text.ElideRight
+						}
+					}
+				}
 			}
 		}
 	}
