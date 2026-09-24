@@ -108,8 +108,13 @@ Singleton {
 			return;
 
 		previewId = id;
-		previewText = "";
-		previewInfo = {};
+		// What the last row decoded to is left on screen until this row answers,
+		// rather than blanked here. Clearing looked correct and read as a
+		// flicker: every step through the list emptied the pane and dropped the
+		// four count rows out of the information block for the length of a fork,
+		// so walking ten entries was ten blinks. The stale text is only ever up
+		// for the debounce plus the decode, and it is replaced, never appended
+		// to.
 		previewDebounce.restart();
 	}
 

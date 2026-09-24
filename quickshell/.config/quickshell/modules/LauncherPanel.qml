@@ -68,105 +68,89 @@ Panel {
 	// list empties under it besides.
 	readonly property int rowsHeight: 8 * 46
 
+	// The information block is a fixed five rows of space whatever it has to put
+	// in them. The rows themselves vary -- five for an image, seven for text,
+	// fewer again while the decode that fills the counts is still in flight --
+	// and a block that sized itself to them moved the rule above it and resized
+	// the preview under the cursor on every step through the list.
+	//
+	// Five and not the seven that text can produce: the block is worth a fifth
+	// of the pane and no more, and the two rows that do not fit scroll rather
+	// than taking the room from the thing they describe. The same trade as
+	// `rowsHeight`, for the same reason.
+	readonly property int infoRows: 5
+	readonly property int infoRowHeight: 16
+	readonly property int infoSpacing: 3
+
 	// The entry the preview pane is drawing, looked up in full: the row record
 	// the list draws is flattened for one delegate to handle every mode, and
 	// the pane wants the dimensions and the byte size that flattening dropped.
 	readonly property var previewEntry: LauncherState.mode !== "clipboard" ? null : (ClipboardState.entries.find(e => e.id === LauncherState.current?.ref) ?? null)
 
-	// The information block under the preview: {label, value, icon} per row, in
-	// the order they are drawn. Built as a list rather than laid out by hand
-	// because an image entry and a text one share only their first two rows and
-	// the last, and two hand-written blocks would drift apart.
+	// Every row the information block can hold, in the order they are drawn.
+	// The Repeater's model, and constant on purpose: a model rebuilt per entry
+	// makes the Repeater destroy and recreate every delegate as the cursor
+	// walks the list, which reloads the application icon and blinks all seven
+	// labels even between two entries whose rows are identical. This list never
+	// changes, so the delegates outlive the cursor and only their text moves.
 	//
-	// A row whose value is not known is not added at all -- an "Application"
-	// reading "unknown" for every entry copied before the note-taking existed
-	// is a column of noise, and the block is short enough to change shape
-	// without the pane jumping.
+	// Longer than the block is tall: an image entry and a text one share only
+	// three of these, and `infoRows` reserves the room for the longest of the
+	// two sets rather than for the union, which cannot occur.
+	readonly property var infoSlots: ["Application", "Content type", "Dimensions", "Image size", "Characters", "Words", "Lines", "Text size", "Copied"]
+
+	// label -> value for the entry under the cursor. A label this leaves out is
+	// a row that is not drawn: an "Application" reading "unknown" for every
+	// entry copied before the note-taking existed is a column of noise.
 	readonly property var info: {
 		const e = previewEntry;
 		if (!e)
-			return [];
+			return ({});
 
-		const rows = [];
+		const rows = {};
 
-		if (e.app) {
-			// The desktop entry behind the window class, for the name a human
-			// would use and its icon. heuristicLookup is what forgives the case
-			// and the reverse-DNS id, the same as in windows mode.
-			const app = DesktopEntries.heuristicLookup(e.app);
-			rows.push({
-				label: "Application",
-				value: app?.name ?? e.app,
-				icon: app?.icon ?? ""
-			});
-		}
+		// The desktop entry behind the window class, for the name a human would
+		// use. heuristicLookup is what forgives the case and the reverse-DNS
+		// id, the same as in windows mode.
+		if (e.app)
+			rows["Application"] = DesktopEntries.heuristicLookup(e.app)?.name ?? e.app;
 
 		if (e.kind === "image") {
-			rows.push({
-				label: "Content type",
-				value: `Image (${e.ext.toUpperCase()})`,
-				icon: ""
-			});
-			rows.push({
-				label: "Dimensions",
-				value: `${e.width}×${e.height}`,
-				icon: ""
-			});
-			rows.push({
-				label: "Image size",
-				value: e.size,
-				icon: ""
-			});
+			rows["Content type"] = `Image (${e.ext.toUpperCase()})`;
+			rows["Dimensions"] = `${e.width}×${e.height}`;
+			rows["Image size"] = e.size;
 		} else {
 			const i = ClipboardState.previewInfo;
-			rows.push({
-				label: "Content type",
-				// What the entry is for, when that is something other than
-				// prose: a link is the one worth calling out, because it is the
-				// entry you most often have several near-identical copies of.
-				value: /^\w+:\/\/\S+$/.test(ClipboardState.previewText.trim()) ? "Link" : "Text",
-				icon: ""
-			});
-			// Absent while the decode is in flight, and null for an entry past
-			// the script's 1MiB cap, where the only honest count is none.
+			// What the entry is for, when that is something other than prose: a
+			// link is the one worth calling out, because it is the entry you
+			// most often hold several near-identical copies of.
+			rows["Content type"] = /^\w+:\/\/\S+$/.test(ClipboardState.previewText.trim()) ? "Link" : "Text";
+			// Null for an entry past the script's 1MiB cap, where the only
+			// honest count is none. "1" for a single line rather than dropping
+			// the row: three text entries in a row should differ in their
+			// numbers and not in which numbers they have.
 			if (i.chars != null) {
-				rows.push({
-					label: "Characters",
-					value: String(i.chars),
-					icon: ""
-				});
-				rows.push({
-					label: "Words",
-					value: String(i.words),
-					icon: ""
-				});
-				// Only when there is more than one: the list folds an entry
-				// onto a single line, so "12 lines" is the fact the list hid,
-				// and "1 line" is not a fact at all.
-				if (i.lines > 1)
-					rows.push({
-						label: "Lines",
-						value: String(i.lines),
-						icon: ""
-					});
+				rows["Characters"] = String(i.chars);
+				rows["Words"] = String(i.words);
+				rows["Lines"] = String(i.lines);
 			}
 			if (i.bytes !== undefined)
-				rows.push({
-					label: "Text size",
-					value: root.humanSize(i.bytes, i.truncated === true),
-					icon: ""
-				});
+				rows["Text size"] = root.humanSize(i.bytes, i.truncated === true);
 		}
 
 		// 0 is an entry copied before the note-taking, not the epoch.
 		if (e.at)
-			rows.push({
-				label: "Copied",
-				value: root.stamp(e.at),
-				icon: ""
-			});
+			rows["Copied"] = root.stamp(e.at);
 
 		return rows;
+	}
+
+	// The application row's icon, kept beside the values rather than in them:
+	// it is the one field that is not a string, and the one delegate that draws
+	// it can ask for it by name.
+	readonly property string infoIcon: {
+		const e = previewEntry;
+		return e?.app ? (DesktopEntries.heuristicLookup(e.app)?.icon ?? "") : "";
 	}
 
 	// cliphist's own units for an image, applied to a text entry so the two
@@ -535,11 +519,12 @@ Panel {
 
 				source: root.previewEntry?.kind === "image" ? `file://${root.previewEntry.path}` : ""
 				fillMode: Image.PreserveAspectFit
-				// Top-left rather than centred, so a wide screenshot and a tall
-				// one both start in the same place instead of drifting about
-				// the pane as the cursor moves between them.
-				horizontalAlignment: Image.AlignLeft
-				verticalAlignment: Image.AlignTop
+				// Centred in what is left of the pane above the information
+				// block. The block is a fixed height, so the space this is
+				// centred in is the same for every image and a wide screenshot
+				// and a tall one are both simply in the middle of it.
+				horizontalAlignment: Image.AlignHCenter
+				verticalAlignment: Image.AlignVCenter
 				// Decoded at pane size, not at the screenshot's own 4K.
 				sourceSize.width: 860
 				asynchronous: true
@@ -572,36 +557,81 @@ Panel {
 			// these three screenshots is the one I want" without reading the
 			// picture -- the application and the time do that on their own.
 			//
-			// Under the preview rather than over it so that the preview keeps
-			// the top of the pane whichever kind of entry is up: this block is
-			// four rows for an image and up to six for text, and a preview that
-			// started at a different height per entry would jump as the cursor
-			// walked the list.
+			// Under the preview rather than over it, so the preview keeps the
+			// top of the pane whichever kind of entry is up. Its height is
+			// `infoRows` whatever it holds; see there.
 			Rectangle {
 				Layout.fillWidth: true
-				visible: root.info.length > 0
+				visible: root.previewEntry !== null
 
 				implicitHeight: 1
 				color: Theme.tooltipBorder
 			}
 
-			ColumnLayout {
-				Layout.fillWidth: true
-				visible: root.info.length > 0
+			// Five rows of space and however many rows the entry has, which is
+			// seven for a text one. A Flickable and not the ListView the rest of
+			// this file reaches for: a ListView keeps the height of a delegate
+			// it has hidden and pads the spacing around it either way, so the
+			// four slots an entry has no value for would show as a gap. A
+			// ColumnLayout drops an invisible child outright, and there is no
+			// cursor here for a ListView to be tracking.
+			Flickable {
+				id: infoFlick
 
-				spacing: 3
+				Layout.fillWidth: true
+				// Both, and not just the preferred height: a layout nested in a
+				// layout defaults to filling it, so this would have taken the
+				// surplus the preview is supposed to get and the rule above it
+				// would sit directly under a two-line entry and halfway down the
+				// pane for an image -- the drift this block exists to stop.
+				Layout.fillHeight: false
+				Layout.preferredHeight: root.infoRows * root.infoRowHeight + (root.infoRows - 1) * root.infoSpacing
+				Layout.maximumHeight: Layout.preferredHeight
+				visible: root.previewEntry !== null
+
+				contentHeight: infoColumn.implicitHeight
+				boundsBehavior: Flickable.StopAtBounds
+				// Nothing to drag when it all fits, so an entry with four rows
+				// cannot be scrolled off its own block by a stray wheel.
+				interactive: contentHeight > height
+				clip: true
+
+			ColumnLayout {
+				id: infoColumn
+
+				width: infoFlick.width
+
+				spacing: root.infoSpacing
 
 				Repeater {
-					model: root.info
+					model: root.infoSlots
 
 					RowLayout {
-						required property var modelData
+						id: row
+
+						required property string modelData
+
+						// This slot's value for the entry under the cursor, and
+						// whether the entry has one at all. A row an image has
+						// and a text entry does not simply stops drawing: the
+						// delegate itself stays.
+						readonly property string value: root.info[modelData] ?? ""
+
+						visible: value !== ""
 
 						Layout.fillWidth: true
+						// Stated rather than implicit, so the reservation above
+						// is a count of rows this size and not an estimate of
+						// what a label happens to measure. fillHeight off for
+						// the same reason it is off on the block: a nested
+						// layout fills by default, and five rows sharing seven
+						// rows of space are five rows in the wrong places.
+						Layout.fillHeight: false
+						Layout.preferredHeight: root.infoRowHeight
 						spacing: 8
 
 						BarText {
-							text: modelData.label
+							text: row.modelData
 							color: Theme.dim
 							font.pixelSize: 11
 						}
@@ -614,7 +644,11 @@ Panel {
 						}
 
 						Image {
-							visible: modelData.icon !== ""
+							// The one row that has an icon. Bound to the name
+							// rather than carried in `info`, so the value map
+							// stays strings and this delegate is the only thing
+							// that knows an icon exists.
+							visible: row.modelData === "Application" && root.infoIcon !== ""
 
 							Layout.preferredWidth: 14
 							Layout.preferredHeight: 14
@@ -622,7 +656,7 @@ Panel {
 							// `check`, so a class the icon theme has nothing for
 							// leaves the slot empty rather than drawing a broken
 							// image beside a perfectly good name.
-							source: modelData.icon !== "" ? Quickshell.iconPath(modelData.icon, true) : ""
+							source: visible ? Quickshell.iconPath(root.infoIcon, true) : ""
 							fillMode: Image.PreserveAspectFit
 							sourceSize.width: 28
 							asynchronous: true
@@ -635,9 +669,37 @@ Panel {
 							// thing that gets pushed off the row.
 							Layout.maximumWidth: 240
 
-							text: modelData.value
+							text: row.value
 							font.pixelSize: 11
 							elide: Text.ElideRight
+						}
+					}
+				}
+			}
+
+				// What says there is more under the fold, since the rows carry
+				// no scrollbar and a block cut off at a row boundary looks
+				// exactly like a block that ended there.
+				Rectangle {
+					// A Flickable parents its children to the content item, so
+					// this scrolls with the rows unless it is told to follow the
+					// viewport: hence `contentY` rather than an anchor to the
+					// bottom, which would put it at the bottom of the content.
+					x: 0
+					y: infoFlick.contentY + infoFlick.height - height
+
+					width: infoFlick.width
+					height: 14
+					visible: infoFlick.contentHeight - infoFlick.contentY > infoFlick.height + 1
+
+					gradient: Gradient {
+						GradientStop {
+							position: 0
+							color: "transparent"
+						}
+						GradientStop {
+							position: 1
+							color: pane.color
 						}
 					}
 				}
