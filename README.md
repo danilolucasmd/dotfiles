@@ -257,6 +257,10 @@ back restarts that countdown — a hand on its way to a tray icon dips off the b
 constantly. An open tray menu holds them regardless, since reaching one means
 leaving the bar.
 
+`super+X` does what the chevron does, through `qs ipc call extras toggle`.
+Opened that way they stay out until it is pressed again, because the countdown
+only starts when the pointer leaves the bar and a keybind never put it there.
+
 The network module is one glyph — an Ethernet port, or the Wi-Fi wedge at the
 strength it is seeing, with Ethernet winning when both links are up. Clicking it
 (or `super+shift+W`) opens a panel with both links, whatever the active one is

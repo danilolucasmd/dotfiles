@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Bar extras
+Comment=Show or hide the tray and the rest of the collapsed bar icons, Super+X
+Icon=view-more-symbolic
+Keywords=quickshell;bar;tray;chevron;extras;
+Exec=qs ipc call extras toggle
+Terminal=false
+StartupNotify=false
+Categories=Utility;

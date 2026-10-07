@@ -176,6 +176,17 @@ ShellRoot {
 		}
 	}
 
+	// super+X. The chevron's click, from the keyboard. Opened this way the
+	// extras stay out until toggled again: the fold-away timer in Bar.qml only
+	// starts when the pointer leaves the bar, and a keybind never put it there.
+	IpcHandler {
+		target: "extras"
+
+		function toggle(): void {
+			BarState.extrasVisible = !BarState.extrasVisible;
+		}
+	}
+
 	IpcHandler {
 		target: "media"
 
