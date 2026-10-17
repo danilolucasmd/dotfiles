@@ -65,8 +65,10 @@ PanelWindow {
 		readonly property int timeout: NotificationsState.popupTimeout(modelData)
 		readonly property bool sticky: timeout === 0
 		// Everything but the default action, which is not a button — it is what
-		// clicking the notification itself means.
-		readonly property var actions: (modelData.actions ?? []).filter(a => a.identifier !== "default")
+		// clicking the notification itself means. None at all for something
+		// shared over KDE Connect, where the click opens it and the buttons
+		// KDE Connect offers are the broken way to do the same.
+		readonly property var actions: NotificationsState.shareTarget(modelData) ? [] : (modelData.actions ?? []).filter(a => a.identifier !== "default")
 
 		// Flipped on after the first frame, so the card fades in instead of
 		// appearing.

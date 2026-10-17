@@ -71,7 +71,10 @@ Singleton {
 			urgency: notif.urgency,
 			// What the panel needs to find the sender's window later, once the
 			// notification object itself is long gone.
-			entry: notif.desktopEntry ?? ""
+			entry: notif.desktopEntry ?? "",
+			// And what to open instead, for the notifications that are about
+			// something rather than from somewhere.
+			open: shareTarget(notif)
 		};
 
 		if (!isFleeting(notif)) {
@@ -119,6 +122,12 @@ Singleton {
 	// the web-app window. The script knows which case it is looking at and says
 	// so in its exit status.
 	function activate(notif: var): void {
+		const target = shareTarget(notif);
+		if (target) {
+			openShared(target);
+			return;
+		}
+
 		const fallback = (notif.actions ?? []).find(a => a.identifier === "default") ?? null;
 		focus.fallback = fallback;
 		find({
@@ -132,6 +141,11 @@ Singleton {
 	// The panel's rows are plain records with no live object behind them, so
 	// there is no action to fall back on and a rough match beats none.
 	function focusSender(rec: var): void {
+		if (rec.open) {
+			openShared(rec.open);
+			return;
+		}
+
 		focus.fallback = null;
 		find(rec, false);
 	}
@@ -142,6 +156,32 @@ Singleton {
 	function find(rec: var, hasDefault: bool): void {
 		focus.command = [`${Paths.scripts}/focus-sender.sh`, rec.entry ?? "", rec.app ?? "", rec.summary ?? "", rec.body ?? "", hasDefault ? "1" : "0"];
 		focus.running = true;
+	}
+
+	// Something sent from the phone over KDE Connect, as [kind, value] for
+	// open-shared.sh, or null for every other notification.
+	//
+	// There is no window to focus for these. KDE Connect has none, so the
+	// window match would fall through to nothing; what the click is for is the
+	// thing that was sent. Two shapes reach here:
+	//
+	//   text  KDE Connect's own popup (event textShareReceived), whose body is
+	//         the shared text verbatim. It has no default action, only buttons
+	//         that do not work on this system (see open-shared.sh), so the
+	//         popup hides them and the click does their job.
+	//   file  The popup kdeconnect-received.sh sends for a finished transfer,
+	//         which KDE Connect never announces itself outside Plasma.
+	function shareTarget(notif: var): var {
+		const hints = notif.hints ?? {};
+		if (hints["x-kde-eventId"] === "textShareReceived")
+			return ["text", notif.body ?? ""];
+		if (hints.category === "transfer.complete" && hints["x-kde-urls"])
+			return ["file", String(hints["x-kde-urls"])];
+		return null;
+	}
+
+	function openShared(target: var): void {
+		Quickshell.execDetached([`${Paths.scripts}/open-shared.sh`].concat(target));
 	}
 
 	function dismiss(rec: var): void {
@@ -256,9 +296,10 @@ Singleton {
 		imageSupported: false
 		actionIconsSupported: false
 		inlineReplySupported: false
-		// Category is how music players label a track change, and it is the
-		// only hint any of this reads.
-		extraHints: ["category"]
+		// Category is how music players label a track change. The two x-kde
+		// hints are KNotification's, and are how a KDE Connect share is told
+		// apart from the rest (see shareTarget).
+		extraHints: ["category", "x-kde-eventId", "x-kde-urls"]
 
 		onNotification: notif => root.receive(notif)
 	}
@@ -280,6 +321,39 @@ Singleton {
 		// the first thing in the config to want one of its own.
 		command: ["mkdir", "-p", `${Paths.state}/quickshell`]
 		running: true
+	}
+
+	// Files received over KDE Connect. The share plugin emits shareReceived on
+	// the device's object path once a transfer finishes, with the file's URL;
+	// the signal header line carries the path and the next line the argument.
+	//
+	// It fires for URL shares too (http, already opened in the browser by the
+	// daemon) and for its own "Open in Text Editor" temp file (a bare path),
+	// so only file:// URLs count as something received.
+	//
+	// dbus-monitor itself rather than a script around it: this Process is
+	// killed on every reload, and a pipeline inside a script would outlive it,
+	// leaving one more monitor sending duplicate popups after each save.
+	Process {
+		id: shares
+
+		property string device: ""
+
+		command: ["dbus-monitor", "--session", "type='signal',interface='org.kde.kdeconnect.device.share',member='shareReceived'"]
+		running: true
+
+		stdout: SplitParser {
+			onRead: line => {
+				const path = line.match(/path=\/modules\/kdeconnect\/devices\/([^/]+)\/share;/);
+				if (path) {
+					shares.device = path[1];
+					return;
+				}
+				const url = line.match(/^\s*string "(file:\/\/.*)"$/);
+				if (url)
+					Quickshell.execDetached([`${Paths.scripts}/kdeconnect-received.sh`, shares.device, url[1]]);
+			}
+		}
 	}
 
 	Process {

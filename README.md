@@ -906,6 +906,21 @@ because notifications say more than their app name does:
   library). Nothing identifies these and herdr does not claim them, so all that
   is left is the text: the script scores windows by the words their titles share
   with the notification, and gives up rather than guess when none of them do.
+- **Things sent from the phone over KDE Connect** open the thing itself, since
+  there is no window to go to. Shared text already arrives as KDE Connect's own
+  notification (and on the clipboard); clicking it opens the link if the text
+  ends in one, and otherwise opens the text in the `text/plain` editor. Received
+  files are announced by nobody outside Plasma, whose job tracker KDE Connect
+  reports them to, so `NotificationsState` watches the share plugin's
+  `shareReceived` D-Bus signal with `dbus-monitor` and
+  `scripts/kdeconnect-received.sh` sends a "File from <device>" popup per file;
+  clicking it opens the file with its default app. Both go through
+  `scripts/open-shared.sh`, which runs a `Terminal=true` default (nvim, for text)
+  inside ghostty, because `xdg-open` launched from the shell has no terminal to
+  run it in. KDE Connect's own "Open in Text Editor" / "Open Link" buttons are
+  hidden on these popups: the first leaves a temp file in `$HOME` per click.
+  Links shared as a URL rather than as text are still opened straight away by
+  KDE Connect and get no popup.
 
 Notifications can carry action buttons, the popups use the bar's palette, and
 the history is a panel with a keyboard (`j`/`k` to move, `enter` to open, `d` to
