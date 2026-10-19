@@ -1,12 +1,12 @@
 theme = "github-dark-default"
-mode = "stack"
+mode = "auto"
 vcs = "git"          # git, jj, sl
 watch = false
 exclude_untracked = false
 line_numbers = true
 wrap_lines = false
 menu_bar = true
-agent_notes = false
+agent_notes = true
 prompt_save_view_preferences = true
 transparent_background = false
 hunk_headers = true
@@ -22,3 +22,4 @@ cursor_line = "row"
 # writes between a comment and its header would orphan the comment.
 "hunk.review.halfPageDown" = ["d", "ctrl+d"]
 "hunk.review.halfPageUp" = ["u", "ctrl+u"]
+"hunk.view.toggleLineNumbers" = false
