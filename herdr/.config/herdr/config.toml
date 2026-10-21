@@ -18,6 +18,7 @@ show_agent_labels_on_pane_borders = false
 # with macOS system shortcuts (e.g. Cmd+Ctrl+Shift+3 = screenshot to clipboard)
 # while leaving plain Ctrl+hjkl free for nvim/tmux inside panes.
 agent_panel_sort = "spaces"
+status_indicators = "symbols"
 [keys]
 focus_pane_left = ["prefix+h", "cmd+shift+ctrl+alt+h"]
 focus_pane_down = ["prefix+j", "cmd+shift+ctrl+alt+j"]

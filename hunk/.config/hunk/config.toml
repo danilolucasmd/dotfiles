@@ -1,5 +1,5 @@
 theme = "github-dark-default"
-mode = "auto"
+mode = "stack"
 vcs = "git"          # git, jj, sl
 watch = false
 exclude_untracked = false

@@ -134,8 +134,6 @@ alias bt="btui"
 source ~/.safe-chain/scripts/init-posix.sh # Safe-chain Zsh initialization scriptexport PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
-# opencode
-export PATH=/Users/ddias/.opencode/bin:$PATH
 
 # lazygit: read config from ~/.config (stow-managed); macOS default is elsewhere
 export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
