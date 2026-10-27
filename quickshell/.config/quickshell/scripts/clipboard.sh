@@ -43,14 +43,23 @@ line_for() {
 # over its max-items -- and a cache that only ever grew would be holding the
 # thumbnail and the source application of every image copied since the machine
 # was installed.
+#
+# The live ids go into an associative array rather than being grepped for one
+# file at a time: a fork per cached file was half a second on a few hundred
+# entries, and this runs on every super+V, so it was most of the delay between
+# the launcher opening on the previous listing and it catching up.
 prune() {
-	local ids f id
-	ids=$(cliphist list | cut -f1)
+	local -A live=()
+	local f id stale=()
+	while IFS=$'\t' read -r id _; do
+		live[$id]=1
+	done < <(cliphist list)
 	for f in "$cache"/*.* "$meta"/*.json; do
 		id=${f##*/}
 		id=${id%%.*}
-		grep -qxF -- "$id" <<<"$ids" || rm -f "$f"
+		[[ -n ${live[$id]:-} ]] || stale+=("$f")
 	done
+	((${#stale[@]} == 0)) || rm -f -- "${stale[@]}"
 }
 
 # Image entries are previewed as `[[ binary data 8 KiB png 64x64 ]]` and their
@@ -66,8 +75,12 @@ thumbnails() {
 		# the file is called. Anything unrecognised is left alone rather than
 		# guessed at -- a thumbnail that fails to load is better than a
 		# mislabelled file handed to tensaku.
-		ext=$(sed -n 's/^\[\[ binary data [0-9.]* [A-Za-z]* \([a-z]*\) .*/\1/p' <<<"$preview")
-		[[ -n $ext ]] || continue
+		#
+		# Matched in bash rather than with a sed per entry, for the same reason
+		# `prune` keeps its ids in an array: a fork per image is a fork per image
+		# on every open.
+		[[ $preview =~ ^\[\[\ binary\ data\ [0-9.]+\ [A-Za-z]+\ ([a-z]+)\  ]] || continue
+		ext=${BASH_REMATCH[1]}
 		[[ -s "$cache/$id.$ext" ]] || cliphist decode "$id" >"$cache/$id.$ext"
 	done < <(cliphist list)
 }
@@ -167,7 +180,11 @@ list)
 		def img: "^\\[\\[ binary data (?<size>[0-9.]+ [A-Za-z]+) (?<ext>[a-z]+) (?<width>[0-9]+)x(?<height>[0-9]+) \\]\\]$";
 		{
 			entries: [
-				splits("\n")
+				# `split` and not `splits`: the latter takes a regex, and running
+				# the regex engine over the whole listing was most of what this
+				# filter cost: over 100ms on a few hundred entries, against a
+				# few for the plain string split.
+				split("\n")[]
 				| select(length > 0)
 				# `.[0]` and the rest joined back together, because a preview may
 				# hold tabs of its own -- cliphist only collapses newlines.
@@ -177,7 +194,9 @@ list)
 				# them is the common case, and the panel drops an empty field
 				# rather than testing for a missing one.
 				| . + (($notes[.id | tostring] // {}) | { app: (.app // ""), at: (.at // 0) })
-				| if (.preview | test(img)) then
+				# The prefix check first, so the regex only ever runs on the
+				# entries that are images rather than on every line of text.
+				| if (.preview | startswith("[[ binary data ")) and (.preview | test(img)) then
 					(.preview | capture(img)) as $m
 					| . + {
 						kind: "image",
