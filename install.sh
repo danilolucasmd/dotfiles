@@ -608,6 +608,7 @@ pac \
   qt5ct \
   qt6ct \
   kdeconnect \
+  transmission-gtk \
   steam
 
 ############################################################
