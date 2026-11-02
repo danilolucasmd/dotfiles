@@ -439,7 +439,14 @@ Singleton {
 		switch (row.kind) {
 		case "app":
 			remember(row.ref.id);
-			row.ref.execute();
+			// execute() ignores Terminal=true, so yazi, btop, nvim and every
+			// other TUI entry used to start with no tty and exit on the spot,
+			// which from the launcher looked like nothing happening at all.
+			// `command` is the Exec line with its field codes already dropped.
+			if (row.ref.runInTerminal)
+				Quickshell.execDetached(["ghostty", "-e", ...row.ref.command]);
+			else
+				row.ref.execute();
 			break;
 		case "clip":
 			ClipboardState.paste(row.ref);
