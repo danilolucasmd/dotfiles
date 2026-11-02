@@ -1680,6 +1680,10 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 - When an app has already written a config that stow wants to own, `install.sh`
   moves the original aside as `<name>.pre-stow` rather than failing
 - All non-deterministic or GUI-based steps are documented here on purpose
+- Video opens in mpv everywhere: `install.sh` makes it the xdg handler for
+  every `video/*` type its desktop file claims, which covers Nautilus, and
+  yazi's `play` opener calls it directly so a multi-file selection becomes a
+  playlist. `mpv-mpris` puts it in the bar's media module
 
 ### Leftovers worth removing
 

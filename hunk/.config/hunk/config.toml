@@ -1,9 +1,9 @@
 theme = "github-dark-default"
-mode = "stack"
+mode = "unified"
 vcs = "git"          # git, jj, sl
 watch = false
 exclude_untracked = false
-line_numbers = true
+line_numbers = false
 wrap_lines = false
 agent_notes = false
 transparent_background = false

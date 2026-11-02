@@ -48,5 +48,39 @@
   "theme": "auto",
   "preferredNotifChannel": "ghostty",
   "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "autoMode": {
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured (single-repo evidence only; no org-wide signal gathered)",
+      "**Cloud provider(s)**: Supabase (gmakeealodrzvtkonbvt.supabase.co, projects `preview` and `production`), Vercel (deploy target for apps/web and apps/landing), Cloudflare (CLOUDFLARE_API_TOKEN secret, cloudflare-worker.yml CDN worker)",
+      "**Repository visibility**: private (sopezinhobr/sopezinho, verified via gh)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: GitHub Actions Environment secrets/variables (preview and production), named: CLOUDFLARE_API_TOKEN, GITHUB_TOKEN, PAYMENTS_CRON_SECRET, PRODUCTION_SYNC_TOKEN, SUPABASE_ACCESS_TOKEN, SUPABASE_AUTH_GOOGLE_CLIENT_ID, SUPABASE_AUTH_GOOGLE_SECRET, SUPABASE_AUTH_SMTP_ADMIN_EMAIL, SUPABASE_AUTH_SMTP_HOST, SUPABASE_AUTH_SMTP_PASS, SUPABASE_AUTH_SMTP_USER, SUPABASE_DB_PASSWORD, SUPABASE_PROJECT_ID",
+      "**Default / protected branches**: Default branch `main` (staging/preview per CLAUDE.md); `production` branch is the production promotion target. Protected branches: none listed via gh, and CLAUDE.md confirms no branch protection exists (private repo on Free plan) — production is only gated by the manual Deploy-production workflow and its CI checks, not by GitHub branch protection",
+      "**CI/CD deploy targets**: GitHub Actions workflows in this repo: supabase-migrations.yml (deploys `preview` on push to main, `production` on push to production), cloudflare-worker.yml (production CDN worker, production branch only), payments-reconcile.yml (dispatches to production via `gh workflow run --ref production`), Deploy production workflow (fast-forwards production to main's commit); Vercel projects for app.sopezinho.com.br / app-preview.sopezinho.com.br and www.sopezinho.com.br / preview.sopezinho.com.br",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet",
+      "**Source control**: This repo (sopezinhobr/sopezinho) and its origin remote (github.com:sopezinhobr/sopezinho.git) only — no additional orgs configured",
+      "**Trusted internal domains**: app.sopezinho.com.br, app-preview.sopezinho.com.br, www.sopezinho.com.br, preview.sopezinho.com.br, sopezinho.com.br (this project's own hosts, contacted routinely per transcript evidence)",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: Supabase project gmakeealodrzvtkonbvt.supabase.co (contacted in transcripts); api.pagar.me (payments provider, contacted 4× in transcripts)",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: .env, .env.local, .env.development.local, .env.test.local, .env.production.local (gitignored, hold Supabase/SMTP/OAuth secrets); recipient_contacts and payer_contacts DB tables (service_role-only, hold recebedor phone and assinante name/phone per CLAUDE.md); profiles privileged columns (is_creator, recipient_status, recipient_id, recipient_provider, cpf, date_of_birth) — share only with audiences cleared at the [named+specifics] bar",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace/host/container with `prod` or `production` as a whole word/segment — includes this repo's `production` git branch, the `production` Supabase project, and Vercel/GitHub Environment `production`",
+      "**Protected deployment namespaces / environments**: GitHub Actions Environment `production` (gated to the `production` branch only, per CLAUDE.md); Supabase project `production`; Vercel production environment for app.sopezinho.com.br and www.sopezinho.com.br",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (this repo, onlyfeet-web/sopezinho — a Next.js/Supabase monorepo)",
+      "**Trusted repo**: /home/danilolucasmd/Code/sopezinho (this repo) and its origin remote github.com:sopezinhobr/sopezinho.git — private, so confidential material is fine here, but secrets are never cleared into it by visibility alone",
+      "**Org-specific CLIs**: None configured"
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Bash(gh workflow run:*) — scoped to sopezinhobr/sopezinho supabase-reset.yml, a destructive DB-wipe workflow CLAUDE.md says no agent should ever trigger",
+      "Bash(supabase db reset --linked:*)",
+      "Bash(supabase db push --include-all:*) — against production, flagged by CLAUDE.md as equivalent to the forbidden reset"
+    ]
+  }
 }

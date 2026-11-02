@@ -563,6 +563,12 @@ echo "==> Installing pacman packages"
 # this script ran on a new machine -- ghostty in Zig, bluetui and wiremix in
 # Rust -- and is a download from a mirror instead. ghostty's AUR package no
 # longer exists at all; it was dropped when the repo package landed.
+#
+# mpv is the video player: yazi's `play` opener calls it directly and the
+# default-applications step below makes it the handler for video/*, which is
+# what Nautilus and every xdg-open go through. mpv-mpris is a system-wide mpv
+# script that publishes playback over MPRIS, which is how an mpv window shows
+# up in the bar's media module and panel alongside a browser or Spotify.
 pac \
   stow \
   neovim \
@@ -609,6 +615,8 @@ pac \
   qt6ct \
   kdeconnect \
   transmission-gtk \
+  mpv \
+  mpv-mpris \
   steam
 
 ############################################################
@@ -1426,6 +1434,18 @@ sudo systemctl enable bluetooth.service
 # mimeapps.list doing nothing but shadowing the real handler.
 echo "==> Setting default applications"
 xdg-mime default org.gnome.Nautilus.desktop inode/directory
+
+# mpv owns video. Taken from the MimeType list mpv.desktop itself declares
+# rather than a hand-kept list, so a format mpv learns to claim is picked up on
+# the next run. Without this the handler is whichever installed app sorted
+# first, which on this machine was Video Trimmer: double-clicking a film in
+# Nautilus opened an editor. Audio is left alone on purpose.
+if [[ -f /usr/share/applications/mpv.desktop ]]; then
+  mapfile -t mpv_video_types < <(
+    sed -n 's/^MimeType=//p' /usr/share/applications/mpv.desktop | tr ';' '\n' | grep '^video/'
+  )
+  try "mpv as video handler" xdg-mime default mpv.desktop "${mpv_video_types[@]}"
+fi
 
 # Through sudo, not as a bare `chsh`: chsh authenticates the user with PAM in
 # its own right, so a plain call asks for the password again -- at the very end
