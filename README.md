@@ -1683,7 +1683,10 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 - Video opens in mpv everywhere: `install.sh` makes it the xdg handler for
   every `video/*` type its desktop file claims, which covers Nautilus, and
   yazi's `play` opener calls it directly so a multi-file selection becomes a
-  playlist. `mpv-mpris` puts it in the bar's media module
+  playlist. `mpv-mpris` puts it in the bar's media module. Its settings are the
+  `mpv` stow package, empty for now; to keep a tweak made in a running window, quit it with
+  <kbd>Shift</kbd>+<kbd>Q</kbd> and copy the properties from the file that
+  lands in `~/.local/state/mpv/watch_later/`
 
 ### Leftovers worth removing
 

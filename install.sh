@@ -1211,7 +1211,7 @@ sudo stow -t / sddm
 
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
-  btop fastfetch ghostty git hunk hypr lazygit nvim scripts sounds \
+  btop fastfetch ghostty git hunk hypr lazygit mpv nvim scripts sounds \
   quickshell tensaku wallpapers wireplumber yazi zsh
 stow \
   btop \
@@ -1221,6 +1221,7 @@ stow \
   hunk \
   hypr \
   lazygit \
+  mpv \
   nvim \
   scripts \
   sounds \
