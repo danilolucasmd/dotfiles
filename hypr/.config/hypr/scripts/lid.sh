@@ -21,12 +21,20 @@ on_ac() {
   # AC on this ThinkPad, but the name is not fixed, so ask by type. The USB-C
   # entries are deliberately not counted: they describe the port, and this
   # laptop's PD brick already shows up as mains.
-  local supply
+  #
+  # No system battery at all means a desktop, which is on mains whether or not
+  # it reports an AC supply. The desktop here reports none, and answering
+  # "battery" made the idle listener suspend it 20 minutes after the KVM
+  # switched away, from which its NVIDIA resume sometimes never came back.
+  # A wireless mouse or headset is a Battery too, but with scope Device, so
+  # those do not make a desktop look like a laptop.
+  local supply type has_battery=0
   for supply in /sys/class/power_supply/*; do
-    [[ $(cat "$supply/type" 2>/dev/null) == Mains ]] || continue
-    [[ $(cat "$supply/online" 2>/dev/null) == 1 ]] && return 0
+    type=$(cat "$supply/type" 2>/dev/null)
+    [[ $type == Mains && $(cat "$supply/online" 2>/dev/null) == 1 ]] && return 0
+    [[ $type == Battery && $(cat "$supply/scope" 2>/dev/null) != Device ]] && has_battery=1
   done
-  return 1
+  ((has_battery == 0))
 }
 
 external_monitor() {
