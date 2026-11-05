@@ -1669,7 +1669,43 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 
 ---
 
-## 17. General Notes
+## 17. Game Streaming (Sunshine + Moonlight)
+
+The PC streams games to a modded Switch running
+[Moonlight-Switch](https://github.com/XITRIX/Moonlight-Switch). Steam Link was
+the first idea, but it has no Switch build; Moonlight is the homebrew client
+that exists, and it talks to Sunshine rather than to Steam. Sunshine runs as a
+user unit started with the graphical session, encodes with NVENC on the GPU,
+and is managed from its web UI at <https://localhost:47990>.
+
+`install.sh` installs `sunshine-bin` and enables
+`app-dev.lizardbyte.app.Sunshine.service`. The package's install hook grants
+the binary `cap_sys_admin` for KMS capture and adds the udev rule for
+`/dev/uinput`, so nothing else is needed on the host.
+
+### Manual steps
+
+1. Open <https://localhost:47990> and create the web UI login (first visit
+   only; it lives in `~/.config/sunshine`, which is machine state and stays out
+   of this repo).
+2. Put `Moonlight-Switch.nro` from the project's releases into `sdmc:/switch/`
+   (DBI's MTP responder shows the SD card over USB) and start it from the
+   Homebrew Menu through title takeover (hold R while launching a game), not
+   from the album, which runs with too little memory.
+3. In Moonlight, pick the PC (found over mDNS by avahi, or add it by IP) and
+   type the PIN it shows into the web UI's PIN page.
+4. Steam Big Picture is one of the default apps; launch it from Moonlight.
+
+### Notes
+
+- `systemctl --user status sunshine` to check it; the unit's alias is
+  `sunshine.service`.
+- No firewall runs on this machine. If one is added, Sunshine needs TCP 47984,
+  47989, 47990 and 48010, and UDP 47998 to 48000.
+
+---
+
+## 18. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`

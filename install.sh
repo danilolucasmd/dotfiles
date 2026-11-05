@@ -1047,6 +1047,7 @@ aur_packages=(
   docker-desktop
   kanata-bin
   tensaku # the screenshot annotation editor clicking a screenshot notification opens
+  sunshine-bin # the game stream host Moonlight on the Switch connects to; README section 17
 )
 
 if command -v yay >/dev/null 2>&1; then
@@ -1084,6 +1085,18 @@ fi
 # again on quit -- re-run this line, or `docker context use default`, after a
 # session that used it.
 try "docker context" docker context use default
+
+# Sunshine is the host side of Moonlight: it captures the screen, encodes it on
+# the GPU and takes the client's controller input through /dev/uinput. The
+# package's install hook already does the two privileged parts -- setcap
+# cap_sys_admin on the binary, which KMS capture needs, and a udev rule granting
+# the seat user /dev/uinput and /dev/uhid -- so all that is left is starting it
+# with the graphical session. It is a user unit on purpose: it has to run inside
+# the Wayland session it streams, and an idle Sunshine costs next to nothing.
+# Pairing is the one manual step: README section 17.
+if pacman -Q sunshine-bin >/dev/null 2>&1; then
+  systemctl --user enable app-dev.lizardbyte.app.Sunshine.service
+fi
 
 ############################################################
 # NODE SETUP                                               #
