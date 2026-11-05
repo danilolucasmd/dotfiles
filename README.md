@@ -1696,6 +1696,29 @@ the binary `cap_sys_admin` for KMS capture and adds the udev rule for
    type the PIN it shows into the web UI's PIN page.
 4. Steam Big Picture is one of the default apps; launch it from Moonlight.
 
+### Streaming with the KVM switched away
+
+The monitor is behind a physical KVM, and switching it to the other machine
+unplugs HDMI-A-1 as far as Hyprland is concerned. Captured directly, the stream
+would freeze on its last frame. So `install.sh` gives Sunshine a
+`global_prep_cmd` that runs `hypr/.config/hypr/scripts/sunshine-headless.sh`:
+when a stream starts, the desktop moves onto a headless output named
+`SUNSHINE` (1920x1080@60) and every real monitor mirrors it; when the stream
+ends, the headless output is removed and `hyprctl reload` restores the monitor
+rules. While a stream is running the physical monitor is a mirror, so it runs
+at its preferred mode without VRR.
+
+Sunshine runs the undo only when the app quits, not when the client merely
+disconnects, because a disconnected session stays resumable. So end a stream
+by quitting the app in Moonlight; a plain disconnect leaves the monitor
+mirrored at 60Hz.
+
+A stream that ends while the KVM is still on the other machine leaves the
+headless output in place, since there is no monitor to move the workspaces
+back to; the monitor returns as a mirror. Running
+`~/.config/hypr/scripts/sunshine-headless.sh stop` once it is back, or after a
+stream that died uncleanly, puts everything back.
+
 ### Notes
 
 - `systemctl --user status sunshine` to check it; the unit's alias is
