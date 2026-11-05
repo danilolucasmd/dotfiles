@@ -22,6 +22,16 @@ set -euo pipefail
 
 OUTPUT=SUNSHINE
 
+# Monitor changes land a few frames after hyprctl returns.
+wait_for() {
+  local i
+  for i in {1..20}; do
+    hyprctl monitors all -j | jq -e --arg m "$1" \
+      ".[] | select(.name == \$m) | $2" >/dev/null && return 0
+    sleep 0.1
+  done
+}
+
 start() {
   hyprctl monitors all -j | grep -q "\"name\": \"$OUTPUT\"" ||
     hyprctl output create headless "$OUTPUT" >/dev/null
@@ -51,13 +61,18 @@ stop() {
   # The mirror rules were runtime keywords, so a reload is what puts the
   # monitor rules in hyprland.conf back. It lands a few frames later, and a
   # workspace moved onto a monitor that is still a mirror goes nowhere.
+  #
+  # Hyprland 0.56 also never re-advertises the wl_output of a monitor that
+  # stops mirroring: it lights up again, but to every Wayland client it is
+  # gone, so hyprpaper leaves it on Hyprland's default wallpaper and grim
+  # reports no outputs at all. A disable and re-enable recreates the global;
+  # SUNSHINE still holds the workspaces while the monitor is briefly off.
   hyprctl reload >/dev/null
-  local i
-  for i in {1..20}; do
-    [[ $(hyprctl monitors all -j | jq -r --arg t "$target" \
-      '.[] | select(.name == $t) | .mirrorOf') == none ]] && break
-    sleep 0.1
-  done
+  wait_for "$target" '.mirrorOf == "none"'
+  hyprctl keyword monitor "$target,disable" >/dev/null
+  wait_for "$target" '.disabled'
+  hyprctl reload >/dev/null
+  wait_for "$target" '(.disabled | not) and .mirrorOf == "none"'
 
   # Workspaces have to be walked off by hand first: removing an output that
   # still holds them leaves them on a monitor that no longer exists, windows
