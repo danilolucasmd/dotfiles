@@ -246,7 +246,8 @@ away from the clock — one of the two has to move when the other appears, and i
 may as well be the one that is only ever on screen after dark.
 
 The right cluster is split in two. Media, keyboard layout, volume, network,
-bluetooth, battery, display, performance, agent usage, updates and
+bluetooth, battery, display, performance, agent usage, a launcher button (the way to open the launcher from a
+Moonlight stream, which has no keyboard), updates and
 notifications are always on screen; only the tray folds away behind a chevron that
 stays the leftmost thing in the cluster. Clicking it slides them out rightward
 from the chevron, with a hairline marking where they end and the always-visible
