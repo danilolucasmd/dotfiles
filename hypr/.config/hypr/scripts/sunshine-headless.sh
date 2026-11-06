@@ -61,18 +61,8 @@ stop() {
   # The mirror rules were runtime keywords, so a reload is what puts the
   # monitor rules in hyprland.conf back. It lands a few frames later, and a
   # workspace moved onto a monitor that is still a mirror goes nowhere.
-  #
-  # Hyprland 0.56 also never re-advertises the wl_output of a monitor that
-  # stops mirroring: it lights up again, but to every Wayland client it is
-  # gone, so hyprpaper leaves it on Hyprland's default wallpaper and grim
-  # reports no outputs at all. A disable and re-enable recreates the global;
-  # SUNSHINE still holds the workspaces while the monitor is briefly off.
   hyprctl reload >/dev/null
   wait_for "$target" '.mirrorOf == "none"'
-  hyprctl keyword monitor "$target,disable" >/dev/null
-  wait_for "$target" '.disabled'
-  hyprctl reload >/dev/null
-  wait_for "$target" '(.disabled | not) and .mirrorOf == "none"'
 
   # Workspaces have to be walked off by hand first: removing an output that
   # still holds them leaves them on a monitor that no longer exists, windows
@@ -86,6 +76,32 @@ stop() {
   done
   hyprctl output remove "$OUTPUT" >/dev/null
   [[ -n $active ]] && hyprctl dispatch workspace "$active" >/dev/null
+
+  # Some of the time Hyprland 0.56 advertises no wl_output for the unmirrored
+  # monitor at all, not even to a fresh client: hyprpaper starts with "Found 0
+  # output(s)", leaves Hyprland's default wallpaper up and ignores every
+  # `hyprctl hyprpaper wallpaper` from the picker. grim is the cheapest probe
+  # for the global. Disabling and re-enabling the monitor recreates it, but
+  # only once SUNSHINE is gone: tried before the workspaces were walked off,
+  # it was measured not to help. Hyprland parks the workspaces on its FALLBACK
+  # output for the moment the monitor is off and hands them back after.
+  if ! grim -o "$target" - >/dev/null 2>&1; then
+    hyprctl keyword monitor "$target,disable" >/dev/null
+    wait_for "$target" '.disabled'
+    hyprctl reload >/dev/null
+    wait_for "$target" '(.disabled | not) and .mirrorOf == "none"'
+    [[ -n $active ]] && hyprctl dispatch workspace "$active" >/dev/null
+  fi
+
+  # Even when the global is there, Hyprland never re-advertises it to the
+  # clients that were already connected: the monitor lights up, but hyprpaper
+  # leaves it on Hyprland's default wallpaper and quickshell sees no outputs,
+  # so the bar is gone. A fresh client does see it, so the two layer-shell
+  # clients are restarted. Through
+  # Hyprland's exec rather than from here, because the display panel runs this
+  # script as a child of quickshell, and the restart must outlive the qs it
+  # kills.
+  hyprctl dispatch exec 'pkill -x hyprpaper; pkill -x qs; while pgrep -x hyprpaper || pgrep -x qs; do sleep 0.1; done >/dev/null; hyprpaper & qs &' >/dev/null
 }
 
 case "${1:-}" in

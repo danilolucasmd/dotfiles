@@ -132,6 +132,44 @@ Panel {
 	}
 
 	// ------------------------------------------------------------------
+	// Output
+	// ------------------------------------------------------------------
+
+	// First, above everything else, because it decides which screen the rest
+	// of the panel is describing. Pills rather than a dropdown, like every
+	// other choice here: two options fit on one row with nothing to open.
+	ColumnLayout {
+		Layout.fillWidth: true
+		spacing: 6
+
+		Heading {
+			title: "Output"
+			value: DisplayState.switching ? "switching…" : (DisplayState.streamOutput ? "SUNSHINE" : "")
+		}
+
+		RowLayout {
+			Layout.fillWidth: true
+			spacing: 6
+
+			Choice {
+				label: "Monitor"
+				current: !DisplayState.streamOutput
+				enabled: !DisplayState.switching
+
+				onPicked: DisplayState.useStreamOutput(false)
+			}
+
+			Choice {
+				label: "Sunshine"
+				current: DisplayState.streamOutput
+				enabled: !DisplayState.switching
+
+				onPicked: DisplayState.useStreamOutput(true)
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------
 	// Brightness
 	// ------------------------------------------------------------------
 

@@ -1706,7 +1706,9 @@ would freeze on its last frame. So `install.sh` gives Sunshine a
 when a stream starts, the desktop moves onto a headless output named
 `SUNSHINE` (1920x1080@60) and every real monitor mirrors it; when the stream
 ends, the headless output is removed and `hyprctl reload` restores the monitor
-rules. While a stream is running the physical monitor is a mirror, so it runs
+rules. hyprpaper and quickshell are then restarted, because Hyprland does not
+re-advertise a monitor that stops mirroring to clients already running, and
+without the restart the bar and the wallpaper are gone. When Hyprland fails to advertise the monitor at all, which even a restarted client cannot see past, the script first disables and re-enables it. While a stream is running the physical monitor is a mirror, so it runs
 at its preferred mode without VRR.
 
 Sunshine runs the undo only when the app quits, not when the client merely
@@ -1718,7 +1720,8 @@ A stream that ends while the KVM is still on the other machine leaves the
 headless output in place, since there is no monitor to move the workspaces
 back to; the monitor returns as a mirror. Running
 `~/.config/hypr/scripts/sunshine-headless.sh stop` once it is back, or after a
-stream that died uncleanly, puts everything back.
+stream that died uncleanly, puts everything back. The display panel's Output row
+does the same by hand: Monitor runs `stop`, Sunshine runs `start`.
 
 ### Notes
 
