@@ -246,8 +246,7 @@ away from the clock — one of the two has to move when the other appears, and i
 may as well be the one that is only ever on screen after dark.
 
 The right cluster is split in two. Media, keyboard layout, volume, network,
-bluetooth, battery, display, performance, agent usage, a launcher button (the way to open the launcher from a
-Moonlight stream, which has no keyboard), updates and
+bluetooth, battery, display, performance, agent usage, updates and
 notifications are always on screen; only the tray folds away behind a chevron that
 stays the leftmost thing in the cluster. Clicking it slides them out rightward
 from the chevron, with a hairline marking where they end and the always-visible
@@ -1670,69 +1669,7 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 
 ---
 
-## 17. Game Streaming (Sunshine + Moonlight)
-
-The PC streams games to a modded Switch running
-[Moonlight-Switch](https://github.com/XITRIX/Moonlight-Switch). Steam Link was
-the first idea, but it has no Switch build; Moonlight is the homebrew client
-that exists, and it talks to Sunshine rather than to Steam. Sunshine runs as a
-user unit started with the graphical session, encodes with NVENC on the GPU,
-and is managed from its web UI at <https://localhost:47990>.
-
-`install.sh` installs `sunshine-bin` and enables
-`app-dev.lizardbyte.app.Sunshine.service`. The package's install hook grants
-the binary `cap_sys_admin` for KMS capture and adds the udev rule for
-`/dev/uinput`, so nothing else is needed on the host.
-
-### Manual steps
-
-1. Open <https://localhost:47990> and create the web UI login (first visit
-   only; it lives in `~/.config/sunshine`, which is machine state and stays out
-   of this repo).
-2. Put `Moonlight-Switch.nro` from the project's releases into `sdmc:/switch/`
-   (DBI's MTP responder shows the SD card over USB) and start it from the
-   Homebrew Menu through title takeover (hold R while launching a game), not
-   from the album, which runs with too little memory.
-3. In Moonlight, pick the PC (found over mDNS by avahi, or add it by IP) and
-   type the PIN it shows into the web UI's PIN page.
-4. Steam Big Picture is one of the default apps; launch it from Moonlight.
-
-### Streaming with the KVM switched away
-
-The monitor is behind a physical KVM, and switching it to the other machine
-unplugs HDMI-A-1 as far as Hyprland is concerned. Captured directly, the stream
-would freeze on its last frame. So `install.sh` gives Sunshine a
-`global_prep_cmd` that runs `hypr/.config/hypr/scripts/sunshine-headless.sh`:
-when a stream starts, the desktop moves onto a headless output named
-`SUNSHINE` (1920x1080@60) and every real monitor mirrors it; when the stream
-ends, the headless output is removed and `hyprctl reload` restores the monitor
-rules. hyprpaper and quickshell are then restarted, because Hyprland does not
-re-advertise a monitor that stops mirroring to clients already running, and
-without the restart the bar and the wallpaper are gone. When Hyprland fails to advertise the monitor at all, which even a restarted client cannot see past, the script first disables and re-enables it. While a stream is running the physical monitor is a mirror, so it runs
-at its preferred mode without VRR.
-
-Sunshine runs the undo only when the app quits, not when the client merely
-disconnects, because a disconnected session stays resumable. So end a stream
-by quitting the app in Moonlight; a plain disconnect leaves the monitor
-mirrored at 60Hz.
-
-A stream that ends while the KVM is still on the other machine leaves the
-headless output in place, since there is no monitor to move the workspaces
-back to; the monitor returns as a mirror. Running
-`~/.config/hypr/scripts/sunshine-headless.sh stop` once it is back, or after a
-stream that died uncleanly, puts everything back. The display panel's Output row
-does the same by hand: Monitor runs `stop`, Sunshine runs `start`.
-
-### Notes
-
-- `systemctl --user status sunshine` to check it; the unit's alias is
-  `sunshine.service`.
-- No firewall runs on this machine. If one is added, Sunshine needs TCP 47984,
-  47989, 47990 and 48010, and UDP 47998 to 48000.
-
----
-
-## 18. General Notes
+## 17. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`

@@ -179,7 +179,6 @@ Variants {
 				}
 
 				// Always on screen, in the order they're glanced at.
-				Launcher {}
 				Media {}
 				KeyboardLayout {}
 				Volume {}

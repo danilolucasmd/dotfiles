@@ -190,39 +190,6 @@ Singleton {
 	}
 
 	// ------------------------------------------------------------------
-	// Sunshine
-	// ------------------------------------------------------------------
-
-	// Where the desktop lives: on the real monitor, or on the headless output
-	// sunshine-headless.sh moves it onto for a stream. Sunshine runs the
-	// script's `start` and `stop` itself, but only `stop` when the app is quit
-	// rather than merely disconnected, and a `stop` that lands while the KVM is
-	// on the other machine has nowhere to hand the workspaces back to. So the
-	// panel offers both directions by hand, as the same two script calls.
-	//
-	// `hyprctl monitors -j` hides mirrors, so while SUNSHINE is up it is the
-	// only monitor this list holds, and the panel is already pointed at it.
-	readonly property bool streamOutput: monitors.some(m => m.name === "SUNSHINE")
-	readonly property bool switching: outputSwitch.running
-
-	function useStreamOutput(on: bool): void {
-		if (outputSwitch.running || on === streamOutput)
-			return;
-		outputSwitch.command = [`${Paths.home}/.config/hypr/scripts/sunshine-headless.sh`, on ? "start" : "stop"];
-		outputSwitch.running = true;
-	}
-
-	// A Process rather than execDetached so the pills can say they are working:
-	// the script takes a second or two, and a second press in that window would
-	// race the first. `stop` ends by restarting quickshell, so on that side this
-	// panel goes with it; nothing here has to survive the press.
-	Process {
-		id: outputSwitch
-
-		onExited: settleMonitors.restart()
-	}
-
-	// ------------------------------------------------------------------
 
 	function toggle(screenName: string): void {
 		panelOpen = !panelOpen;

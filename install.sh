@@ -1047,7 +1047,6 @@ aur_packages=(
   docker-desktop
   kanata-bin
   tensaku # the screenshot annotation editor clicking a screenshot notification opens
-  sunshine-bin # the game stream host Moonlight on the Switch connects to; README section 17
 )
 
 if command -v yay >/dev/null 2>&1; then
@@ -1085,31 +1084,6 @@ fi
 # again on quit -- re-run this line, or `docker context use default`, after a
 # session that used it.
 try "docker context" docker context use default
-
-# Sunshine is the host side of Moonlight: it captures the screen, encodes it on
-# the GPU and takes the client's controller input through /dev/uinput. The
-# package's install hook already does the two privileged parts -- setcap
-# cap_sys_admin on the binary, which KMS capture needs, and a udev rule granting
-# the seat user /dev/uinput and /dev/uhid -- so all that is left is starting it
-# with the graphical session. It is a user unit on purpose: it has to run inside
-# the Wayland session it streams, and an idle Sunshine costs next to nothing.
-# Pairing is the one manual step: README section 17.
-#
-# The prep command moves the desktop onto a headless output for the length of
-# each stream, so switching the KVM away does not freeze it; the script says
-# why. sunshine.conf is not stowed because the web UI rewrites it on every
-# save, which would put Sunshine writing into this repo, so the one line is
-# added only when absent and everything else in the file stays the UI's.
-if pacman -Q sunshine-bin >/dev/null 2>&1; then
-  systemctl --user enable app-dev.lizardbyte.app.Sunshine.service
-
-  SUNSHINE_CONF="$HOME/.config/sunshine/sunshine.conf"
-  SUNSHINE_PREP="$HOME/.config/hypr/scripts/sunshine-headless.sh"
-  mkdir -p "${SUNSHINE_CONF%/*}"
-  if ! grep -q '^global_prep_cmd' "$SUNSHINE_CONF" 2>/dev/null; then
-    echo "global_prep_cmd = [{\"do\":\"$SUNSHINE_PREP start\",\"undo\":\"$SUNSHINE_PREP stop\"}]" >>"$SUNSHINE_CONF"
-  fi
-fi
 
 ############################################################
 # NODE SETUP                                               #
