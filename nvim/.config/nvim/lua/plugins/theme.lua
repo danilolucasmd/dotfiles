@@ -1,6 +1,8 @@
 return {
   {
     "gthelding/monokai-pro.nvim",
+    lazy = false,
+    priority = 1000,
     config = function()
       require("monokai-pro").setup({
         filter = "pro",
@@ -19,13 +21,7 @@ return {
           }
         end,
       })
-      vim.cmd([[colorscheme monokai-pro]])
+      vim.cmd.colorscheme("monokai-pro")
     end,
-  },
-  {
-    "LazyVim/LazyVim",
-    opts = {
-      colorscheme = "monokai-pro",
-    },
   },
 }

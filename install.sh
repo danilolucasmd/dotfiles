@@ -1092,13 +1092,18 @@ try "docker context" docker context use default
 echo "==> Installing Node.js and packages"
 
 pac nodejs npm
-# Guarded: npm is only here if the pacman step above landed, and a missing npm
-# under `set -e` would end the install rather than the step.
-if command -v npm >/dev/null 2>&1; then
-  try "tree-sitter-cli" sudo npm install -g tree-sitter-cli
-else
-  skip "tree-sitter-cli (npm is not installed)"
+
+# tree-sitter-cli is what nvim-treesitter compiles parsers with. It used to come
+# from `npm install -g`, but that package is a shell whose install script
+# downloads the real binary, and the script silently did not run: the result was
+# a /usr/bin/tree-sitter pointing at a file that was never there, and every
+# parser build failing with ENOENT. [extra] packages the binary itself. A
+# machine that still has the npm copy has to lose it first, or pacman refuses
+# over the conflicting /usr/bin/tree-sitter.
+if command -v npm >/dev/null 2>&1 && npm ls -g tree-sitter-cli >/dev/null 2>&1; then
+  try "remove npm tree-sitter-cli" sudo npm uninstall -g tree-sitter-cli
 fi
+pac tree-sitter-cli
 
 ############################################################
 # RUST TOOLCHAIN                                           #
