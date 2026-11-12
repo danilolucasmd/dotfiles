@@ -162,3 +162,18 @@ Snacks.toggle.treesitter():map("<leader>uT")
 Snacks.toggle.indent():map("<leader>ug")
 Snacks.toggle.inlay_hints():map("<leader>uh")
 Snacks.toggle.zoom():map("<leader>wm")
+
+-- The whole diff inline in the window being edited, hunk-style but without
+-- opening anything: gitsigns' unified diffthis draws the removed lines in place
+-- and tints what was added, against the index like the signs are. It is the
+-- real buffer underneath, so editing carries on as normal, with ]h / [h moving
+-- between hunks. Per window; diffthis toggles, so `set` only fires on a change.
+Snacks.toggle({
+  name = "Inline Diff",
+  get = function()
+    return require("gitsigns.unified").get_view() ~= nil
+  end,
+  set = function()
+    require("gitsigns").diffthis(nil, { unified = true })
+  end,
+}):map("<leader>gv")
