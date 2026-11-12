@@ -179,3 +179,32 @@ Snacks.toggle({
     gs.toggle_numhl(state)
   end,
 }):map("<leader>gv")
+
+-- The same comparison side by side: the staged version opens read-only in a
+-- vertical split on the left, in vim's diff mode, with ]c / [c between changes.
+-- Closing the gitsigns:// window is enough to switch it off; gitsigns turns
+-- diff mode off in the remaining window when its buffer is hidden.
+local function side_by_side_wins()
+  local wins = {}
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.wo[win].diff and vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win)):match("^gitsigns://") then
+      wins[#wins + 1] = win
+    end
+  end
+  return wins
+end
+Snacks.toggle({
+  name = "Side-by-side Diff",
+  get = function()
+    return #side_by_side_wins() > 0
+  end,
+  set = function(state)
+    if state then
+      require("gitsigns").diffthis(nil, { vertical = true })
+    else
+      for _, win in ipairs(side_by_side_wins()) do
+        vim.api.nvim_win_close(win, false)
+      end
+    end
+  end,
+}):map("<leader>gV")
