@@ -18,6 +18,52 @@ return {
         enabled = true,
         sources = {
           explorer = {
+            -- +added -removed line counts beside each changed file's git mark,
+            -- and the repo-wide total in the title (lua/util/diffstat.lua).
+            -- The counts refresh every time the explorer does (a save, a
+            -- stage or commit, a file appearing), in the background; when they
+            -- change, only the rows and title are redrawn, not the tree.
+            finder = function(opts, ctx)
+              local root = Snacks.git.get_root(ctx.filter.cwd)
+              if root then
+                local picker = ctx.picker
+                require("util.diffstat").refresh(root, function()
+                  if picker.closed then
+                    return
+                  end
+                  local total = require("util.diffstat").total
+                  picker.title = (total.add + total.del > 0) and ("Explorer  +%d -%d"):format(total.add, total.del)
+                    or "Explorer"
+                  picker:update_titles()
+                  picker.list:update({ force = true })
+                end)
+              end
+              return require("snacks.picker.source.explorer").explorer(opts, ctx)
+            end,
+            format = function(item, picker)
+              local ret = require("snacks.picker.format").file(item, picker)
+              local stat = not item.dir and require("util.diffstat").files[item.file]
+              if not stat then
+                return ret
+              end
+              -- Slot the counts into the right-aligned git status mark rather
+              -- than adding a second right-aligned chunk, which would overlap it.
+              for _, chunk in ipairs(ret) do
+                local first = chunk.virt_text and chunk.virt_text[1]
+                if chunk.virt_text_pos == "right_align" and first and first[2]:find("^SnacksPickerGitStatus") then
+                  local counts = {}
+                  if stat.add > 0 then
+                    counts[#counts + 1] = { "+" .. stat.add .. " ", "GitSignsAdd" }
+                  end
+                  if stat.del > 0 then
+                    counts[#counts + 1] = { "-" .. stat.del .. " ", "GitSignsDelete" }
+                  end
+                  chunk.virt_text = vim.list_extend(counts, chunk.virt_text)
+                  break
+                end
+              end
+              return ret
+            end,
             -- M narrows the tree to files git reports as changed (and the
             -- folders leading to them). Snacks has no such filter, but it
             -- already tags every tree node with its git status, and propagates
