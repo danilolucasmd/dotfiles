@@ -11,14 +11,12 @@ map({ "", "i" }, "<Right>", "<Nop>", { silent = true })
 map({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", { desc = "Down", expr = true, silent = true })
 map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { desc = "Up", expr = true, silent = true })
 
--- Seamless Ctrl+hjkl navigation across nvim splits and herdr panes (herdr leaves
--- Ctrl+hjkl unbound for exactly this; see lua/util/herdr-nav.lua).
-local tnav = require("util.herdr-nav")
-for _, dir in ipairs({ "h", "j", "k", "l" }) do
-  map("n", "<C-" .. dir .. ">", function()
-    tnav.navigate(dir)
-  end, { desc = "Navigate window/pane (" .. dir .. ")" })
-end
+-- Ctrl+hjkl stays inside nvim and stops at the outer split. Moving to another
+-- herdr pane is herdr's own Alt+hjkl; the two are kept apart on purpose.
+map("n", "<C-h>", "<C-w>h", { desc = "Go to Left Window" })
+map("n", "<C-j>", "<C-w>j", { desc = "Go to Lower Window" })
+map("n", "<C-k>", "<C-w>k", { desc = "Go to Upper Window" })
+map("n", "<C-l>", "<C-w>l", { desc = "Go to Right Window" })
 
 map("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase Window Height" })
 map("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease Window Height" })

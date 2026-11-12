@@ -1013,12 +1013,13 @@ at all.
 **tmux is gone** — package, config, plugin list and stow entry. Anything that
 integrated with it went with it:
 
-- `nvim/.config/nvim/lua/util/herdr-nav.lua` is the old `tmux-nav.lua`
-  retargeted at `herdr pane focus`. Ctrl+hjkl still moves between nvim splits
-  and hands off to the neighbouring pane at the edge; `herdr pane edges` gives
-  the same no-wrap guard `#{pane_at_left}` used to.
-- `claudecode.nvim`'s "jump to the Claude pane" binding uses `herdr pane focus`
-  the same way.
+- There is no vim-tmux-navigator equivalent any more. Ctrl+hjkl moves between
+  nvim splits and stops at the outer one; Alt+hjkl is herdr's and moves between
+  panes. Keeping the two apart avoids asking herdr which program owns the
+  pane, which (via `herdr pane process-info`) cost around 100ms per keypress
+  and made pane switching feel sluggish.
+- `claudecode.nvim`'s "jump to the Claude pane" binding uses
+  `herdr pane focus --current --direction right`.
 - The fzf-tab completion menu renders inline. `ftb-tmux-popup` drew it in a
   floating tmux popup and hangs outside tmux rather than falling back.
 - Claude Code's tmux hooks — fourteen events routed into `tmux-agent-sidebar`,

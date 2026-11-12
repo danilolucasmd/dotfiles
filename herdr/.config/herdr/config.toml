@@ -12,10 +12,10 @@ delivery = "system"
 accent = "#dddddd"
 show_agent_labels_on_pane_borders = false
 
-# Move pane focus with Alt+hjkl (direct chords, no prefix), alongside the
-# default prefix+hjkl. Ctrl+hjkl stays free for nvim/tmux inside panes.
 agent_panel_sort = "spaces"
 [keys]
+# Move pane focus with Alt+hjkl (direct chords, no prefix), alongside the
+# default prefix+hjkl. Ctrl+hjkl stays free for moving between nvim splits.
 focus_pane_left = ["prefix+h", "alt+h"]
 focus_pane_down = ["prefix+j", "alt+j"]
 focus_pane_up = ["prefix+k", "alt+k"]
