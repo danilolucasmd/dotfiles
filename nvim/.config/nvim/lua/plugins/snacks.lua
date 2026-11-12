@@ -1,5 +1,4 @@
--- snacks.nvim is a bundle; only the modules enabled here are active. The scroll
--- animation is deliberately left off.
+-- snacks.nvim is a bundle; only the modules enabled here are active.
 return {
   {
     "folke/snacks.nvim",
@@ -81,8 +80,8 @@ return {
       { "<leader>su", function() Snacks.picker.undo() end, desc = "Undotree" },
       { "<leader>uC", function() Snacks.picker.colorschemes() end, desc = "Colorschemes" },
       -- LSP reference highlights (words)
-      { "]]", function() Snacks.words.jump(vim.v.count1) end, desc = "Next Reference", mode = { "n", "t" } },
-      { "[[", function() Snacks.words.jump(-vim.v.count1) end, desc = "Prev Reference", mode = { "n", "t" } },
+      { "]]", function() Snacks.words.jump(vim.v.count1) end, desc = "Next Reference" },
+      { "[[", function() Snacks.words.jump(-vim.v.count1) end, desc = "Prev Reference" },
     },
   },
 }

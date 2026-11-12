@@ -3,7 +3,7 @@ local function augroup(name)
 end
 
 -- Reload files changed outside nvim (lazygit, Claude Code in the next pane).
-vim.api.nvim_create_autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
+vim.api.nvim_create_autocmd("FocusGained", {
   group = augroup("checktime"),
   callback = function()
     if vim.o.buftype ~= "nofile" then
@@ -46,7 +46,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 
 vim.api.nvim_create_autocmd("FileType", {
   group = augroup("close_with_q"),
-  pattern = { "checkhealth", "gitsigns-blame", "help", "lspinfo", "notify", "qf", "startuptime" },
+  pattern = { "checkhealth", "gitsigns-blame", "help", "qf" },
   callback = function(event)
     vim.bo[event.buf].buflisted = false
     vim.schedule(function()
@@ -93,14 +93,5 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     end
     local file = vim.uv.fs_realpath(event.match) or event.match
     vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
-  end,
-})
-
--- Esc leaves terminal mode, so a :terminal buffer can be scrolled and left like
--- any other. Programs that need a real Esc can still get one with <C-v><Esc>.
-vim.api.nvim_create_autocmd("TermOpen", {
-  group = augroup("terminal_esc"),
-  callback = function(event)
-    vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], { buffer = event.buf })
   end,
 })
