@@ -1,3 +1,25 @@
+-- The inline diff (<leader>gv). monokai-pro gives these a dim red/green
+-- foreground, which repaints whole lines in one colour over the syntax
+-- highlighting, on a background barely off the editor's. Background only, so
+-- the code keeps its colours: a tint per line, a stronger one on the words that
+-- changed. Set after the colorscheme rather than through monokai-pro's
+-- `override`, because that merges into the theme's own definition, and the
+-- theme links several of these to Diff*, a link that would win over any colour.
+local inline_diff = {
+  GitSignsDeleteVirtLn = { bg = "#4a2a31" },
+  GitSignsDeleteVirtLnInLine = { bg = "#6e2f3c" },
+  GitSignsAddPreview = { bg = "#33402b" },
+  GitSignsAddInline = { bg = "#4b6136" },
+  GitSignsChangeInline = { bg = "#4b6136" },
+  GitSignsDeleteInline = { bg = "#6e2f3c" },
+  -- Number column on those lines. The Nr groups only show while the inline
+  -- diff is on (numhl is toggled with it), and gitsigns calls a modified line
+  -- "change", which reads as an addition in this view.
+  GitSignsVirtLnum = { fg = "#ff6188", bg = "#4a2a31" },
+  GitSignsAddNr = { fg = "#a9dc76", bg = "#33402b" },
+  GitSignsChangeNr = { fg = "#a9dc76", bg = "#33402b" },
+}
+
 return {
   {
     "gthelding/monokai-pro.nvim",
@@ -19,6 +41,15 @@ return {
             MiniIconsAzure = { fg = "#a8a9eb" },
             MiniIconsCyan = { fg = "#85dacc" }, -- same value as MiniIconsBlue for consistency
           }
+        end,
+      })
+      vim.api.nvim_create_autocmd("ColorScheme", {
+        group = vim.api.nvim_create_augroup("user_inline_diff_hl", { clear = true }),
+        pattern = "monokai-pro",
+        callback = function()
+          for group, hl in pairs(inline_diff) do
+            vim.api.nvim_set_hl(0, group, hl)
+          end
         end,
       })
       vim.cmd.colorscheme("monokai-pro")

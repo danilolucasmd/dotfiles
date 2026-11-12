@@ -173,7 +173,9 @@ Snacks.toggle({
   get = function()
     return require("gitsigns.unified").get_view() ~= nil
   end,
-  set = function()
-    require("gitsigns").diffthis(nil, { unified = true })
+  set = function(state)
+    local gs = require("gitsigns")
+    gs.diffthis(nil, { unified = true })
+    gs.toggle_numhl(state)
   end,
 }):map("<leader>gv")
