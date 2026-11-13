@@ -14,7 +14,6 @@
 
 [core]
 	hooksPath = /Users/ddias/.githooks
-	pager = hunk pager
 
 [merge]
 	conflictStyle = zdiff3

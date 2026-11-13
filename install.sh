@@ -25,7 +25,6 @@ CLI_PACKAGES=(
   fzf-tab
   gitleaks
   lazygit
-  hunk
   neovim
   node
   nvm
@@ -35,6 +34,7 @@ CLI_PACKAGES=(
   sevenzip
   smudge/smudge/nightlight
   stow
+  tree-sitter-cli
   tmux
   yazi
   zoxide

@@ -12,14 +12,14 @@ delivery = "system"
 accent = "#dddddd"
 show_agent_labels_on_pane_borders = false
 
+agent_panel_sort = "spaces"
+status_indicators = "symbols"
+[keys]
 # Move pane focus with Cmd+Shift+Ctrl+Option+hjkl (direct chords, no prefix),
 # alongside the default prefix+hjkl. Karabiner remaps Cmd+hjkl -> the full hyper
 # combo (Cmd+Shift+Ctrl+Option) in Ghostty; the extra Option avoids collisions
 # with macOS system shortcuts (e.g. Cmd+Ctrl+Shift+3 = screenshot to clipboard)
-# while leaving plain Ctrl+hjkl free for nvim/tmux inside panes.
-agent_panel_sort = "spaces"
-status_indicators = "symbols"
-[keys]
+# while leaving plain Ctrl+hjkl free for moving between nvim splits.
 focus_pane_left = ["prefix+h", "cmd+shift+ctrl+alt+h"]
 focus_pane_down = ["prefix+j", "cmd+shift+ctrl+alt+j"]
 focus_pane_up = ["prefix+k", "cmd+shift+ctrl+alt+k"]

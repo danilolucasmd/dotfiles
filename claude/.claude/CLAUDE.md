@@ -34,17 +34,6 @@ If the user asks for this while on the base branch of the stack, rebase and push
 
 Do not re-verify the current branch or re-run its checks; the user has already handled it. Do run a typecheck on each rebased branch, and resolve conflicts by keeping both sides' behavior unless one clearly supersedes the other.
 
-## "Comments" means Hunk review comments
-
-When the user says they "added comments", "made comments", "left comments", or "commented" (and asks to fix/address them), they almost always mean inline review comments in a **Hunk diff session** — not code comments, PR comments, or anything else.
-
-The user reviews diffs in Hunk (interactive terminal diff viewer) and leaves inline notes there. On such a request, use the Hunk CLI to find and read them (do NOT run `hunk diff`/`hunk show` — those are the user's TUI). Typical flow:
-- `hunk session list --json` → find the live session id matching the repo/work you're on (there may be several sessions across repos; pick the one whose repo/title matches).
-- `hunk session comment list <session-id> --type user --json` → read the user-authored notes (filePath + newRange line + body).
-- Make the fixes, then optionally reply with `hunk session comment add <session-id> --file <path> --new-line <n> --summary "..." --author agent --focus` after `hunk session reload <session-id> -- diff`.
-
-See the hunk-review skill (`hunk skill path`) for the full command reference. Never perform git operations while doing this — see "Git: never operate unless explicitly asked" above.
-
 ## Dashes: never use them as sentence punctuation
 
 Do not use an em dash, en dash, or spaced hyphen to interrupt a sentence. It reads as obviously generated text, and the user strips it out of anything they share, so producing it only creates cleanup work.
