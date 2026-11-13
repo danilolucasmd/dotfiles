@@ -8,8 +8,6 @@ herdr/.config/herdr/*.sock
 __pycache__/
 *.pyc
 
-# hunk runtime state (last-seen CLI version, rewritten on every run)
-hunk/.config/hunk/state.json
 
 # Claude Code session checkpoints written into the repo root. Was only in
 # .git/info/exclude, which is local to one clone and does not travel.

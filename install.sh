@@ -212,8 +212,8 @@ pac() {
 }
 
 # stow refuses to replace a real file, and several of these apps write their
-# own config the first time they run -- Claude Code's settings.json, hunk's
-# config.toml. Ask stow what it would collide with and move those aside so the
+# own config the first time they run -- Claude Code's settings.json, for one.
+# Ask stow what it would collide with and move those aside so the
 # repo's copy wins, keeping the original next to it as .pre-stow.
 resolve_stow_conflicts() {
   local target
@@ -1036,7 +1036,6 @@ echo "==> Installing AUR packages"
 # because neither has a -bin variant. README section 10 has the accounting.
 aur_packages=(
   rtl8188gu-dkms-git
-  hunk-bin
   herdr-bin
   gh-dash-bin
   ttf-joypixels # the colour emoji font, and what gen-emoji-data.py checks coverage against
@@ -1216,14 +1215,13 @@ sudo stow -t / sddm
 
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
-  btop fastfetch ghostty git hunk hypr lazygit mpv nvim scripts sounds \
+  btop fastfetch ghostty git hypr lazygit mpv nvim scripts sounds \
   quickshell tensaku wallpapers wireplumber yazi zsh
 stow \
   btop \
   fastfetch \
   ghostty \
   git \
-  hunk \
   hypr \
   lazygit \
   mpv \

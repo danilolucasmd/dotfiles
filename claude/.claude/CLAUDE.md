@@ -30,17 +30,6 @@ The user saw a pushed commit render on GitHub as "danilolucasmd and claude commi
 
 Applies to every repo and every commit, including amends and rebases. Permission to commit still has to be asked for separately each time — see "Git: never operate unless explicitly asked" above.
 
-## "Comments" means Hunk review comments
-
-When the user says they "added comments", "made comments", "left comments", or "commented" (and asks to fix/address them), they almost always mean inline review comments in a **Hunk diff session** — not code comments, PR comments, or anything else.
-
-The user reviews diffs in Hunk (interactive terminal diff viewer) and leaves inline notes there. On such a request, use the Hunk CLI to find and read them (do NOT run `hunk diff`/`hunk show` — those are the user's TUI). Typical flow:
-- `hunk session list --json` → find the live session id matching the repo/work you're on (there may be several sessions across repos; pick the one whose repo/title matches).
-- `hunk session comment list <session-id> --type user --json` → read the user-authored notes (filePath + newRange line + body).
-- Make the fixes, then optionally reply with `hunk session comment add <session-id> --file <path> --new-line <n> --summary "..." --author agent --focus` after `hunk session reload <session-id> -- diff`.
-
-See the hunk-review skill (`hunk skill path`) for the full command reference. Never perform git operations while doing this — see "Git: never operate unless explicitly asked" above.
-
 ## PR descriptions: no hard wraps
 
 When writing PR descriptions (or other markdown for the user to paste), do not hard-wrap paragraph text at a fixed column. Keep each paragraph on a single line and let it soft-wrap in the editor.

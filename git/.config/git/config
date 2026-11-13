@@ -4,7 +4,6 @@
 	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPkbzJgFyiqSr9RRXlmsk+JT0VBP1zBcV4122w+Sp7j9
 [core]
     editor = nvim
-    pager = hunk pager
 [pull]
     rebase = false
 [credential "https://github.com"]
