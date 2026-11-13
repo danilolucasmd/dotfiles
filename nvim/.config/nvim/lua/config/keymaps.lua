@@ -168,6 +168,30 @@ Snacks.toggle.zoom():map("<leader>wm")
 -- and tints what was added, against the index like the signs are. It is the
 -- real buffer underneath, so editing carries on as normal, with ]h / [h moving
 -- between hunks. Per window; diffthis toggles, so `set` only fires on a change.
+-- The coloured line numbers that go with it are a global gitsigns setting, so
+-- they are switched off again once no window shows a view: gitsigns drops the
+-- view when its buffer leaves the window, and the numbers would stay behind.
+local function any_inline_view()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if require("gitsigns.unified").get_view(win) then
+      return true
+    end
+  end
+  return false
+end
+
+vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed" }, {
+  group = vim.api.nvim_create_augroup("user_inline_diff", { clear = true }),
+  callback = function()
+    vim.schedule(function()
+      if vim.g.inline_diff_numhl and not any_inline_view() then
+        vim.g.inline_diff_numhl = false
+        require("gitsigns").toggle_numhl(false)
+      end
+    end)
+  end,
+})
+
 Snacks.toggle({
   name = "Inline Diff",
   get = function()
@@ -176,7 +200,9 @@ Snacks.toggle({
   set = function(state)
     local gs = require("gitsigns")
     gs.diffthis(nil, { unified = true })
-    gs.toggle_numhl(state)
+    local numhl = state or any_inline_view()
+    vim.g.inline_diff_numhl = numhl
+    gs.toggle_numhl(numhl)
   end,
 }):map("<leader>gv")
 
