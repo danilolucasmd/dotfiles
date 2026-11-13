@@ -1,4 +1,20 @@
 -- snacks.nvim is a bundle; only the modules enabled here are active.
+
+-- Snacks caches the explorer's git status for 15 minutes and only refreshes it
+-- early when it sees .git/index change, and it only watches while an explorer
+-- is open. A commit made with the explorer closed (from a shell, lazygit,
+-- Claude) left it marking files that were no longer changed, so the status is
+-- refetched whenever an explorer opens and whenever nvim regains focus. The
+-- focus case also picks up edits made elsewhere to files in collapsed folders,
+-- which nothing watches.
+local function refresh_explorer_git(picker)
+  local root = Snacks.git.get_root(picker:cwd())
+  if root then
+    require("snacks.explorer.git").refresh(root)
+  end
+  require("snacks.explorer.actions").update(picker, { refresh = true })
+end
+
 return {
   {
     "folke/snacks.nvim",
@@ -31,6 +47,20 @@ return {
             -- stage or commit, a file appearing), in the background; when they
             -- change, only the rows and title are redrawn, not the tree.
             finder = function(opts, ctx)
+              -- Changed files usually sit in collapsed folders, so with the M
+              -- filter on, every folder on the way to one is opened before the
+              -- tree is listed. Done on each find rather than once on M, so a
+              -- change that appears later (the git status refresh after an
+              -- edit or a commit triggers a find) is revealed too.
+              if ctx.picker.opts.changed_only then
+                local Tree = require("snacks.explorer.tree")
+                Tree:walk(Tree:find(ctx.filter.cwd), function(node)
+                  if not node.dir or node.ignored or not node.status then
+                    return false
+                  end
+                  node.open = true
+                end, { all = true })
+              end
               local root = Snacks.git.get_root(ctx.filter.cwd)
               if root then
                 local picker = ctx.picker
@@ -71,6 +101,7 @@ return {
               end
               return ret
             end,
+            on_show = refresh_explorer_git,
             -- M narrows the tree to files git reports as changed (and the
             -- folders leading to them). Snacks has no such filter, but it
             -- already tags every tree node with its git status, and propagates
@@ -115,17 +146,6 @@ return {
                 else
                   picker.opts.hidden = picker.opts.hidden_before_changed_only
                 end
-                if picker.opts.changed_only then
-                  -- Changed files usually sit in collapsed folders; open every
-                  -- folder on the way to one, or the filter shows only the top.
-                  local Tree = require("snacks.explorer.tree")
-                  Tree:walk(Tree:find(picker:cwd()), function(node)
-                    if not node.dir or node.ignored or not node.status then
-                      return false
-                    end
-                    node.open = true
-                  end, { all = true })
-                end
                 Snacks.notify((picker.opts.changed_only and "Showing changed files only" or "Showing all files"), {
                   title = "Explorer",
                 })
@@ -148,6 +168,16 @@ return {
         },
       },
     },
+    init = function()
+      vim.api.nvim_create_autocmd("FocusGained", {
+        group = vim.api.nvim_create_augroup("user_explorer_git", { clear = true }),
+        callback = function()
+          for _, picker in ipairs(Snacks.picker.get({ source = "explorer" })) do
+            refresh_explorer_git(picker)
+          end
+        end,
+      })
+    end,
     -- stylua: ignore
     keys = {
       { "<leader>e", function() Snacks.explorer() end, desc = "Explorer" },
