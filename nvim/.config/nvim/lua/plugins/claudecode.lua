@@ -23,6 +23,9 @@ return {
     terminal = {
       provider = "none",
     },
+    -- Tracking streams every cursor move to Claude, which shows it as an
+    -- "In <file>" line under its prompt. Only explicit sends are wanted.
+    track_selection = false,
   },
   keys = {
     { "<leader>a", nil, desc = "AI/Claude Code" },
@@ -36,8 +39,15 @@ return {
     },
     {
       "<leader>as",
+      -- ClaudeCodeSend refuses to run without selection tracking, so the
+      -- range is read here and sent directly (Claude's lines are 0-indexed).
       function()
-        vim.cmd("ClaudeCodeSend")
+        local first, last = vim.fn.line("v"), vim.fn.line(".")
+        if first > last then
+          first, last = last, first
+        end
+        vim.cmd("normal! \27")
+        require("claudecode").send_at_mention(vim.api.nvim_buf_get_name(0), first - 1, last - 1, "ClaudeCodeSend")
         focus_claude_pane()
       end,
       mode = "v",
