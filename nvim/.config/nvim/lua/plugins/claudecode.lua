@@ -11,13 +11,19 @@ end
 return {
   "coder/claudecode.nvim",
   dependencies = { "folke/snacks.nvim" },
+  -- Loaded at startup, not on its keys: setup starts the WebSocket server and
+  -- writes the ~/.claude/ide lockfile, and Claude (autoConnectIde) only connects
+  -- to an nvim whose lockfile already exists when it starts. Loaded on first
+  -- keypress, the server came up too late, nothing was connected, and the
+  -- mention timed out in the queue.
+  event = "VeryLazy",
   opts = {
-    focus_after_send = true,
+    -- Claude runs in a herdr pane, not an nvim terminal, so the plugin has
+    -- nothing to focus (focus_after_send only warns); focus_claude_pane does it.
     terminal = {
       provider = "none",
     },
   },
-  config = true,
   keys = {
     { "<leader>a", nil, desc = "AI/Claude Code" },
     {
