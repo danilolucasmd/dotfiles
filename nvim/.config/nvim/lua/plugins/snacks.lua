@@ -16,6 +16,13 @@ return {
       words = { enabled = true },
       picker = {
         enabled = true,
+        -- Snacks toggles hidden files on Alt+h, but herdr takes Alt+h for pane
+        -- focus before nvim ever sees it. Alt+Shift+H is the same letter and
+        -- free; Alt+i (gitignored files) does not clash and stays as it is.
+        win = {
+          input = { keys = { ["<a-H>"] = { "toggle_hidden", mode = { "i", "n" } } } },
+          list = { keys = { ["<a-H>"] = "toggle_hidden" } },
+        },
         sources = {
           explorer = {
             -- +added -removed line counts beside each changed file's git mark,
