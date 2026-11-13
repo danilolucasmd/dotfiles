@@ -68,15 +68,34 @@ return {
             -- folders leading to them). Snacks has no such filter, but it
             -- already tags every tree node with its git status, and propagates
             -- it up to the parent folders, so dropping unmarked nodes is enough.
-            -- Untracked folders are reported whole, hence dir_status for the
-            -- files inside them.
+            -- Untracked folders are reported whole, so the files inside one
+            -- have no status of their own and are kept through the folder's
+            -- dir_status. Snacks never clears dir_status once the folder is
+            -- committed, though, so it only counts while git still reports
+            -- the folder itself (status set); otherwise the filter would keep
+            -- showing an orphaned, long-committed folder.
             transform = function(item, ctx)
               if not ctx.picker.opts.changed_only or item.file == ctx.filter.cwd then
                 return
               end
               local node = require("snacks.explorer.tree"):node(item.file)
-              return (node and node.status and not node.ignored or item.dir_status) and true or false
+              if not node then
+                return false
+              end
+              if node.status and not node.ignored then
+                return true
+              end
+              local parent = node.parent
+              while parent do
+                if parent.dir_status and parent.status and not parent.ignored then
+                  return true
+                end
+                parent = parent.parent
+              end
+              return false
             end,
+            -- Shows as an M flag in the title while the filter is on.
+            toggles = { changed_only = "M" },
             actions = {
               explorer_changed_only = function(picker)
                 picker.opts.changed_only = not picker.opts.changed_only
@@ -103,6 +122,8 @@ return {
                 Snacks.notify((picker.opts.changed_only and "Showing changed files only" or "Showing all files"), {
                   title = "Explorer",
                 })
+                vim.api.nvim_set_hl(0, "SnacksPickerToggleChangedOnly", { link = "SnacksPickerToggle", default = true })
+                picker:update_titles()
                 require("snacks.explorer.actions").update(picker, { refresh = true })
               end,
             },
