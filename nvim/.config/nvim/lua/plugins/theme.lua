@@ -26,6 +26,8 @@ local diff_hl = {
   GitSignsVirtLnum = { fg = "#ff6188", bg = "#4a2a31" },
   GitSignsAddNr = { fg = "#a9dc76", bg = "#33402b" },
   GitSignsChangeNr = { fg = "#a9dc76", bg = "#33402b" },
+  -- Explorer mark for a file with both staged and unstaged changes.
+  SnacksPickerGitStatusPartial = { fg = "#ffd866" },
 }
 
 return {

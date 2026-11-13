@@ -79,8 +79,11 @@ return {
             end,
             format = function(item, picker)
               local ret = require("snacks.picker.format").file(item, picker)
+              -- Both columns of the porcelain XY code set: part of the file is
+              -- staged and part is not, so the mark turns yellow.
+              local partial = not item.dir and item.status and item.status:match("^[MADRC][MD]$")
               local stat = not item.dir and require("util.diffstat").files[item.file]
-              if not stat then
+              if not stat and not partial then
                 return ret
               end
               -- Slot the counts into the right-aligned git status mark rather
@@ -88,6 +91,10 @@ return {
               for _, chunk in ipairs(ret) do
                 local first = chunk.virt_text and chunk.virt_text[1]
                 if chunk.virt_text_pos == "right_align" and first and first[2]:find("^SnacksPickerGitStatus") then
+                  if partial then
+                    first[2] = "SnacksPickerGitStatusPartial"
+                  end
+                  stat = stat or { add = 0, del = 0 }
                   local counts = {}
                   if stat.add > 0 then
                     counts[#counts + 1] = { "+" .. stat.add .. " ", "GitSignsAdd" }

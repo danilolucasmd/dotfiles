@@ -53,5 +53,23 @@ return {
       mode = "v",
       desc = "Send to Claude",
     },
+    {
+      "<leader>ah",
+      function()
+        local line = vim.fn.line(".")
+        for _, hunk in ipairs(require("gitsigns").get_hunks() or {}) do
+          -- A pure deletion has no lines of its own; it sits on the line above.
+          local first = hunk.added.start
+          local last = first + math.max(hunk.added.count, 1) - 1
+          if line >= first and line <= last then
+            require("claudecode").send_at_mention(vim.api.nvim_buf_get_name(0), first - 1, last - 1, "ClaudeCodeSend")
+            focus_claude_pane()
+            return
+          end
+        end
+        vim.notify("No hunk under the cursor", vim.log.levels.WARN)
+      end,
+      desc = "Send hunk to Claude",
+    },
   },
 }
