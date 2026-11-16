@@ -52,7 +52,17 @@
     },
     "terminalfont",
     "cpu",
-    "gpu",
+    // The generic GPU probe reads only PCI ids, so it knows the card but none
+    // of its memory; on NVIDIA, VRAM comes only from the driver's own library
+    // (NVML), which driverSpecific turns on. The {?dedicated-total} guard drops
+    // the VRAM part on a GPU or driver that reports none, rather than printing
+    // an empty " /  ()". NVML's total sits a little under the box's 8 GiB:
+    // it reports what the driver can hand out, after its own reservation.
+    {
+      "type": "gpu",
+      "driverSpecific": true,
+      "format": "{name} [{type}]{?dedicated-total}, {dedicated-used} / {dedicated-total} VRAM ({dedicated-percentage-num}){?}"
+    },
     "memory",
     "swap",
     "disk",
