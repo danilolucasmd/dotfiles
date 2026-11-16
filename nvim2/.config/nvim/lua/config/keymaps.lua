@@ -1,7 +1,6 @@
 local map = vim.keymap.set
 
--- Arrow keys do nothing in any mode: hjkl or nothing. (The mouse is off too, in
--- options.lua.)
+-- Arrow keys do nothing in any mode: hjkl or nothing.
 map({ "", "i" }, "<Up>", "<Nop>", { silent = true })
 map({ "", "i" }, "<Down>", "<Nop>", { silent = true })
 map({ "", "i" }, "<Left>", "<Nop>", { silent = true })
