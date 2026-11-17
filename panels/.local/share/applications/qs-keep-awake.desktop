@@ -2,7 +2,7 @@
 Type=Application
 Name=Keep awake
 Comment=Hold the screen and the machine up — no lock, no blank, no idle suspend
-Icon=preferences-desktop-screensaver-symbolic
+Icon=system-suspend-inhibited
 Keywords=quickshell;keep;awake;caffeine;idle;inhibit;lock;blank;sleep;suspend;screensaver;
 Exec=qs ipc call keepAwake toggle
 Terminal=false

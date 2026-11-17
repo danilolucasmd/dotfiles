@@ -50,11 +50,16 @@ than a placeholder.
 
 The theme a name is resolved *against* is breeze-dark, not Adwaita —
 `env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` sets it for the tray, and
-the launcher is the same process. That is why several entries here draw a blank
-slot: `bluetooth-symbolic`, `x-office-calendar-symbolic` and
-`night-light-symbolic` are Adwaita names breeze-dark does not carry. A new entry
-that wants an icon which actually appears should be checked against
-`/usr/share/icons/breeze-dark` first.
+the launcher is the same process. Adwaita names breeze-dark does not carry
+(`bluetooth-symbolic`, `x-office-calendar-symbolic`, `night-light-symbolic`)
+used to leave seven entries here drawing a blank slot, so every name now is one
+breeze-dark ships: `network-bluetooth-symbolic`, `view-calendar-symbolic`,
+`redshift-status-on-symbolic` and so on. Qt does drop a trailing `-symbolic` and
+retry, which is why `video-display-symbolic` and `face-smile-symbolic` still
+find breeze-dark's full-colour icons, but that fallback is not to be counted on:
+`x-office-calendar` exists there too and the calendar row still drew blank. A
+new entry that wants an icon which actually appears should be checked against
+`/usr/share/icons/breeze-dark` first, and then in the launcher itself.
 
 One icon here is not a theme name at all. `reminder-knot-symbolic` is drawn in
 this repo, under `.local/share/icons/hicolor/scalable/apps/`, because the

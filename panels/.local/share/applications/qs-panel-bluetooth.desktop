@@ -2,7 +2,7 @@
 Type=Application
 Name=Bluetooth panel
 Comment=The adapter switch, what is paired, and what is in range — Super+B
-Icon=bluetooth-symbolic
+Icon=network-bluetooth-symbolic
 Keywords=quickshell;panel;bluetooth;pair;headphones;
 Exec=qs ipc call bluetooth toggle
 Terminal=false
