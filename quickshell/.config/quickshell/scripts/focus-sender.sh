@@ -170,7 +170,7 @@ read -r byherdr byhost byclass bytitle < <(hyprctl clients -j 2>/dev/null | jq -
 if [ -n "$herdr_target" ]; then
   herdr workspace focus "$herdr_target" >/dev/null 2>&1
   if [ -n "$byherdr" ]; then
-    hyprctl dispatch focuswindow "address:$byherdr" >/dev/null
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$byherdr\" })" >/dev/null
     exit 0
   fi
 fi
@@ -217,5 +217,5 @@ fi
 [ -z "$addr" ] && [ "$has_default" != "1" ] && addr="$byclass"
 [ -z "$addr" ] && exit 1
 
-hyprctl dispatch focuswindow "address:$addr" >/dev/null
+hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null
 exit 0

@@ -343,7 +343,7 @@ Singleton {
 				subtitle: "Open URL",
 				// `internet-web-browser`, not the shorter `web-browser` the
 				// name suggests: breeze-dark is the icon theme here (see
-				// QS_ICON_THEME in hyprland.conf) and only has the long one.
+				// QS_ICON_THEME in hyprland.lua) and only has the long one.
 				icon: "internet-web-browser",
 				image: "",
 				badge: "",
@@ -452,7 +452,7 @@ Singleton {
 			ClipboardState.paste(row.ref);
 			break;
 		case "window":
-			Hyprland.dispatch(`focuswindow address:${row.ref}`);
+			Hyprland.dispatch(`hl.dsp.focus({ window = "address:${row.ref}" })`);
 			break;
 		case "run":
 			Quickshell.execDetached(["sh", "-c", row.ref]);

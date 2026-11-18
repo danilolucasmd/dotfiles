@@ -2,14 +2,14 @@
 """Keybind cheatsheet, as JSON for the quickshell panel.
 
 Reads the live bind table out of `hyprctl binds -j`, so nothing here is a
-second copy of the config that could drift: adding a bind to hyprland.conf is
+second copy of the config that could drift: adding a bind to hyprland.lua is
 all it takes for it to show up. Each bind carries its own label because they
-are all written as `bindd` -- the description is the third field:
+all go through the `bind()` helper there, whose second argument is it:
 
-    bindd = $mainMod, T, Open terminal, exec, $terminal
+    bind(mainMod .. " + T", "Open terminal", sh(terminal))
 
 A bind without one still lists; it falls back to `dispatcher arg`, which is a
-hint to go and give it a description.
+hint to go and give it a description, and it cannot be run from the sheet.
 
 This prints and exits. It used to draw the sheet itself, by padding the key
 column to a fixed width and piping the lot into `walker --dmenu --index`; the
@@ -133,6 +133,12 @@ def label(bind):
     return ("%s %s" % (bind["dispatcher"], arg)).strip()
 
 
+def action(bind):
+    if bind["mouse"] or not bind["description"]:
+        return ""
+    return "KEYBIND_ACTIONS[%s]" % json.dumps(bind["description"], ensure_ascii=False)
+
+
 def flags(bind):
     """Only the flags that change how you press the key.
 
@@ -161,10 +167,12 @@ def rows(binds, codes):
             # Rendered as a parenthetical after the label. Empty for all but a
             # handful, which is the point -- see flags().
             "note": ", ".join(extra),
-            # What the panel dispatches. A mouse bind has nothing to run and is
-            # listed read-only, which is what the empty dispatcher says.
-            "dispatcher": "" if bind["mouse"] else bind["dispatcher"],
-            "arg": bind["arg"],
+            # What the panel hands to `Hyprland.dispatch`. Since Hyprland 0.57
+            # the bind table only names a dispatcher opaquely, so this looks the
+            # action up in the KEYBIND_ACTIONS global that hyprland.lua fills.
+            # A mouse bind, or one without a description, has nothing to run
+            # and is listed read-only, which is what the empty string says.
+            "action": action(bind),
         })
     return out
 

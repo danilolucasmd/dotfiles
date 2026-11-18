@@ -30,7 +30,7 @@ close-on-esc = true
 output-filename = "~/Pictures/Screenshots/%Y-%m-%d-%H%M%S.png"
 
 # Hyprland floats and centres this window (see the windowrule in
-# hyprland.conf); the hack asks for it from tensaku's side too, and dropping the
+# hyprland.lua); the hack asks for it from tensaku's side too, and dropping the
 # decoration leaves the toolbar as the only chrome, which is what the editor is.
 floating-hack = true
 no-window-decoration = true

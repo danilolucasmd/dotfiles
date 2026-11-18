@@ -42,7 +42,10 @@ copy to keep in sync. Two consequences worth holding onto:
   `Reloading configuration... / Configuration Loaded` on a good reload);
   `qs ipc show` lists every live IPC target and function; `qs list` / `qs kill`
   if it wedges. Nothing here needs the shell restarted by hand.
-- **Hyprland** autoreloads `hyprland.conf`; `hyprctl reload` forces it.
+- **Hyprland** autoreloads `hyprland.lua`; `hyprctl reload` forces it, and
+  `Hyprland --verify-config -c <file>` checks it without touching the session.
+  Since 0.57 `hyprctl dispatch` takes Lua (`'hl.dsp.focus({ workspace = 1 })'`)
+  and `hyprctl keyword` is gone; `hyprctl eval` runs any other Lua.
   `hyprctl binds -j` is the live bind table, `hyprctl layers` shows whether a
   panel is actually mapped, `hyprctl monitors -j` the display state.
 - **the launcher** is a quickshell panel, so it hot-reloads with the rest of the
@@ -105,7 +108,8 @@ more files than it looks. All of these, or it is only half-added:
    gets one, added to `bar/Bar.qml`.
 4. `quickshell/.config/quickshell/shell.qml` -- instantiate the panel, and add
    an `IpcHandler` so `qs ipc call <target> toggle` reaches it.
-5. `hypr/.config/hypr/hyprland.conf` -- a `bindd` running that IPC call.
+5. `hypr/.config/hypr/hyprland.lua` -- a `bind(...)` with a description,
+   running that IPC call.
 6. `panels/.local/share/applications/qs-panel-<slug>.desktop` -- the same IPC
    call as an `Exec`, which is what puts the panel in the launcher under its own
    name. See `panels/README.md`.
@@ -113,13 +117,14 @@ more files than it looks. All of these, or it is only half-added:
 Scripts a panel needs go in `quickshell/.config/quickshell/scripts/`, reached
 through `Paths.scripts`, and print one line of JSON for a `JsonScript`.
 
-## Keybinds are always `bindd`, never `bind`
+## Keybinds always go through the `bind()` helper
 
-`super+shift+slash` lists every keybind on the system, and `keybinds-menu.py`
+`super+shift+slash` lists every keybind on the system, and `keybinds.py`
 builds that list from `hyprctl binds -j` at open time rather than by parsing the
-config. A plain `bind` still lists, but falls back to showing its raw
-`dispatcher arg` -- readable to nobody, and the sheet doubles as a command
-palette, so the description is what makes the bind findable.
+config. The helper in `hyprland.lua` gives every bind its description and files
+its action in `KEYBIND_ACTIONS`, which is how the sheet, doubling as a command
+palette, can run it. A raw `hl.bind` still lists, but shows an opaque
+`HL.Dispatcher(...)` and cannot be run from the sheet.
 
 ## Style
 

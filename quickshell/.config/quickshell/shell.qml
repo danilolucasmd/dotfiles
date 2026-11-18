@@ -60,8 +60,8 @@ ShellRoot {
 	// the wlr global-shortcuts protocol would need a portal Hyprland does not
 	// wire up to its own keybind config.
 	//
-	// A new handler here wants two things outside this file: the `bindd` in
-	// hyprland.conf, and a desktop entry in ~/dotfiles/panels, which is what
+	// A new handler here wants two things outside this file: the `bind(...)` in
+	// hyprland.lua, and a desktop entry in ~/dotfiles/panels, which is what
 	// puts the panel in the launcher under its own name. See panels/README.md.
 	IpcHandler {
 		target: "agentUsage"

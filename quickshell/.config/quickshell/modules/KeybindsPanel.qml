@@ -105,7 +105,7 @@ Panel {
 			// A mouse bind has nothing to dispatch. Listed anyway -- it is
 			// still a binding somebody may be hunting for -- but dimmed, and
 			// Return on it does nothing.
-			readonly property bool runnable: modelData.dispatcher !== ""
+			readonly property bool runnable: modelData.action !== ""
 
 			width: list.width
 			implicitHeight: 32

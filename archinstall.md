@@ -172,7 +172,7 @@ Both details matter:
 - **`-b arch`** — the repo's default branch is `omarchy`. A plain `git clone`
   checks that out and gives you a different setup entirely.
 - **`~/dotfiles`** — `install.sh` refuses to run from anywhere else, and both
-  `hyprland.conf` and the SDDM theme refer to that path directly.
+  `hyprland.lua` and the SDDM theme refer to that path directly.
 
 Expect the first run to take a while: it builds AUR packages, including a DKMS
 kernel module for the wifi dongle. Anything that fails on its own is reported

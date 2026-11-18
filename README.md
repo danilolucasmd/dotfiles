@@ -36,7 +36,7 @@ Two things that are load-bearing:
 - **`-b arch`.** The repo's default branch is `omarchy`; a plain `git clone`
   checks that out instead and none of this applies.
 - **`~/dotfiles`.** `install.sh` refuses to run anywhere else, and
-  `hyprland.conf` and the SDDM theme refer to the path directly.
+  `hyprland.lua` and the SDDM theme refer to the path directly.
 
 **It asks for your password once, at the very start, and never again.** sudo's
 credential cache expires after five minutes of *not being used*, which on a
@@ -211,7 +211,7 @@ After installation:
 ## 5. Status Bar
 
 The bar is [quickshell](https://quickshell.org) (`quickshell/.config/quickshell`),
-launched by `exec-once = qs` in `hyprland.conf`.
+launched by `hl.exec_cmd("qs")` in the `hyprland.start` handler in `hyprland.lua`.
 
 It replaced waybar, which has since been deleted from the repo along with its
 config and its stow entry. Every module that was a polling shell script under
@@ -469,8 +469,8 @@ the refresh rate and the mode list that Quickshell's own `Hyprland.monitors`
 leaves empty. Rates are collapsed to the nearest whole hertz — 119.88, 119.98
 and 120.00 are one button — and a scale that would not divide the mode into
 whole logical pixels is greyed out rather than offered and refused. All three go
-out as a `hyprctl keyword monitor` rule and are therefore runtime only: a
-`hyprctl reload` or the next login puts `hyprland.conf`'s `monitor =` lines back
+out as an `hl.monitor` rule through `hyprctl eval` and are therefore runtime only: a
+`hyprctl reload` or the next login puts `hyprland.lua`'s `hl.monitor` rules back
 in charge, which the panel's footer says outright. Those lines say `highrr`, so
 a monitor comes up at the fastest mode it offers rather than the one it
 advertises — the VG279QR advertises 60Hz and does 144. That one is the exception
@@ -687,7 +687,7 @@ config error). It does neither. The var points at one stable path,
 `~/.local/state/hypr/wallpaper`, which is a symlink; choosing a wallpaper
 retargets the link. Nothing in the repo changes, nothing has to be re-applied at
 the next login -- hyprpaper simply follows the link again -- and `hyprctl
-reload` cannot undo it, which a runtime `hyprctl keyword env` would not have
+reload` cannot undo it, which a runtime `hl.env` through `hyprctl eval` would not have
 survived. `install.sh` creates the link on a fresh machine and leaves an
 existing one alone, since that one points at whatever was last picked.
 
@@ -706,7 +706,7 @@ Every panel is also reachable by name from the launcher, for the ones whose
 keybind you do not have in your fingers yet. `panels/` is a stow package of
 desktop entries — one per panel, each a single
 `Exec=qs ipc call <target> <function>`, which is exactly what the matching
-`bindd` runs — symlinked into `~/.local/share/applications`, where
+bind runs — symlinked into `~/.local/share/applications`, where
 `DesktopEntries` finds them with nothing to restart. Searching `panel` or
 `quickshell` lists the lot. Icons are symbolic names from breeze-dark, with one
 exception drawn in this repo and stowed into `~/.local/share/icons/hicolor`: the
@@ -750,7 +750,7 @@ to be a disk, which is no use to hibernate — and the kernel has no `resume=`,
 so `systemctl hibernate` fails; the entry would list, and picking it would do
 nothing but log an error.
 
-`env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` is what gives the tray its
+`hl.env("QS_ICON_THEME", "breeze-dark")` in `hyprland.lua` is what gives the tray its
 icons — Qt has no icon theme configured on this system, and breeze-dark is the
 one that ships light symbolic icons for a dark bar.
 
@@ -854,7 +854,7 @@ because notifications say more than their app name does:
   names a site with no web-app window open, the script bows out and the
   notification's default action runs instead — Brave opens the tab, which is the
   right answer there. That path needs `misc:focus_on_activate = true` in
-  `hyprland.conf`.
+  `hyprland.lua`.
 - **herdr.** It notifies through a bare `notify-send`: no desktop entry, app
   name "notify-send", and the project in the body ("dotfiles · 1 · 1 agent").
   Matching on windows cannot work here, because herdr multiplexes every project
@@ -885,7 +885,7 @@ because notifications say more than their app name does:
   `esc` closes without copying. The colour palette is the bar's, the config is
   `tensaku/.config/tensaku/config.toml`, and the in-app preferences dialog
   (`ctrl+,`) writes back into that same stowed file, so a setting changed there
-  lands in the repo. `hyprland.conf` floats and centres the window, which is
+  lands in the repo. `hyprland.lua` floats and centres the window, which is
   what lets it open at the size of the image it was given.
 
   This is keyed on the app name (`-a "Screenshot"`), so a **screen recording is
@@ -1531,7 +1531,7 @@ processes, one for text and one for images, because `wl-paste` watches a single
 MIME type at a time and an image on the clipboard is not offered as text. What
 they run is `scripts/clipboard.sh store`, not `cliphist store` directly, and the
 difference is one note taken beside the copy: the class of the focused window.
-Starting them is `scripts/clipboard.sh watch` in `hyprland.conf`, which clears
+Starting them is `scripts/clipboard.sh watch` in `hyprland.lua`, which clears
 its own stale watchers first so that running it again is how `ctrl+P` resumes a
 paused history — cliphist has no pause of its own, so pausing is stopping the
 things that feed it.
@@ -1584,9 +1584,17 @@ and it works because that decode already happened.
 
 `super+shift+/` lists every bind on the system, built from `hyprctl binds -j` at
 open time — so it is the live bind table and never a second copy of
-`hyprland.conf` that could drift. Adding a `bindd` is all it takes to appear
-there. Selecting a row runs it, so the sheet doubles as a command palette; a
-mouse bind has nothing to dispatch and is listed dimmed and read-only.
+`hyprland.lua` that could drift. Adding a bind with a description is all it
+takes to appear there. Selecting a row runs it, so the sheet doubles as a
+command palette; a mouse bind has nothing to dispatch and is listed dimmed and
+read-only.
+
+Since Hyprland 0.57 the bind table names a dispatcher only as an opaque
+`HL.Dispatcher(exec_cmd)`, which cannot be sent back. So the `bind()` helper in
+`hyprland.lua` also files each action in a `KEYBIND_ACTIONS` global under its
+description, and the sheet runs a row by dispatching
+`KEYBIND_ACTIONS["<description>"]`: `hyprctl dispatch` evaluates its argument in
+the same Lua state the config ran in.
 
 `scripts/keybinds.py` still does the parsing — the modmask, the evdev keycodes a
 `code:59` bind comes back as, the XF86 media keysyms — but it now prints JSON and

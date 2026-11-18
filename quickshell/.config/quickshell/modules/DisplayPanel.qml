@@ -6,7 +6,7 @@ import qs.components
 // The display panel, opened by clicking the bar module or by super+D.
 //
 // Everything about a screen that is worth changing from the bar rather than
-// from hyprland.conf: how bright it is, how fast it refreshes, how big
+// from hyprland.lua: how bright it is, how fast it refreshes, how big
 // everything on it is, and which way up it is. The machine has two monitors
 // that want different answers to all four, so the panel is pointed at one of
 // them at a time and carries tabs to move between them.
@@ -96,7 +96,7 @@ Panel {
 				font.weight: Font.DemiBold
 			}
 
-			// The connector name is how hyprland.conf refers to this screen, so
+			// The connector name is how hyprland.lua refers to this screen, so
 			// it is the name worth printing. The mode goes with it: when a
 			// monitor offers only one refresh rate its section is gone, and
 			// this is then the only place the rate is said at all.

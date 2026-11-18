@@ -94,7 +94,7 @@ thumbnails() {
 watchers='wl-paste --type (text|image) --watch'
 
 case "${1:-list}" in
-# What hyprland.conf runs at startup, and what `resume` runs again. Two
+# What hyprland.lua runs at startup, and what `resume` runs again. Two
 # watchers because wl-paste watches one MIME type at a time, and an image on
 # the clipboard is not offered as text.
 #
@@ -141,7 +141,7 @@ store)
 
 # ctrl+p in the panel. cliphist itself has no pause -- it is a store, not a
 # daemon -- so pausing is stopping the things that feed it, which is why the
-# watchers had to be something this script starts rather than two exec-once
+# watchers had to be something this script starts rather than two startup commands
 # lines hyprland alone knew about.
 pause)
 	pkill -f "$watchers" || true

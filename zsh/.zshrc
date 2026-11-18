@@ -118,7 +118,7 @@ alias vim=nvim
 ## Commands
 alias lock=hyprlock
 alias suspend="systemctl suspend"
-alias logout="hyprctl dispatch exit"
+alias logout="hyprctl dispatch 'hl.dsp.exit()'"
 
 # `copy` puts stdin, or its arguments, on the clipboard. It is a function
 # rather than an alias because of the two regex flags, and what makes those

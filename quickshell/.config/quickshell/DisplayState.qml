@@ -49,7 +49,7 @@ Singleton {
 	// ------------------------------------------------------------------
 
 	// brightnessctl is driven with the same curve the XF86MonBrightness binds
-	// use (`-e4 -n2`, in hyprland.conf), so the panel's percentage and the
+	// use (`-e4 -n2`, in hyprland.lua), so the panel's percentage and the
 	// keys' percentage are the same number rather than two scales for one
 	// slider. The exponent has to be applied here too when going the other way:
 	// sysfs reports the raw value, and 36% of the range is 78% of the curve.
@@ -166,18 +166,19 @@ Singleton {
 			write(monitor, monitor.scale, monitor.transform, rate);
 	}
 
-	// One `monitor` rule, spelled out in full. The keyword replaces the rule
+	// One `hl.monitor` rule, spelled out in full. It replaces the rule
 	// wholesale rather than patching it, so every field goes out on every
-	// change, including the position — which the panel does not offer and must
-	// therefore not disturb.
+	// change, including the position, which the panel does not offer and must
+	// therefore not disturb. `hyprctl keyword` is gone since Hyprland 0.57, so
+	// the rule goes in as Lua through `hyprctl eval`.
 	//
 	// Runtime only, deliberately: this writes nothing, so a `hyprctl reload` or
-	// the next login puts hyprland.conf back in charge. The panel says as much
+	// the next login puts hyprland.lua back in charge. The panel says as much
 	// in its footer.
 	function write(monitor: var, scale: real, transform: int, rate: real): void {
 		const mode = `${monitor.width}x${monitor.height}@${rate.toFixed(2)}Hz`;
-		const rule = `${monitor.name},${mode},${monitor.x}x${monitor.y},${trim(scale)},transform,${transform}`;
-		Quickshell.execDetached(["hyprctl", "keyword", "monitor", rule]);
+		const rule = `hl.monitor({ output = ${JSON.stringify(monitor.name)}, mode = "${mode}", position = "${monitor.x}x${monitor.y}", scale = "${trim(scale)}", transform = ${transform} })`;
+		Quickshell.execDetached(["hyprctl", "eval", rule]);
 		// Hyprland applies the rule a beat later, and says nothing on the event
 		// socket when it has: the panel finds out by looking again.
 		settleMonitors.restart();

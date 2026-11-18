@@ -26,7 +26,7 @@ There is no `qs-hibernate.desktop`: swap here is zram and the kernel has no
 `resume=`, so the row would be one that fails every time it is picked.
 
 Each one is a one-line `Exec=qs ipc call <target> <function>` — exactly what the
-matching `bindd` in `hyprland.conf` runs. There is no second copy of the panel
+matching bind in `hyprland.lua` runs. There is no second copy of the panel
 here and nothing to keep in sync beyond the command itself; `qs ipc` finds the
 running instance on its own, so an entry works whether the panel was last opened
 from the bar, from a keybind or from here.
@@ -49,7 +49,7 @@ as a broken-image path: a row with no icon draws a blank slot, which is quieter
 than a placeholder.
 
 The theme a name is resolved *against* is breeze-dark, not Adwaita —
-`env = QS_ICON_THEME,breeze-dark` in `hyprland.conf` sets it for the tray, and
+`hl.env("QS_ICON_THEME", "breeze-dark")` in `hyprland.lua` sets it for the tray, and
 the launcher is the same process. Adwaita names breeze-dark does not carry
 (`bluetooth-symbolic`, `x-office-calendar-symbolic`, `night-light-symbolic`)
 used to leave seven entries here drawing a blank slot, so every name now is one

@@ -53,7 +53,7 @@ close)
     # Backgrounded: hyprlock runs until it is unlocked, and this script must
     # not stay alive that long.
     hyprlock &
-    hyprctl dispatch dpms off
+    hyprctl dispatch 'hl.dsp.dpms({ action = "off" })'
   else
     # No explicit lock. hypridle holds a delay inhibitor and runs its
     # before_sleep_cmd to completion before the system goes down, so letting it
@@ -65,7 +65,7 @@ close)
 open)
   # The panel was blanked either here or by hypridle; only one of them tracks
   # that, so turn it back on unconditionally.
-  hyprctl dispatch dpms on
+  hyprctl dispatch 'hl.dsp.dpms({ action = "on" })'
   ;;
 idle)
   on_ac || systemctl suspend

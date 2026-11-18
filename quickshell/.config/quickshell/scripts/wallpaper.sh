@@ -5,7 +5,7 @@
 # The wallpaper is addressed everywhere through one stable path --
 # ~/.local/state/hypr/wallpaper, a symlink at $ACTIVE_WALLPAPER_PATH -- rather
 # than by naming the image file. hyprpaper and hyprlock both read that env var
-# out of hyprland.conf, and a chosen wallpaper has to outlive the session, so
+# out of hyprland.lua, and a chosen wallpaper has to outlive the session, so
 # the alternatives were rewriting `env =` in a checked-in config from a picker
 # (runtime state in the repo) or sourcing a generated fragment (a `source =` of
 # a file that does not exist yet on a fresh clone is a config error). Retargeting

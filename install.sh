@@ -153,7 +153,7 @@ rm -f "$sudoers_candidate"
 # one step here that can cost you a reboot, so it is worth knowing up front.
 echo "==> Note: on btrfs, this migrates the bootloader to Limine. See README.md section 10."
 
-# Everything below assumes the repo is checked out here: hyprland.conf, the
+# Everything below assumes the repo is checked out here: hyprland.lua, the
 # stow invocations and the sddm theme permissions all refer to it by path.
 DOTFILES="$HOME/dotfiles"
 [[ -d "$DOTFILES" ]] || {
@@ -552,7 +552,7 @@ sudo systemctl enable sddm
 #
 # cliphist and libqalculate are the two halves of the launcher that are not
 # quickshell's own: cliphist is the clipboard store the `wl-paste --watch` pair
-# in hyprland.conf feeds, and libqalculate brings `qalc`, which answers the `=`
+# in hyprland.lua feeds, and libqalculate brings `qalc`, which answers the `=`
 # prefix. Both replaced an elephant provider, and both are in the official
 # repos where those were three AUR builds.
 echo "==> Installing pacman packages"
@@ -1236,7 +1236,7 @@ stow \
   zsh
 
 # The wallpaper is addressed through one stable path, ~/.local/state/hypr/wallpaper,
-# which hyprland.conf exports as $ACTIVE_WALLPAPER_PATH and both hyprpaper and
+# which hyprland.lua exports as $ACTIVE_WALLPAPER_PATH and both hyprpaper and
 # hyprlock read. The link is runtime state and deliberately not in the repo --
 # it is what the quickshell picker retargets when a wallpaper is chosen -- so a
 # fresh machine has to be given one, and only a fresh machine: a link that is
