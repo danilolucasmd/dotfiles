@@ -179,17 +179,37 @@ local function any_inline_view()
   return false
 end
 
+local function drop_numhl_if_unused()
+  if vim.g.inline_diff_numhl and not any_inline_view() then
+    vim.g.inline_diff_numhl = false
+    require("gitsigns").toggle_numhl(false)
+  end
+end
+
 vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed" }, {
   group = vim.api.nvim_create_augroup("user_inline_diff", { clear = true }),
   callback = function()
-    vim.schedule(function()
-      if vim.g.inline_diff_numhl and not any_inline_view() then
-        vim.g.inline_diff_numhl = false
-        require("gitsigns").toggle_numhl(false)
-      end
-    end)
+    vim.schedule(drop_numhl_if_unused)
   end,
 })
+
+-- Close the view once a commit leaves the buffer clean. The User GitSignsUpdate
+-- event only tracks unstaged hunks, so it stays silent when staged ones are committed.
+require("gitsigns.manager").on_update(function(ctx)
+  if #(ctx.bcache.hunks or {}) > 0 or #(ctx.bcache.hunks_staged or {}) > 0 then
+    return
+  end
+  vim.schedule(function()
+    local unified = require("gitsigns.unified")
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local view = unified.get_view(win)
+      if view and view.buf == ctx.bufnr then
+        unified.close(win)
+      end
+    end
+    drop_numhl_if_unused()
+  end)
+end)
 
 Snacks.toggle({
   name = "Inline Diff",
