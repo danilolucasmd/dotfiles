@@ -569,6 +569,9 @@ echo "==> Installing pacman packages"
 # what Nautilus and every xdg-open go through. mpv-mpris is a system-wide mpv
 # script that publishes playback over MPRIS, which is how an mpv window shows
 # up in the bar's media module and panel alongside a browser or Spotify.
+#
+# rclone backs game saves up to Google Drive; its login (`rclone config create
+# gdrive drive scope=drive`) is per machine and stays out of this repo.
 pac \
   stow \
   neovim \
@@ -617,6 +620,7 @@ pac \
   transmission-gtk \
   mpv \
   mpv-mpris \
+  rclone \
   steam
 
 ############################################################
