@@ -1,0 +1,24 @@
+# Makes ' + c (and the other acute-c sequences) produce ç rather than ć, which
+# is what a Portuguese speaker on the us-intl layout means by it.
+#
+# This used to be done by sed-ing ć to ç in the system Compose file, which
+# libx11 owns: every libx11 upgrade put the stock file back and silently broke
+# the cedilla again. A ~/.XCompose is read instead of the system file by
+# libxkbcommon (and so by fcitx5, which every app here types through) and by
+# GTK's own compose handling, and no package upgrade can touch it.
+#
+# The include pulls in the full table for the current locale; the lines below it
+# then redefine just these eight sequences, since a later definition of the same
+# sequence replaces the earlier one. fcitx5 reads this once at startup, so an
+# edit needs `pkill -x fcitx5; fcitx5 -d` (or a new session) to take effect.
+
+include "%L"
+
+<dead_acute> <c>                : "ç"   ccedilla
+<dead_acute> <C>                : "Ç"   Ccedilla
+<Multi_key> <acute> <c>         : "ç"   ccedilla
+<Multi_key> <acute> <C>         : "Ç"   Ccedilla
+<Multi_key> <apostrophe> <c>    : "ç"   ccedilla
+<Multi_key> <apostrophe> <C>    : "Ç"   Ccedilla
+<Multi_key> <c> <apostrophe>    : "ç"   ccedilla
+<Multi_key> <C> <apostrophe>    : "Ç"   Ccedilla

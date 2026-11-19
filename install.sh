@@ -1220,7 +1220,7 @@ sudo stow -t / sddm
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
   btop fastfetch ghostty git hypr lazygit mpv nvim scripts sounds \
-  quickshell tensaku wallpapers wireplumber yazi zsh
+  quickshell tensaku wallpapers wireplumber xcompose yazi zsh
 stow \
   btop \
   fastfetch \
@@ -1236,6 +1236,7 @@ stow \
   tensaku \
   wallpapers \
   wireplumber \
+  xcompose \
   yazi \
   zsh
 
@@ -1469,9 +1470,10 @@ fi
 # GTK CEDILLA FIX                                          #
 ############################################################
 
-# Makes ' + c produce ç rather than ć on the us-intl layout. Patches files
-# owned by gtk2/gtk3 and libx11, so it has to run again after those packages
-# are upgraded. See post-install.sh.
+# Makes ' + c produce ç rather than ć on the us-intl layout in GTK apps that do
+# their own compose handling. The compose table itself is ~/.XCompose, stowed
+# above; this patches gtk3's immodules.cache, which an upgrade regenerates, so
+# it has to run again after one. See post-install.sh.
 echo "==> Applying GTK cedilla fix"
 try "cedilla fix" "$DOTFILES/post-install.sh"
 

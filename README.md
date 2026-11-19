@@ -1353,13 +1353,13 @@ was never doing anything. Where GRUB is real, it stays and keeps working.
 
 ---
 
-## 11. GTK Cedilla Fix
+## 11. Cedilla
 
-`post-install.sh` makes `'` + `c` produce ç rather than ć on the us-intl layout.
-`install.sh` calls it, so a fresh install needs nothing.
+`'` + `c` gives ç rather than ć on the us-intl layout. Two pieces make that happen.
 
-It patches files owned by **gtk2, gtk3 and libx11**, so a package upgrade
-reverts it. Re-run `./post-install.sh` when the cedilla stops working.
+The compose table is `xcompose/.XCompose`. It includes the locale's stock table and redefines the eight acute-c sequences to ç and Ç. libxkbcommon reads it in place of the system file, and so does fcitx5, which every app types through. Because it is a file in `$HOME`, no package upgrade can undo it. An earlier version of this fix used sed on `/usr/share/X11/locale/en_US.UTF-8/Compose`, and every libx11 upgrade wiped that out. fcitx5 loads the table once at startup, so after an edit run `pkill -x fcitx5; fcitx5 -d` and relaunch any app that was already open.
+
+`post-install.sh` takes care of GTK apps that do their own compose handling. It adds `en` to the locales of the cedilla input module in gtk3's `immodules.cache`. gtk3 regenerates that file when it upgrades, so if the cedilla breaks in a GTK app, run `./post-install.sh` again. `install.sh` calls it, so a fresh install needs nothing extra.
 
 ---
 

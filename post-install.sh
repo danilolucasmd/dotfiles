@@ -2,6 +2,9 @@
 
 set -e
 
+# The Compose half of the cedilla fix lives in ~/.XCompose (the xcompose stow
+# package) now. This is only GTK's immodules.cache, which gtk3 regenerates on
+# upgrade, so it has to run again after one.
 echo "==> Fixing GTK cedilla input..."
 
 GTK2="/usr/lib/gtk-2.0/2.10.0/immodules.cache"
@@ -18,19 +21,4 @@ for file in "$GTK2" "$GTK3"; do
   fi
 done
 
-echo "==> Updating Compose key mappings..."
-
-COMPOSE="/usr/share/X11/locale/en_US.UTF-8/Compose"
-
-if [ -f "$COMPOSE" ]; then
-  echo "Backing up Compose file..."
-  sudo cp "$COMPOSE" "${COMPOSE}.bak"
-
-  echo "Applying cedilla fix..."
-  sudo sed -i 's/ć/ç/g' "$COMPOSE"
-  sudo sed -i 's/Ć/Ç/g' "$COMPOSE"
-else
-  echo "Compose file not found at $COMPOSE"
-fi
-
-echo "==> Done! Reboot your system to apply changes."
+echo "==> Done! Restart the affected GTK apps to apply changes."
