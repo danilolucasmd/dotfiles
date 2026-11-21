@@ -427,7 +427,7 @@ fi
 # AUR SIGNING KEYS                                         #
 ############################################################
 
-# The 1password PKGBUILD pins validpgpkeys, so makepkg refuses to build until
+# The 1password and 1password-cli PKGBUILDs pin the same validpgpkeys, so makepkg refuses to build until
 # the key is in the user keyring. --noconfirm cannot answer the import prompt,
 # so an unimported key fails the build and, without this, took the rest of the
 # install down with it.
@@ -570,8 +570,9 @@ echo "==> Installing pacman packages"
 # script that publishes playback over MPRIS, which is how an mpv window shows
 # up in the bar's media module and panel alongside a browser or Spotify.
 #
-# rclone backs game saves up to Google Drive; its login (`rclone config create
-# gdrive drive scope=drive`) is per machine and stays out of this repo.
+# rclone backs game saves up to Google Drive. Its login is per machine and stays
+# out of this repo: run `rclone-gdrive-setup` after signing in to 1Password,
+# which reads our own OAuth client from 1Password (README section 3).
 pac \
   stow \
   neovim \
@@ -1044,6 +1045,7 @@ aur_packages=(
   gh-dash-bin
   ttf-joypixels # the colour emoji font, and what gen-emoji-data.py checks coverage against
   1password
+  1password-cli # `op`; needs the app's "Integrate with 1Password CLI" toggle (README section 3)
   brave-bin
   orca-slicer-bin
   wifitui

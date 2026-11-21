@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# rclone-gdrive-setup: connect rclone's `gdrive` remote to Google Drive.
+#
+# The remote uses our own Google OAuth client (Google Cloud project "rclone")
+# instead of rclone's shared client_id, which Google is retiring. The client ID
+# and secret live in 1Password, so this reads them with `op read` rather than
+# keeping them in the repo. rclone.conf itself never enters the repo either: it
+# holds the login token.
+#
+# Run it after signing in to 1Password with "Integrate with 1Password CLI" on
+# (README section 3). It opens a browser for the Google login; Google warns that
+# the app is unverified, which is expected for a personal client.
+#
+# Re-running is safe: an existing remote gets the credentials updated and is
+# logged in again instead of being duplicated.
+
+set -euo pipefail
+
+readonly REMOTE=gdrive
+readonly ITEM="op://Personal/rclone Google Drive"
+
+die() { printf 'rclone-gdrive-setup: %s\n' "$*" >&2; exit 1; }
+
+command -v rclone >/dev/null || die "rclone is not installed"
+command -v op >/dev/null || die "the 1Password CLI (op) is not installed"
+
+# "no account found" from op almost always means the app integration toggle is
+# off, so name the fix instead of passing op's message through.
+client_id=$(op read "$ITEM/client id") ||
+	die "could not read from 1Password: sign in to the app and enable Settings > Developer > Integrate with 1Password CLI"
+client_secret=$(op read "$ITEM/client secret")
+
+if rclone listremotes | grep -qx "$REMOTE:"; then
+	echo "==> Updating the existing $REMOTE remote"
+	# --non-interactive so update only writes the credentials; the login is the
+	# reconnect below, where its prompts are visible.
+	rclone config update "$REMOTE" client_id "$client_id" client_secret "$client_secret" \
+		--non-interactive >/dev/null
+	rclone config reconnect "$REMOTE:"
+else
+	echo "==> Creating the $REMOTE remote"
+	rclone config create "$REMOTE" drive scope=drive \
+		client_id="$client_id" client_secret="$client_secret"
+fi
+
+rclone lsd "$REMOTE:" >/dev/null && echo "==> $REMOTE is connected"

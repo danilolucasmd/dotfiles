@@ -188,13 +188,48 @@ After installation:
 - Open 1Password
 - Sign in
 - Enable SSH agent
+- Settings > Developer > enable **Integrate with 1Password CLI**
+
+`install.sh` installs the `op` CLI (`1password-cli`) alongside the app. The CLI
+has no account of its own: with that toggle on, it borrows the app's session and
+asks the app to approve each new terminal, so there is no `op signin` and no
+token to store. Without the toggle, every `op` command fails with "no account
+found".
+
+That toggle, like the SSH agent one, lives in the app's
+`~/.config/1Password/settings/settings.json`, which the app rewrites as it runs.
+It is not stowed for the same reason `snapshots/` is not: the app would be
+writing into git.
 
 `install.sh` imports 1Password's code-signing key before the AUR run, because
-its PKGBUILD pins `validpgpkeys` and `makepkg --noconfirm` cannot answer the
-import prompt on its own.
+the `1password` and `1password-cli` PKGBUILDs pin the same `validpgpkeys` and
+`makepkg --noconfirm` cannot answer the import prompt on its own.
 
 Note the ordering: the SSH agent is not available until you have signed in, so
 everything `install.sh` clones is cloned over HTTPS.
+
+### Google Drive (rclone)
+
+After signing in to 1Password with the CLI toggle on:
+
+- Run `rclone-gdrive-setup` and log in to Google in the browser it opens
+
+That creates rclone's `gdrive` remote. It authenticates with our own OAuth
+client, a Desktop app client in the Google Cloud project "rclone", rather than
+rclone's shared client_id, which Google is retiring and which logs a warning on
+every run until then. The client ID and secret are kept in 1Password as the API
+Credential "rclone Google Drive" and read with `op read`, so neither they nor
+`~/.config/rclone/rclone.conf` (which also holds the login token) ever enter
+this repo.
+
+Google shows an "unverified app" warning at the login: the client is personal
+and was never submitted for verification. Continue through **Advanced**. The
+project is published to production on purpose; a project left in Testing
+expires its logins every 7 days.
+
+The script is safe to re-run. On a machine that already has the remote it
+updates the credentials and logs in again, which is also how to rotate the
+client secret.
 
 ---
 
@@ -1315,7 +1350,7 @@ Everything else that used to compile no longer does. `ghostty`, `btop`,
 `bluetui` and `wiremix` all landed in `[extra]` and moved to the pacman list —
 one Zig build and two Rust builds gone. `ghostty` is not optional there: its AUR
 package was deleted when the repo package appeared. The rest of the AUR list is
-already `-bin`, or a repackaged upstream binary (`1password`, `docker-desktop`,
+already `-bin`, or a repackaged upstream binary (`1password`, `1password-cli`, `docker-desktop`,
 `brave-bin`, `orca-slicer-bin`), and downloads rather than builds.
 
 ### Re-running install.sh on a machine set up before this
