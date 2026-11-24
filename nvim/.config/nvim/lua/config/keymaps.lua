@@ -167,42 +167,67 @@ Snacks.toggle.zoom():map("<leader>wm")
 -- opening anything: gitsigns' unified diffthis draws the removed lines in place
 -- and tints what was added, against the index like the signs are. It is the
 -- real buffer underneath, so editing carries on as normal, with ]h / [h moving
--- between hunks. Per window; diffthis toggles, so `set` only fires on a change.
--- The coloured line numbers that go with it are a global gitsigns setting, so
--- they are switched off again once no window shows a view: gitsigns drops the
--- view when its buffer leaves the window, and the numbers would stay behind.
-local function any_inline_view()
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if require("gitsigns.unified").get_view(win) then
-      return true
-    end
+-- between hunks. gitsigns ties a view to one window and buffer, so the toggle is
+-- a global mode that reopens the view in whichever file window is entered.
+local function show_inline_diff()
+  local buf = vim.api.nvim_get_current_buf()
+  if
+    vim.g.inline_diff
+    and not vim.wo.diff
+    and vim.bo[buf].buftype == ""
+    and require("gitsigns.cache").cache[buf]
+    and not require("gitsigns.unified").get_view()
+  then
+    require("gitsigns").diffthis(nil, { unified = true })
   end
-  return false
 end
 
-vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed" }, {
+vim.api.nvim_create_autocmd("BufEnter", {
   group = vim.api.nvim_create_augroup("user_inline_diff", { clear = true }),
   callback = function()
-    vim.schedule(function()
-      if vim.g.inline_diff_numhl and not any_inline_view() then
-        vim.g.inline_diff_numhl = false
-        require("gitsigns").toggle_numhl(false)
-      end
-    end)
+    vim.schedule(show_inline_diff)
   end,
 })
+
+-- A file opened for the first time attaches after BufEnter, so its first update
+-- opens the view. A commit that leaves the buffer clean closes it until new
+-- hunks appear. The User GitSignsUpdate event only tracks unstaged hunks, so it
+-- stays silent when staged ones are committed.
+require("gitsigns.manager").on_update(function(ctx)
+  local clean = #(ctx.bcache.hunks or {}) == 0 and #(ctx.bcache.hunks_staged or {}) == 0
+  vim.schedule(function()
+    if not clean then
+      if vim.api.nvim_get_current_buf() == ctx.bufnr then
+        show_inline_diff()
+      end
+      return
+    end
+    local unified = require("gitsigns.unified")
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local view = unified.get_view(win)
+      if view and view.buf == ctx.bufnr then
+        unified.close(win)
+      end
+    end
+  end)
+end)
 
 Snacks.toggle({
   name = "Inline Diff",
   get = function()
-    return require("gitsigns.unified").get_view() ~= nil
+    return vim.g.inline_diff == true
   end,
   set = function(state)
-    local gs = require("gitsigns")
-    gs.diffthis(nil, { unified = true })
-    local numhl = state or any_inline_view()
-    vim.g.inline_diff_numhl = numhl
-    gs.toggle_numhl(numhl)
+    vim.g.inline_diff = state
+    require("gitsigns").toggle_numhl(state)
+    if state then
+      show_inline_diff()
+      return
+    end
+    local unified = require("gitsigns.unified")
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      unified.close(win)
+    end
   end,
 }):map("<leader>gv")
 
