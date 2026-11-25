@@ -11,10 +11,6 @@
 
 [gpg "ssh"]
 	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-
-[core]
-	hooksPath = /Users/ddias/.githooks
-
 [merge]
 	conflictStyle = zdiff3
 
