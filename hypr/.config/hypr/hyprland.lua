@@ -99,8 +99,6 @@ hl.on("hyprland.start", function()
     -- attached. Re-runnable (it clears its own stale watchers first), which is
     -- what makes ctrl+P in the launcher able to resume capture by running it again.
     hl.exec_cmd(home .. "/.config/quickshell/scripts/clipboard.sh watch")
-    -- Remember the keyboard layout (alt+space) separately for each application
-    hl.exec_cmd(home .. "/.config/hypr/scripts/kb-layout-per-app.py")
 end)
 
 -- Theme, re-applied on every config load as `exec =` used to.
@@ -333,9 +331,9 @@ bind(mainMod .. " + I", "Audio input picker", qs("audio inputs"))
 -- Keyboard layout, on alt+space as it always was: each press switches straight
 -- away and puts up no window at all. Holding alt used to raise the picker as a
 -- HUD, which was a window in the way of a flip you do without looking; the
--- picker is on the bar module and in the launcher instead.
--- kb-layout-per-app.py hears each switch as `activelayout`, so the choice is
--- still remembered per window class.
+-- picker is on the bar module and in the launcher instead. The layout is
+-- global: a per-app memory (kb-layout-per-app.py) restored each window's layout
+-- on focus, and was removed for switching under you more than it helped.
 bind("ALT + space", "Cycle keyboard layout", qs("keyboard cycle"))
 
 -- Apps

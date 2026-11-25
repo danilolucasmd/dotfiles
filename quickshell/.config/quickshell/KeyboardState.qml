@@ -69,9 +69,6 @@ Singleton {
 		panelOpen = false;
 	}
 
-	// Deliberately through Hyprland rather than around it: kb-layout-per-app.py
-	// is listening for `activelayout`, so picking a layout is remembered for the
-	// focused window's class exactly like an alt+space toggle is.
 	function setLayout(index: int): void {
 		panelOpen = false;
 		if (index !== activeIndex)
@@ -122,8 +119,7 @@ Singleton {
 		// *that* one `main` whenever it exists. It tracks a layout of its own
 		// and comes and goes with the input context, so reading it means the
 		// bar reverting to whatever fcitx5 last thought while the real keyboard
-		// stayed where you put it. kb-layout-per-app.py skips it for the same
-		// reason.
+		// stayed where you put it.
 		const real = keyboards.filter(k => !isVirtual(k.name ?? ""));
 		const main = real.find(k => k.main) ?? real[0];
 		if (!main)
