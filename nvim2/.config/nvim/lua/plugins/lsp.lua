@@ -91,6 +91,10 @@ return {
         filetypes = { "typescript", "typescriptreact" },
         root_markers = { "relay.config.json", "relay.config.js" },
         workspace_required = true,
+        -- relay rejects every inlay hint request with an error until its schema finishes compiling
+        on_init = function(client)
+          client.server_capabilities.inlayHintProvider = nil
+        end,
       })
 
       vim.lsp.config("lua_ls", {
