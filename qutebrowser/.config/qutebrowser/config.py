@@ -172,9 +172,36 @@ tabwidget.TabWidget.AUDIBLE_STRING = "\U000f057e "
 tabwidget.TabWidget.MUTE_STRING = "\U000f0581 "
 
 # Tabs: inactive ones sink into the bar, the active one is raised with bright
-# text, and the load indicator runs mauve to green, red on failure.
+# text. No load indicator line: loading shows in the status bar's progress.
 config.set("tabs.padding", {"top": 5, "bottom": 5, "left": 8, "right": 8})
-config.set("tabs.indicator.width", 2)
+config.set("tabs.indicator.width", 0)
+
+# A 1px divider on the right edge of every tab, in the border colour, so
+# neighbouring tabs of the same background read as separate. qutebrowser has
+# no setting for it, so the tab bar's paint is wrapped to draw the lines after
+# its own drawing: a qutebrowser internal, like the audio mark above.
+from qutebrowser.qt.gui import QColor, QPainter
+
+if not hasattr(tabwidget.TabBar, "_original_paint"):
+    tabwidget.TabBar._original_paint = tabwidget.TabBar.paintEvent
+
+
+def _paint_with_dividers(self, event):
+    tabwidget.TabBar._original_paint(self, event)
+    painter = QPainter(self)
+    painter.setPen(QColor(BORDER))
+    current = self.currentIndex()
+    for i in range(self.count()):
+        # The divider after tab i sits between i and i + 1; next to the active
+        # tab its raised background already marks the edge, as in Chrome.
+        if current in (i, i + 1):
+            continue
+        rect = self.tabRect(i)
+        painter.drawLine(rect.right(), rect.top() + 6, rect.right(), rect.bottom() - 6)
+    painter.end()
+
+
+tabwidget.TabBar.paintEvent = _paint_with_dividers
 config.set("colors.tabs.bar.bg", MANTLE)
 for parity in ("odd", "even"):
     config.set(f"colors.tabs.{parity}.bg", MANTLE)
@@ -185,9 +212,6 @@ for parity in ("odd", "even"):
     config.set(f"colors.tabs.pinned.{parity}.fg", MAUVE)
     config.set(f"colors.tabs.pinned.selected.{parity}.bg", RAISED)
     config.set(f"colors.tabs.pinned.selected.{parity}.fg", MAUVE)
-config.set("colors.tabs.indicator.start", MAUVE)
-config.set("colors.tabs.indicator.stop", GREEN)
-config.set("colors.tabs.indicator.error", RED)
 
 # Statusbar: base colour in normal mode, and each other mode gets its own
 # accent so the mode is visible at a glance without reading the label.
