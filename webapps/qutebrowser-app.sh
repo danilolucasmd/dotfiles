@@ -45,16 +45,41 @@ qt_args='"force-dark-mode"'
 widevine=$(ls -d "$HOME"/.config/BraveSoftware/Brave-Browser/WidevineCdm/*/_platform_specific/linux_x64/libwidevinecdm.so 2>/dev/null | sort -V | tail -n1 || true)
 [[ -n "$widevine" ]] && qt_args+=", \"widevine-path=$widevine\""
 
+# WhatsApp starts in passthrough: it is all typing and its own shortcuts
+# (Ctrl+Alt+N, Alt+arrows through chats), and in normal mode every key that
+# misses the message box is a qutebrowser command instead. Nothing about a page
+# load leaves passthrough (only switching tabs could, and the app has one), so
+# entering it once at startup holds; Shift+Escape gets back to normal mode.
+# The status bar is off entirely there rather than in-mode, or it would sit at
+# the bottom saying PASSTHROUGH for as long as the app is open. The command
+# line still shows when `:` is typed: qutebrowser raises the bar for it even
+# under `never`.
+statusbar=in-mode
+startup=()
+case "$slug" in
+	whatsapp)
+		statusbar=never
+		startup=(":mode-enter passthrough")
+		;;
+esac
+
+# The apps' user scripts (see greasemonkey/) are linked into each profile's
+# config directory, which is where a --basedir instance looks for them; the
+# main browser's scripts in ~/.config/qutebrowser are not seen by the apps.
+basedir="${XDG_DATA_HOME:-$HOME/.local/share}/qutebrowser-apps/$slug"
+mkdir -p "$basedir/config"
+ln -sfn "$(dirname "$(realpath "$0")")/greasemonkey" "$basedir/config/greasemonkey"
+
 exec qutebrowser \
-	--basedir "${XDG_DATA_HOME:-$HOME/.local/share}/qutebrowser-apps/$slug" \
+	--basedir "$basedir" \
 	--config-py "${XDG_CONFIG_HOME:-$HOME/.config}/qutebrowser/config.py" \
 	--desktop-file-name "$class" \
 	--set tabs.show never \
-	--set statusbar.show in-mode \
+	--set statusbar.show "$statusbar" \
 	--set tabs.tabs_are_windows true \
 	--set window.title_format '{current_title}' \
 	--set content.notifications.enabled true \
 	--set colors.webpage.darkmode.enabled false \
 	--set content.register_protocol_handler false \
 	--set qt.args "[$qt_args]" \
-	"$url"
+	"$url" "${startup[@]}"

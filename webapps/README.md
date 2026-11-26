@@ -35,6 +35,14 @@ all of it:
   the status bar shown only outside normal mode (insert, hints, the command
   line), and notifications allowed. A link the app opens in a
   new tab becomes a new window, since there is no tab bar to show it in.
+- **WhatsApp starts in passthrough mode**, so every key goes to the page
+  (typing anywhere, its own shortcuts), and has no status bar at all.
+  Shift+Escape returns to normal mode.
+- **User scripts for the apps** live in [`greasemonkey/`](./greasemonkey),
+  linked into every profile at launch. `notifications.user.js` asks for the
+  notification permission on each load: qutebrowser grants it without a prompt
+  but never remembers the grant, so without it apps like WhatsApp show their
+  enable-notifications banner on every open.
 - **Launching an open app raises it** instead of opening a second window.
 - **Widevine** (DRM video, which Spotify needs) is borrowed from Brave's
   profile, since QtWebEngine ships none. Without Brave installed and run once,
