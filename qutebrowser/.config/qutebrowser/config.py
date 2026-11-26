@@ -444,6 +444,51 @@ def reopen(win_id: int) -> None:
 config.bind("<Ctrl-Shift-T>", "reopen")
 config.bind("bT", "reopen")
 
+# :permissions-reset forgets every permission answer saved for the current
+# page's site (camera, microphone, notifications, location, clipboard, ...), so
+# the next request asks again. qutebrowser keeps a "yes/no, always" answer as a
+# per-site value of the setting behind it, in autoconfig.yml, and has no command
+# to drop one short of `:config-unset -u <pattern> <setting>`, which needs the
+# exact pattern it was saved under. This finds them instead: every saved value
+# of a permission setting whose pattern covers this page. Only those settings,
+# so the per-site dark mode switch survives. A "yes" given just for this session
+# is held by the browser engine rather than saved, and lasts until a restart.
+from qutebrowser.config import config as _live_config
+
+_PERMISSION_SETTINGS = (
+    "content.notifications.enabled",
+    "content.geolocation",
+    "content.media.audio_capture",
+    "content.media.video_capture",
+    "content.media.audio_video_capture",
+    "content.desktop_capture",
+    "content.mouse_lock",
+    "content.persistent_storage",
+    "content.register_protocol_handler",
+    "content.javascript.clipboard",
+    "content.tls.certificate_errors",
+)
+
+objects.commands.pop("permissions-reset", None)
+
+
+@cmdutils.register(name="permissions-reset")
+@cmdutils.argument("win_id", value=cmdutils.Value.win_id)
+def permissions_reset(win_id: int) -> None:
+    """Forget the permission answers saved for the current page's site."""
+    tabbed_browser = objreg.get("tabbed-browser", scope="window", window=win_id)
+    url = tabbed_browser.widget.currentWidget().url()
+    reset = []
+    for name in _PERMISSION_SETTINGS:
+        for scoped in list(_live_config.instance._values[name]):
+            if scoped.pattern is not None and scoped.pattern.matches(url):
+                _live_config.instance.unset(name, pattern=scoped.pattern, save_yaml=True)
+                reset.append(name.removeprefix("content."))
+    if reset:
+        message.info(f"Reset for {url.host()}: {', '.join(sorted(set(reset)))}")
+    else:
+        message.info(f"No saved permissions for {url.host()}")
+
 # Chrome-style inline completion for the address prompt (t, <C-t>, o). While a
 # single word is typed, the rest of the most recent history or bookmark address
 # that starts with it is filled in after the cursor, selected, so typing on
