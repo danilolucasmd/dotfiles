@@ -16,6 +16,35 @@ config.load_autoconfig(False)
 # memory to toggle back to, the closest qutebrowser has is gi's first-input hint.
 config.bind("gI", "hint inputs --first")
 
+# j/k and <C-d>/<C-u> scroll whatever is scrollable under the middle of the
+# view, the way Vimium does. qutebrowser's own commands only reach the page:
+# `scroll` presses arrow keys, which Google Docs turns into caret moves, and
+# `scroll-page` scrolls the window through qutebrowser's injected helper, which
+# does nothing where an inner pane scrolls (Docs, Slack) and breaks on sites
+# that wipe the helper (GitHub, AliExpress). Instant, like Vimium's jumps;
+# 60px is Vimium's step.
+def _scroll_js(step):
+    return (
+        "jseval -q (() => {"
+        " let el = document.elementFromPoint(innerWidth / 2, innerHeight / 2);"
+        " const root = (e) => !e || e === document.body || e === document.documentElement;"
+        " while (!root(el)) {"
+        "  const o = getComputedStyle(el).overflowY;"
+        "  if (/(auto|scroll|overlay)/.test(o) && el.scrollHeight > el.clientHeight) break;"
+        "  el = el.parentElement;"
+        " }"
+        " if (root(el)) el = document.scrollingElement;"
+        " const view = el === document.scrollingElement ? innerHeight : el.clientHeight;"
+        f" el.scrollBy({{ top: {step}, behavior: 'instant' }});"
+        " })()"
+    )
+
+
+config.bind("j", _scroll_js("60"))
+config.bind("k", _scroll_js("-60"))
+config.bind("<Ctrl-d>", _scroll_js("view / 2"))
+config.bind("<Ctrl-u>", _scroll_js("-view / 2"))
+
 # Vimium's hint alphabet and look. Fourteen characters give 196 two-letter
 # labels, where qutebrowser's nine home-row keys run out at 81 and start
 # handing out three-letter ones on any busy page. Every label on a page has the
@@ -43,6 +72,8 @@ config.bind("bo", "tab-only")
 config.bind("br", "tab-only --prev")
 config.bind("bH", "tab-move -")
 config.bind("bL", "tab-move +")
+config.bind("bd", "tab-close")
+config.bind("bt", "cmd-set-text -s :open -t")
 
 # Brave's address-bar keys. <C-l> opens the current URL with the URL itself
 # selected, as Chrome does, so typing replaces it and an arrow key edits it.
@@ -274,3 +305,4 @@ def reopen(win_id: int) -> None:
 
 
 config.bind("<Ctrl-Shift-T>", "reopen")
+config.bind("bT", "reopen")
