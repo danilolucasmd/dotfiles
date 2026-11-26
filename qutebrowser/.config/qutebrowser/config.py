@@ -16,6 +16,13 @@ config.load_autoconfig(False)
 # memory to toggle back to, the closest qutebrowser has is gi's first-input hint.
 config.bind("gI", "hint inputs --first")
 
+# Vimium's hint alphabet and look. Fourteen characters give 196 two-letter
+# labels, where qutebrowser's nine home-row keys run out at 81 and start
+# handing out three-letter ones on any busy page. Every label on a page has the
+# same length, as in Vimium, and is shown in capitals.
+config.set("hints.chars", "sadfjklewcmpgh")
+config.set("hints.uppercase", True)
+
 # History
 config.bind("<Ctrl-o>", "back")
 config.bind("<Ctrl-i>", "forward")
@@ -81,11 +88,6 @@ for mode in ("normal", "insert"):
 config.set("qt.args", ["force-dark-mode"])
 # The colour a page shows before it paints; white here is a flash on every load.
 config.set("colors.webpage.bg", "#2c292f")
-
-# j/k scroll by synthesized arrow-key presses, which Chromium's smooth scrolling
-# animates; <C-d>/<C-u> scroll through JavaScript, which it does not, so they
-# stay instant. Needs a restart.
-config.set("scrolling.smooth", True)
 
 # Theme. The base is ghostty's background, so the browser and terminal read as
 # one surface; text, font and the Catppuccin accents are the quickshell bar's
@@ -166,13 +168,6 @@ config.set("colors.completion.item.selected.match.fg", MAUVE)
 config.set("colors.completion.match.fg", MAUVE)
 config.set("colors.completion.scrollbar.bg", BASE)
 config.set("colors.completion.scrollbar.fg", BORDER)
-
-# Hints are the one thing drawn over arbitrary page content, so they take the
-# loudest treatment: solid mauve labels with dark text.
-config.set("colors.hints.bg", MAUVE)
-config.set("colors.hints.fg", ON_ACCENT)
-config.set("colors.hints.match.fg", DIM)
-config.set("hints.border", f"1px solid {BASE}")
 
 config.set("colors.keyhint.bg", MANTLE)
 config.set("colors.keyhint.fg", FG)
@@ -273,3 +268,188 @@ def reopen(win_id: int) -> None:
 
 
 config.bind("<Ctrl-Shift-T>", "reopen")
+
+# 1Password fill, the stand-in for its browser extension, which qutebrowser
+# cannot run. <C-\> asks the `op` CLI (signed in through the desktop app's CLI
+# integration) for the Login items whose website matches the page: exactly one
+# is filled straight away, otherwise the command line opens on `1password-fill`
+# and qutebrowser's own completion list is the picker, so nothing outside the
+# browser is needed on either Linux or macOS. Like `reopen`, the command and its
+# completion use qutebrowser internals.
+#
+# op runs through QProcess so a slow CLI, or the app waiting on its approval
+# prompt, never freezes the browser. Secrets go to the page through
+# run_js_async rather than a :jseval command, so they never pass through the
+# command parser, history or logs. A one-time code, when the item has one, is
+# copied for the step after the password.
+import json
+import shutil
+from urllib.parse import urlparse
+
+from qutebrowser.commands import runners
+from qutebrowser.completion.models import completionmodel, listcategory
+from qutebrowser.qt.core import QProcess
+from qutebrowser.utils import utils
+
+# An app launched from the macOS Dock gets a PATH without Homebrew on it.
+OP = shutil.which("op") or next(
+    (p for p in ("/opt/homebrew/bin/op", "/usr/local/bin/op") if shutil.which(p)),
+    "op",
+)
+
+_op_processes = set()
+_login_choices = {}
+
+
+def _run_op(args, on_success):
+    proc = QProcess()
+    _op_processes.add(proc)
+
+    def finished(code, _status):
+        _op_processes.discard(proc)
+        out = bytes(proc.readAllStandardOutput()).decode()
+        err = bytes(proc.readAllStandardError()).decode().strip()
+        if code != 0:
+            message.error(f"1Password: {err or 'op exited with ' + str(code)}")
+            return
+        on_success(out)
+
+    proc.finished.connect(finished)
+    proc.errorOccurred.connect(
+        lambda _e: (_op_processes.discard(proc), message.error(f"1Password: cannot run {OP}"))
+    )
+    proc.start(OP, args)
+
+
+def _host(url):
+    host = (urlparse(url if "//" in url else "https://" + url).hostname or "").lower()
+    return host[4:] if host.startswith("www.") else host
+
+
+def _matches(page_host, item):
+    for link in item.get("urls") or []:
+        item_host = _host(link.get("href", ""))
+        if item_host and (page_host == item_host or page_host.endswith("." + item_host)):
+            return True
+    return False
+
+
+def _label(item):
+    user = item.get("additional_information")
+    return f"{item['title']} ({user})" if user else item["title"]
+
+
+_FILL_JS = """
+(function (user, pass) {
+    const shown = (el) => {
+        const s = getComputedStyle(el);
+        return el.offsetWidth > 0 && el.offsetHeight > 0
+            && s.visibility !== "hidden" && s.display !== "none";
+    };
+    const textual = (el) => ["text", "email", "tel", ""].includes(el.type);
+    const looksLikeUser = (el) => textual(el) && (el.autocomplete === "username"
+        || /user|email|login|account|identifier/i.test(
+            [el.name, el.id, el.autocomplete, el.placeholder,
+             el.getAttribute("aria-label")].join(" ")));
+    // The native setter plus bubbling input/change events is what frameworks
+    // that track the value themselves (React, Vue) recognise as typing.
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+    const fill = (el, value) => {
+        el.focus();
+        setter.call(el, value);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    const inputs = [...document.querySelectorAll("input")].filter(shown);
+    const pw = inputs.find((el) => el.type === "password");
+    let userField;
+    if (pw) {
+        const before = inputs.slice(0, inputs.indexOf(pw)).filter(textual).reverse();
+        userField = before.find(looksLikeUser) || before[0];
+    } else {
+        // Two-step logins (Google, Microsoft) ask for the email on its own page.
+        userField = inputs.find(looksLikeUser) || inputs.find(textual);
+    }
+    if (userField && user) fill(userField, user);
+    if (pw && pass) fill(pw, pass);
+    return Boolean((userField && user) || (pw && pass));
+})(%s, %s)
+"""
+
+
+def _fill(win_id, item_id, page_url):
+    def got_item(out):
+        item = json.loads(out)
+        fields = item.get("fields") or []
+        value = lambda purpose: next(
+            (f.get("value") for f in fields if f.get("purpose") == purpose), None
+        )
+        tab = objreg.get("tabbed-browser", scope="window", window=win_id).widget.currentWidget()
+        if tab is None or tab.url().toString() != page_url:
+            message.error("1Password: the page changed, nothing was filled")
+            return
+
+        def done(filled):
+            if not filled:
+                message.error("1Password: no login fields found on this page")
+                return
+            totp = next((f.get("totp") for f in fields if f.get("type") == "OTP"), None)
+            if totp:
+                utils.set_clipboard(totp)
+                message.info(f"Filled {item['title']}; one-time code copied")
+            else:
+                message.info(f"Filled {item['title']}")
+
+        code = _FILL_JS % (json.dumps(value("USERNAME")), json.dumps(value("PASSWORD")))
+        tab.run_js_async(code, done)
+
+    _run_op(["item", "get", item_id, "--format", "json", "--reveal"], got_item)
+
+
+def _login_completion(*args, info):
+    model = completionmodel.CompletionModel(column_widths=(50, 50, 0))
+    rows = ((label, host) for label, (_id, host) in _login_choices.items())
+    model.add_category(listcategory.ListCategory("1Password", rows))
+    return model
+
+
+objects.commands.pop("1password-fill", None)
+
+
+@cmdutils.register(name="1password-fill", maxsplit=0)
+@cmdutils.argument("win_id", value=cmdutils.Value.win_id)
+@cmdutils.argument("login", completion=_login_completion)
+def onepassword_fill(win_id: int, login: str = None) -> None:
+    """Fill the page's login from 1Password, or pick one from a list."""
+    tab = objreg.get("tabbed-browser", scope="window", window=win_id).widget.currentWidget()
+    page_url = tab.url().toString()
+    if login:
+        chosen = _login_choices.get(login) or next(
+            (v for k, v in _login_choices.items() if login.lower() in k.lower()), None
+        )
+        if chosen is None:
+            raise cmdutils.CommandError(f"1Password: no login named {login}")
+        _fill(win_id, chosen[0], page_url)
+        return
+
+    def got_list(out):
+        items = json.loads(out)
+        page_host = _host(page_url)
+        matching = [i for i in items if _matches(page_host, i)]
+        if len(matching) == 1:
+            _fill(win_id, matching[0]["id"], page_url)
+            return
+        # None matched: offer every login, for one saved without this site's URL.
+        _login_choices.clear()
+        for item in sorted(matching or items, key=lambda i: i["title"].lower()):
+            urls = item.get("urls") or [{}]
+            _login_choices[_label(item)] = (item["id"], _host(urls[0].get("href", "")))
+        runners.CommandRunner(win_id).run_safely("cmd-set-text -s :1password-fill")
+
+    _run_op(["item", "list", "--categories", "Login", "--format", "json"], got_list)
+
+
+# <Ctrl> is the Command key in qutebrowser on macOS, so this is <C-\> on Linux
+# and Cmd-\ on macOS: 1Password's own fill shortcut on each.
+for mode in ("normal", "insert"):
+    config.bind("<Ctrl-\\>", "1password-fill", mode=mode)

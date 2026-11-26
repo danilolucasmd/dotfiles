@@ -1738,7 +1738,12 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> opens a private window, marked by a
   purple statusbar. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> reopens the
-  last closed tab, or, right after launch, every tab open when it last quit. It is
+  last closed tab, or, right after launch, every tab open when it last quit.
+  <kbd>Ctrl</kbd>+<kbd>\</kbd> fills the page's login from 1Password through the
+  `op` CLI (so it needs the CLI toggle from section 3): one matching login fills
+  straight away, several open a picker in qutebrowser's command line.
+  `greasemonkey/youtube-grid.user.js` ports the YouTube Row Fixer extension: five
+  videos per row, a compact Shorts shelf, no channel avatars. It is
   the only config qutebrowser reads: `:set` lasts for the session, so a setting
   worth keeping goes in `config.py`
 
