@@ -113,6 +113,9 @@ config.bind("br", "tab-only --prev")
 config.bind("bH", "tab-move -")
 config.bind("bL", "tab-move +")
 config.bind("bd", "tab-close")
+# qutebrowser closes the tab on a bare `d` by default, one stray keypress from
+# losing the page. Closing takes `bd` (or Ctrl+W) instead.
+config.unbind("d")
 config.bind("bt", "cmd-set-text -s :open -t")
 # Vimium's new-tab key. A single-key binding fires at once, so this shadows
 # qutebrowser's t-prefixed defaults: th/tl (back/forward in a new tab) and the
