@@ -33,7 +33,8 @@ all of it:
 - **The main `config.py`** for keys and theme, with forced dark mode off (the
   apps' own dark themes still apply), the tab bar off,
   the status bar shown only outside normal mode (insert, hints, the command
-  line), and notifications allowed. A link the app opens in a
+  line), and notifications allowed. Notifications are signed with the app's
+  name instead of "qutebrowser", with no origin URL above the message. A link the app opens in a
   new tab becomes a new window, since there is no tab bar to show it in.
 - **WhatsApp starts in passthrough mode**, so every key goes to the page
   (typing anywhere, its own shortcuts), and has no status bar at all.

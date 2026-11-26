@@ -52,6 +52,43 @@ config.bind("<Ctrl-u>", _scroll_js("-view / 2"))
 config.set("hints.chars", "sadfjklewcmpgh")
 config.set("hints.uppercase", True)
 
+# Shift on the hint's last letter opens the link in a new tab, as in Vimium,
+# where it is the habit: type the label, hold Shift for its final key. Hint
+# mode binds each label lowercase, so a shifted letter matched nothing and the
+# hint never fired. The parser now drops Shift before matching and remembers
+# it, and a hint fired by a shifted key that would have opened in place opens
+# in a tab instead (background, per tabs.background). Hints started for
+# yanking, downloading or anything else that is not a click are left alone.
+from qutebrowser.browser import hints as _hints
+from qutebrowser.keyinput import modeparsers
+from qutebrowser.qt.core import Qt
+from qutebrowser.qt.gui import QKeyEvent
+
+if not hasattr(modeparsers.HintKeyParser, "_original_handle"):
+    modeparsers.HintKeyParser._original_handle = modeparsers.HintKeyParser.handle
+    _hints.HintManager._original_fire = _hints.HintManager._fire
+
+
+def _hint_handle(self, e, *, dry_run=False):
+    shifted = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier) and e.text().isalpha()
+    if shifted:
+        e = QKeyEvent(e.type(), e.key(), e.modifiers() & ~Qt.KeyboardModifier.ShiftModifier,
+                      e.text().lower(), e.isAutoRepeat(), e.count())
+    if not dry_run:
+        self._hintmanager._shift_fired = shifted
+    return modeparsers.HintKeyParser._original_handle(self, e, dry_run=dry_run)
+
+
+def _hint_fire(self, keystr):
+    if getattr(self, "_shift_fired", False) and self._context.target in (
+            _hints.Target.normal, _hints.Target.current):
+        self._context.target = _hints.Target.tab
+    return _hints.HintManager._original_fire(self, keystr)
+
+
+modeparsers.HintKeyParser.handle = _hint_handle
+_hints.HintManager._fire = _hint_fire
+
 # History
 config.bind("<Ctrl-o>", "back")
 config.bind("<Ctrl-i>", "forward")
@@ -191,9 +228,10 @@ def _paint_with_dividers(self, event):
     painter = QPainter(self)
     painter.setPen(QColor(BORDER))
     current = self.currentIndex()
-    for i in range(self.count()):
-        # The divider after tab i sits between i and i + 1; next to the active
-        # tab its raised background already marks the edge, as in Chrome.
+    # The divider after tab i sits between i and i + 1, so the last tab has
+    # none: there is nothing after it to divide from. Next to the active tab
+    # its raised background already marks the edge, as in Chrome.
+    for i in range(self.count() - 1):
         if current in (i, i + 1):
             continue
         rect = self.tabRect(i)
@@ -461,6 +499,7 @@ if not hasattr(statuscommand.Command, "_original_init"):
 def _command_init(self, *args, **kwargs):
     statuscommand.Command._original_init(self, *args, **kwargs)
     _hook_command_line(self)
+    _patch_notifications()
 
 
 statuscommand.Command.__init__ = _command_init
@@ -485,3 +524,49 @@ def command_accept_inline(win_id: int) -> None:
 
 
 config.bind("<Return>", "command-accept-inline", mode="command")
+
+# Notifications from a web app (webapps/qutebrowser-app.sh exports
+# QUTE_WEBAPP_NAME) are signed with the app's name, where qutebrowser hardcodes
+# "qutebrowser" as the app name every notification daemon titles them with, and
+# carry the app's window class as their desktop entry in place of
+# org.qutebrowser.qutebrowser. The launcher also turns off the origin URL that
+# would head the body, and the desktop entry is what replaces it for
+# quickshell's focus-sender.sh: an exact class match takes a clicked
+# notification to the app's own window. The main browser is untouched, since
+# its notifications come from any site and the URL is the only thing saying
+# which.
+#
+# The patch cannot simply import the notification module here. At startup
+# config.py runs before qutebrowser has loaded it, and qutebrowser deletes every
+# module config.py was first to import once the file is done (so a re-source
+# starts clean), which leaves the patch on a copy nobody uses. So it is applied
+# when the first window's command line is built (by then the module is
+# qutebrowser's own) and straight away when the module is already loaded, as on
+# a :config-source.
+import os
+import sys
+
+from qutebrowser.qt.gui import QGuiApplication
+
+_WEBAPP_NAME = os.environ.get("QUTE_WEBAPP_NAME")
+_NOTIFICATION_MODULE = "qutebrowser.browser.webengine.notification"
+
+
+def _patch_notifications():
+    from qutebrowser.browser.webengine import notification
+
+    adapter = notification.DBusNotificationAdapter
+    if not hasattr(adapter, "_original_notify"):
+        adapter._original_notify = adapter._call_notify_wrapper
+
+    def notify_as_webapp(self, *, appname, hints, **kwargs):
+        if _WEBAPP_NAME:
+            appname = _WEBAPP_NAME
+            hints["desktop-entry"] = QGuiApplication.desktopFileName()
+        return adapter._original_notify(self, appname=appname, hints=hints, **kwargs)
+
+    adapter._call_notify_wrapper = notify_as_webapp
+
+
+if _NOTIFICATION_MODULE in sys.modules:
+    _patch_notifications()

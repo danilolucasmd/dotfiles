@@ -11,13 +11,14 @@
 #      default action instead, and lets the app raise itself
 #
 # That split exists because the app's default action is not always the better
-# answer. qutebrowser sets desktop-entry=org.qutebrowser.qutebrowser on every
-# notification, web apps included, so that and its default action both point at
-# the *browser* -- but the notification for a WhatsApp message belongs to the
-# web-app window. The origin is the first line of the body
-# ("https://web.whatsapp.com"), and webapps/qutebrowser-app.sh gives those
-# windows classes built from the same host (webapp-web.whatsapp.com), so
-# matching on that beats both.
+# answer. A browser's notification names the browser, so its default action
+# points at the browser window, while the site may be open as a web app of its
+# own. The main qutebrowser puts the origin on the first line of the body
+# ("https://web.whatsapp.com"), and a web app's window class is built from the
+# same host (webapp-web.whatsapp.com), so the host pass below can still find
+# the app. The web apps themselves need none of that: config.py makes their
+# notifications carry their window class as the desktop entry, which the class
+# pass matches exactly.
 #
 # Five passes, in order of how much the match can be trusted:
 #

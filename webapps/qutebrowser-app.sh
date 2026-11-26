@@ -19,15 +19,22 @@
 # the question came back every time. Everything else (keys, theme) is the main
 # config.py, which every app loads.
 #
-# The app id is webapp-<host>: quickshell's focus-sender.sh routes a clicked
-# notification to the window whose class carries the notification's origin, and
-# qutebrowser puts the origin URL at the top of every notification body.
+# The app id is webapp-<host>, and the app's notifications carry it as their
+# desktop entry (config.py does that), so quickshell's focus-sender.sh can take
+# a clicked one straight to this window. They are signed with the app's name
+# rather than "qutebrowser", and the origin URL qutebrowser would otherwise put
+# above every message is off: the name already says where it came from.
 set -euo pipefail
 
 slug=$1
 url=$2
 host=$(printf '%s' "$url" | sed -E 's#^[a-z]+://##; s#[/?#].*##')
 class="webapp-$host"
+
+# The app's display name from apps.conf, for config.py to sign its
+# notifications with (QUTE_WEBAPP_NAME; see the notifications section there).
+QUTE_WEBAPP_NAME=$(awk -F'|' -v s="$slug" '!/^#/ { gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/[ \t]/, "", $3); if ($3 == s) { print $1; exit } }' "$(dirname "$(realpath "$0")")/apps.conf")
+export QUTE_WEBAPP_NAME
 
 # Launching an app that is already open raises it instead of opening a second
 # window, which is what a dock icon is expected to do.
@@ -79,6 +86,7 @@ exec qutebrowser \
 	--set tabs.tabs_are_windows true \
 	--set window.title_format '{current_title}' \
 	--set content.notifications.enabled true \
+	--set content.notifications.show_origin false \
 	--set colors.webpage.darkmode.enabled false \
 	--set content.register_protocol_handler false \
 	--set qt.args "[$qt_args]" \

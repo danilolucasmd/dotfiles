@@ -881,11 +881,14 @@ that sent it, through `focus-sender.sh`. The matching is better than mako's,
 because notifications say more than their app name does:
 
 - **Web apps.** qutebrowser stamps `desktop-entry=org.qutebrowser.qutebrowser`
-  on everything, web apps included, so the entry alone would raise the main
-  browser. But it puts the origin on the first line of the body
-  (`https://web.whatsapp.com`), and each web-app window's class carries that
-  host (`webapp-web.whatsapp.com`), so that is matched first and the message
-  goes to its own window.
+  and the app name "qutebrowser" on everything, and heads the body with the
+  origin URL. In a web app, `config.py` replaces both with the app's own name
+  and window class (`webapp-web.whatsapp.com`) and the origin line is turned
+  off, so the popup reads "WhatsApp" over the message alone and the class
+  match takes a click straight to that window. The main browser keeps the
+  origin line, and a site it notifies for that is also open as a web app
+  (`https://web.whatsapp.com` against `webapp-web.whatsapp.com`) still goes to
+  the app's window.
 - **The app's own action is the fallback, not the first choice.** If the origin
   names a site with no web-app window open, the script bows out and the
   notification's default action runs instead — the browser opens the tab, which is the
