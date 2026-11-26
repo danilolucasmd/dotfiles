@@ -1732,8 +1732,9 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   `mpv` stow package, empty for now; to keep a tweak made in a running window, quit it with
   <kbd>Shift</kbd>+<kbd>Q</kbd> and copy the properties from the file that
   lands in `~/.local/state/mpv/watch_later/`
-- qutebrowser is installed alongside Brave as a keyboard-driven browser; Brave
-  stays the default browser; the web apps (`webapps/`) run on qutebrowser. Its `config.py` ports the
+- qutebrowser is the default browser, for every link opened outside a browser
+  (terminals and herdr included), and runs the web apps (`webapps/`); Brave stays
+  installed for its Widevine copy and `mailto:` links. Its `config.py` ports the
   Vimium C keymap from `vimium/`, so both browsers navigate the same way, and
   sets Google as the search engine and dark mode on every page
   (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).

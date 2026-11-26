@@ -574,9 +574,9 @@ echo "==> Installing pacman packages"
 # out of this repo: run `rclone-gdrive-setup` after signing in to 1Password,
 # which reads our own OAuth client from 1Password (README section 3).
 #
-# qutebrowser is a keyboard-driven browser alongside Brave, not a replacement
-# for it: Brave still owns the default-browser handler. The web apps run on
-# qutebrowser (webapps/qutebrowser-app.sh).
+# qutebrowser is the default browser (see DEFAULT APPLICATIONS) and runs the
+# web apps (webapps/qutebrowser-app.sh). Brave stays installed: the web apps
+# borrow its Widevine copy for DRM video.
 pac \
   stow \
   neovim \
@@ -1468,6 +1468,14 @@ if [[ -f /usr/share/applications/mpv.desktop ]]; then
   )
   try "mpv as video handler" xdg-mime default mpv.desktop "${mpv_video_types[@]}"
 fi
+
+# qutebrowser is the browser for every link opened outside a browser: xdg-open,
+# and through it terminal links (ghostty, herdr) and other apps. xdg-settings
+# covers http, https and text/html; about: and unknown schemes go with them.
+# mailto: is left alone.
+try "qutebrowser as web browser" xdg-settings set default-web-browser org.qutebrowser.qutebrowser.desktop
+try "qutebrowser for about/unknown" xdg-mime default org.qutebrowser.qutebrowser.desktop \
+  x-scheme-handler/about x-scheme-handler/unknown
 
 # Through sudo, not as a bare `chsh`: chsh authenticates the user with PAM in
 # its own right, so a plain call asks for the password again -- at the very end
