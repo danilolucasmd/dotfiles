@@ -575,7 +575,8 @@ echo "==> Installing pacman packages"
 # which reads our own OAuth client from 1Password (README section 3).
 #
 # qutebrowser is a keyboard-driven browser alongside Brave, not a replacement
-# for it: Brave still owns the default-browser handler and the web apps.
+# for it: Brave still owns the default-browser handler. The web apps run on
+# qutebrowser (webapps/qutebrowser-app.sh).
 pac \
   stow \
   neovim \
@@ -1301,7 +1302,7 @@ try "nautilus/GTK preferences" dconf load / < "$DOTFILES/nautilus/dconf.ini"
 
 # panels carries the desktop entries that put every quickshell panel in the
 # launcher by name. --no-folding so that ~/.local/share/applications stays a real
-# directory -- webapps/generate.sh writes the Brave web-app launchers in there,
+# directory -- webapps/generate.sh writes the web-app launchers in there,
 # and folding would send those into this repo. See panels/README.md.
 stow --no-folding panels
 
@@ -1490,13 +1491,13 @@ echo "==> Applying GTK cedilla fix"
 try "cedilla fix" "$DOTFILES/post-install.sh"
 
 ############################################################
-# BRAVE WEB APPS                                           #
+# WEB APPS                                                 #
 ############################################################
 
-# Generate toolbar-free Brave web-app launchers (--app=URL)
-# from webapps/apps.conf. See webapps/README.md.
-echo "==> Generating Brave web app launchers"
-try "Brave web apps" "$DOTFILES/webapps/generate.sh"
+# Launchers for the web apps in webapps/apps.conf, each a bare qutebrowser
+# window with a profile of its own. See webapps/README.md.
+echo "==> Generating web app launchers"
+try "web apps" "$DOTFILES/webapps/generate.sh"
 
 ############################################################
 # SANITY CHECKS                                            #

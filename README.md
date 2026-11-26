@@ -880,14 +880,15 @@ Clicking a notification — or hitting enter on it in the panel — jumps to the
 that sent it, through `focus-sender.sh`. The matching is better than mako's,
 because notifications say more than their app name does:
 
-- **Web apps.** Brave stamps `desktop-entry=brave-browser` on everything and its
-  own default action raises the *browser*, so a WhatsApp message used to land on
-  whatever tab was last open. But Brave puts the origin on the first line of the
-  body (`web.whatsapp.com`), and the generated launchers carry a matching class,
-  so that is matched first and the message goes to its own window.
+- **Web apps.** qutebrowser stamps `desktop-entry=org.qutebrowser.qutebrowser`
+  on everything, web apps included, so the entry alone would raise the main
+  browser. But it puts the origin on the first line of the body
+  (`https://web.whatsapp.com`), and each web-app window's class carries that
+  host (`webapp-web.whatsapp.com`), so that is matched first and the message
+  goes to its own window.
 - **The app's own action is the fallback, not the first choice.** If the origin
   names a site with no web-app window open, the script bows out and the
-  notification's default action runs instead — Brave opens the tab, which is the
+  notification's default action runs instead — the browser opens the tab, which is the
   right answer there. That path needs `misc:focus_on_activate = true` in
   `hyprland.lua`.
 - **herdr.** It notifies through a bare `notify-send`: no desktop entry, app
@@ -1732,7 +1733,7 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   <kbd>Shift</kbd>+<kbd>Q</kbd> and copy the properties from the file that
   lands in `~/.local/state/mpv/watch_later/`
 - qutebrowser is installed alongside Brave as a keyboard-driven browser; Brave
-  stays the default browser and the web apps' engine. Its `config.py` ports the
+  stays the default browser; the web apps (`webapps/`) run on qutebrowser. Its `config.py` ports the
   Vimium C keymap from `vimium/`, so both browsers navigate the same way, and
   sets Google as the search engine and dark mode on every page
   (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).

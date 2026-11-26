@@ -11,12 +11,13 @@
 #      default action instead, and lets the app raise itself
 #
 # That split exists because the app's default action is not always the better
-# answer. Brave sets desktop-entry=brave-browser on every notification and its
-# default action raises the *browser* window — but the notification for a
-# WhatsApp message belongs to the web-app window, which Brave will never raise.
-# The origin is the first line of the body ("web.whatsapp.com"), and the
-# generated launchers give those windows classes built from the same host
-# (brave-web.whatsapp.com__-Default), so matching on that beats both.
+# answer. qutebrowser sets desktop-entry=org.qutebrowser.qutebrowser on every
+# notification, web apps included, so that and its default action both point at
+# the *browser* -- but the notification for a WhatsApp message belongs to the
+# web-app window. The origin is the first line of the body
+# ("https://web.whatsapp.com"), and webapps/qutebrowser-app.sh gives those
+# windows classes built from the same host (webapp-web.whatsapp.com), so
+# matching on that beats both.
 #
 # Five passes, in order of how much the match can be trusted:
 #
@@ -93,9 +94,12 @@ if [ -z "$entry" ] && [ "$app" = "notify-send" ] && command -v herdr >/dev/null 
   fi
 fi
 
-# Brave and friends put the origin on the first line of the body. Only a bare
-# hostname counts — anything with a space in it is prose.
-host=$(printf '%s' "$body" | head -n1 | grep -oE '^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$' || true)
+# Browsers put the origin on the first line of the body: Brave as a bare host,
+# qutebrowser as a full URL, possibly wrapped in a link. Tags, scheme and path
+# are stripped, and what is left counts only if it is a bare hostname --
+# anything with a space in it is prose.
+host=$(printf '%s' "$body" | head -n1 | sed -E 's/<[^>]*>//g; s#^[a-z]+://##; s#[/?\#].*##' \
+  | grep -oE '^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$' || true)
 
 # The first absolute path in the text that is a file we can actually open.
 # Existing is the whole test: it is what stops prose about a path that has since
