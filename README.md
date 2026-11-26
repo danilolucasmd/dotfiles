@@ -1717,8 +1717,8 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`
-- `dbus`, `nautilus`, `panels`, `kanata`, `claude`, `caveman` and `herdr` are
-  stowed with `--no-folding`, everything else plainly
+- `dbus`, `nautilus`, `panels`, `kanata`, `claude`, `caveman`, `herdr` and
+  `qutebrowser` are stowed with `--no-folding`, everything else plainly
 - `webapps/` and `snapshots/` are not stow packages at all -- the first is a
   generator, the second a set of curated `/etc` files `install.sh` copies
 - When an app has already written a config that stow wants to own, `install.sh`
@@ -1731,6 +1731,16 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   `mpv` stow package, empty for now; to keep a tweak made in a running window, quit it with
   <kbd>Shift</kbd>+<kbd>Q</kbd> and copy the properties from the file that
   lands in `~/.local/state/mpv/watch_later/`
+- qutebrowser is installed alongside Brave as a keyboard-driven browser; Brave
+  stays the default browser and the web apps' engine. Its `config.py` ports the
+  Vimium C keymap from `vimium/`, so both browsers navigate the same way, and
+  sets Google as the search engine and dark mode on every page
+  (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> opens a private window, marked by a
+  purple statusbar. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> reopens the
+  last closed tab, or, right after launch, every tab open when it last quit. It is
+  the only config qutebrowser reads: `:set` lasts for the session, so a setting
+  worth keeping goes in `config.py`
 
 ### Leftovers worth removing
 

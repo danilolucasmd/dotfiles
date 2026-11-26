@@ -573,6 +573,9 @@ echo "==> Installing pacman packages"
 # rclone backs game saves up to Google Drive. Its login is per machine and stays
 # out of this repo: run `rclone-gdrive-setup` after signing in to 1Password,
 # which reads our own OAuth client from 1Password (README section 3).
+#
+# qutebrowser is a keyboard-driven browser alongside Brave, not a replacement
+# for it: Brave still owns the default-browser handler and the web apps.
 pac \
   stow \
   neovim \
@@ -621,6 +624,7 @@ pac \
   transmission-gtk \
   mpv \
   mpv-mpris \
+  qutebrowser \
   rclone \
   steam
 
@@ -1268,6 +1272,12 @@ fi
 # spacebar quick preview) that sets SUSHI_USE_GST_GTKSINK=1, because
 # GStreamer's gtkglsink is broken on NVIDIA. See dbus/README.md.
 stow --no-folding dbus
+
+# qutebrowser writes its bookmarks, quickmarks, autoconfig.yml and greasemonkey
+# scripts into ~/.config/qutebrowser, so only config.py is linked and the
+# directory stays real: folded, all of that would land in this repo.
+resolve_stow_conflicts --no-folding qutebrowser
+stow --no-folding qutebrowser
 
 # nautilus carries the sidebar bookmarks, ~/.config/gtk-3.0/bookmarks, which
 # GTK 4 still reads from the gtk-3.0 path and which the Open/Save dialogs share
