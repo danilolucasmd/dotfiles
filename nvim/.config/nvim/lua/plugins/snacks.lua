@@ -15,6 +15,53 @@ local function refresh_explorer_git(picker)
   require("snacks.explorer.actions").update(picker, { refresh = true })
 end
 
+-- The explorer tree is read from disk, so files git reports as deleted have no
+-- node. They are linked into it here, and expand is wrapped because rescanning
+-- a folder drops any child that is not on disk.
+local injected = {} ---@type table<string, boolean>
+
+local function inject_deleted(open)
+  local Tree = require("snacks.explorer.tree")
+  local deleted = require("util.diffstat").deleted
+  for path in pairs(injected) do
+    if not deleted[path] and not vim.uv.fs_lstat(path) then
+      local node = Tree:node(path)
+      while node and node.parent and not vim.uv.fs_lstat(node.path) and vim.tbl_isempty(node.children) do
+        node.parent.children[node.name] = nil
+        Tree.nodes[node.path] = nil
+        node = node.parent
+      end
+      injected[path] = nil
+    end
+  end
+  for path in pairs(deleted) do
+    injected[path] = true
+    local node = Tree:find(path)
+    while node.parent do
+      node.parent.children[node.name] = node
+      if open and node.parent.dir then
+        node.parent.open = true
+      end
+      node = node.parent
+    end
+  end
+end
+
+local function patch_tree_expand()
+  local Tree = require("snacks.explorer.tree")
+  if rawget(Tree, "expand") then
+    return
+  end
+  local expand = getmetatable(Tree).expand
+  Tree.expand = function(self, node)
+    local was = node.expanded
+    expand(self, node)
+    if not was then
+      inject_deleted(false)
+    end
+  end
+end
+
 return {
   {
     "folke/snacks.nvim",
@@ -47,6 +94,8 @@ return {
             -- stage or commit, a file appearing), in the background; when they
             -- change, only the rows and title are redrawn, not the tree.
             finder = function(opts, ctx)
+              patch_tree_expand()
+              inject_deleted(ctx.picker.opts.changed_only)
               -- Changed files usually sit in collapsed folders, so with the M
               -- filter on, every folder on the way to one is opened before the
               -- tree is listed. Done on each find rather than once on M, so a
@@ -64,9 +113,12 @@ return {
               local root = Snacks.git.get_root(ctx.filter.cwd)
               if root then
                 local picker = ctx.picker
-                require("util.diffstat").refresh(root, function()
+                require("util.diffstat").refresh(root, function(tree_changed)
                   if picker.closed then
                     return
+                  end
+                  if tree_changed then
+                    picker:find()
                   end
                   local total = require("util.diffstat").total
                   picker.title = (total.add + total.del > 0) and ("Explorer  +%d -%d"):format(total.add, total.del)
@@ -119,9 +171,26 @@ return {
             -- committed, though, so it only counts while git still reports
             -- the folder itself (status set); otherwise the filter would keep
             -- showing an orphaned, long-committed folder.
+            -- Statuses come from diffstat where it has one: it runs git with
+            -- --no-renames, so a rename shows as its new file added and its old
+            -- one deleted, and it covers the deleted files snacks skips.
             transform = function(item, ctx)
+              local diffstat = require("util.diffstat")
+              if not item.dir and diffstat.status[item.file] then
+                item.status = diffstat.status[item.file]
+              end
               if not ctx.picker.opts.changed_only or item.file == ctx.filter.cwd then
                 return
+              end
+              if diffstat.deleted[item.file] then
+                return true
+              end
+              if item.dir then
+                for path in pairs(diffstat.deleted) do
+                  if path:find(item.file .. "/", 1, true) == 1 then
+                    return true
+                  end
+                end
               end
               local node = require("snacks.explorer.tree"):node(item.file)
               if not node then

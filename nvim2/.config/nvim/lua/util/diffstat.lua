@@ -9,6 +9,10 @@ local M = {}
 
 M.files = {} ---@type table<string, {add: integer, del: integer}>
 M.total = { add = 0, del = 0 }
+-- Porcelain XY per changed path with renames split into a delete and an add.
+M.status = {} ---@type table<string, string>
+-- The subset of M.status whose file is gone from disk, which the explorer tree cannot list.
+M.deleted = {} ---@type table<string, string>
 
 local running, again = false, nil ---@type boolean, fun()?
 
@@ -59,7 +63,7 @@ local function parse_numstat(out, root, files)
 end
 
 ---@param root string git root
----@param on_change fun() called (scheduled) when the counts differ from the last run
+---@param on_change fun(tree_changed: boolean) called (scheduled) when anything differs; tree_changed means statuses or deletions moved
 function M.refresh(root, on_change)
   if running then
     again = function()
@@ -69,6 +73,7 @@ function M.refresh(root, on_change)
   end
   running = true
   local files = {} ---@type table<string, {add: integer, del: integer}>
+  local status, deleted = {}, {} ---@type table<string, string>, table<string, string>
   local git = { "git", "--no-pager", "--no-optional-locks" }
 
   local function finish()
@@ -76,11 +81,14 @@ function M.refresh(root, on_change)
     for _, s in pairs(files) do
       total.add, total.del = total.add + s.add, total.del + s.del
     end
-    local changed = not vim.deep_equal(files, M.files)
-    M.files, M.total = files, total
+    local tree_changed = not vim.deep_equal(deleted, M.deleted) or not vim.deep_equal(status, M.status)
+    local changed = tree_changed or not vim.deep_equal(files, M.files)
+    M.files, M.total, M.status, M.deleted = files, total, status, deleted
     running = false
     if changed then
-      vim.schedule(on_change)
+      vim.schedule(function()
+        on_change(tree_changed)
+      end)
     end
     if again then
       local fn = again
@@ -89,22 +97,45 @@ function M.refresh(root, on_change)
     end
   end
 
-  vim.system(vim.list_extend(vim.deepcopy(git), { "diff", "HEAD", "--numstat", "-z" }), { cwd = root, text = true }, function(diff)
-    if diff.code == 0 then
-      parse_numstat(diff.stdout or "", root, files)
-    end
-    vim.system(vim.list_extend(vim.deepcopy(git), { "ls-files", "--others", "--exclude-standard", "-z" }), { cwd = root, text = true }, function(ls)
-      if ls.code == 0 then
-        for path in (ls.stdout or ""):gmatch("([^%z]+)") do
-          local n = count_lines(root .. "/" .. path)
-          if n then
-            files[root .. "/" .. path] = { add = n, del = 0 }
-          end
-        end
+  vim.system(
+    vim.list_extend(vim.deepcopy(git), { "diff", "HEAD", "--numstat", "-z", "--no-renames" }),
+    { cwd = root, text = true },
+    function(diff)
+      if diff.code == 0 then
+        parse_numstat(diff.stdout or "", root, files)
       end
-      finish()
-    end)
-  end)
+      vim.system(
+        vim.list_extend(vim.deepcopy(git), { "ls-files", "--others", "--exclude-standard", "-z" }),
+        { cwd = root, text = true },
+        function(ls)
+          if ls.code == 0 then
+            for path in (ls.stdout or ""):gmatch("([^%z]+)") do
+              local n = count_lines(root .. "/" .. path)
+              if n then
+                files[root .. "/" .. path] = { add = n, del = 0 }
+              end
+            end
+          end
+          local args = { "status", "--porcelain=v1", "-z", "-uno", "--no-renames" }
+          vim.system(vim.list_extend(vim.deepcopy(git), args), { cwd = root, text = true }, function(st)
+            if st.code == 0 then
+              for entry in (st.stdout or ""):gmatch("([^%z]+)") do
+                local xy, path = entry:match("^(..) (.+)$")
+                if xy then
+                  path = root .. "/" .. path
+                  status[path] = xy
+                  if xy:find("D") and xy ~= "UD" and not vim.uv.fs_lstat(path) then
+                    deleted[path] = xy
+                  end
+                end
+              end
+            end
+            finish()
+          end)
+        end
+      )
+    end
+  )
 end
 
 return M
