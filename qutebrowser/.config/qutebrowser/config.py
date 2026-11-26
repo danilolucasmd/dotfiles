@@ -544,6 +544,7 @@ def _command_init(self, *args, **kwargs):
     statuscommand.Command._original_init(self, *args, **kwargs)
     _hook_command_line(self)
     _patch_notifications()
+    _patch_context_menu()
 
 
 statuscommand.Command.__init__ = _command_init
@@ -614,3 +615,54 @@ def _patch_notifications():
 
 if _NOTIFICATION_MODULE in sys.modules:
     _patch_notifications()
+    _patch_context_menu()
+
+# An "Inspect" item at the bottom of the right-click menu, as in Chrome: it opens
+# DevTools (docked, as :devtools does) on the element that was clicked. Qt's own
+# Inspect action only appears once DevTools has been opened for the tab, so it
+# is taken out and this one, which opens them first, is always there. Applied
+# lazily for the same reason as the notifications above: the web view module is
+# not loaded yet when config.py first runs.
+_WEBVIEW_MODULE = "qutebrowser.browser.webengine.webview"
+
+
+def _inspect(view):
+    from qutebrowser.qt.webenginecore import QWebEnginePage
+
+    tabbed = objreg.get("tabbed-browser", scope="window", window=view._win_id)
+    tab = next((t for t in tabbed.widgets() if t._widget is view), None)
+    if tab is None:
+        return
+    inspector = tab.data.inspector
+    if inspector is None or not inspector.isVisible():
+        tab.private_api.toggle_inspector(None)
+    view.page().triggerAction(QWebEnginePage.WebAction.InspectElement)
+
+
+def _patch_context_menu():
+    from qutebrowser.browser.webengine import webview
+    from qutebrowser.config import config as live_config
+    from qutebrowser.qt.core import Qt
+    from qutebrowser.qt.webenginecore import QWebEnginePage
+
+    view_class = webview.WebEngineView
+
+    def context_menu(self, ev):
+        if live_config.val.input.mouse.rocker_gestures:
+            ev.ignore()
+            return
+        menu = self.createStandardContextMenu()
+        menu.removeAction(self.pageAction(QWebEnginePage.WebAction.InspectElement))
+        menu.addSeparator()
+        menu.addAction("Inspect").triggered.connect(lambda: _inspect(self))
+        menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        # Held on the view: PyQt owns the menu createStandardContextMenu hands
+        # back, and would delete it as this returns, before it is ever drawn.
+        self._qb_context_menu = menu
+        menu.popup(ev.globalPos())
+
+    view_class.contextMenuEvent = context_menu
+
+
+if _WEBVIEW_MODULE in sys.modules:
+    _patch_context_menu()
