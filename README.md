@@ -1736,9 +1736,10 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   <kbd>Shift</kbd>+<kbd>Q</kbd> and copy the properties from the file that
   lands in `~/.local/state/mpv/watch_later/`
 - qutebrowser is the default browser, for every link opened outside a browser
-  (terminals and herdr included) and for images and XML files (Enter on one in
-  yazi), and runs the web apps (`webapps/`); Brave stays installed for its
-  Widevine copy and `mailto:` links. PDFs open in zathura instead, with vim keys
+  (terminals and herdr included) and for images and XML files, and runs the web apps (`webapps/`); Brave stays installed for its
+  Widevine copy and `mailto:` links. Enter on an image in yazi opens it in
+  tensaku instead, ready to mark up (the default app is the second choice in its
+  open-with menu). PDFs open in zathura instead, with vim keys
   and the browser's colours around the page (`zathura/`); pages stay white,
   and <kbd>Ctrl</kbd>+<kbd>R</kbd> redraws one dark. Its `config.py` ports the
   Vimium C keymap from `vimium/`, so both browsers navigate the same way, and

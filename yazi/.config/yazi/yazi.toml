@@ -13,6 +13,20 @@ play = [
 	{ run = "mpv --force-window --player-operation-mode=pseudo-gui -- %s", orphan = true, desc = "mpv", for = "unix" },
 	{ run = "xdg-open %s1", orphan = true, desc = "Default app", for = "linux" },
 ]
+# Images open in tensaku, the screenshot annotator (tensaku/), so Enter on a
+# picture lands straight in an editor that can mark it up and put it back on
+# the clipboard. Only from here: the system default for images stays
+# qutebrowser. The default app is the second choice in yazi's open-with menu.
+annotate = [
+	{ run = "tensaku %s1", orphan = true, desc = "tensaku", for = "unix" },
+]
+
+# SVG is a vector image tensaku cannot draw on, so it keeps the default app.
+[open]
+prepend_rules = [
+	{ mime = "image/svg+xml", use = [ "open", "reveal" ] },
+	{ mime = "image/*", use = [ "annotate", "open", "reveal" ] },
+]
 
 # Newest first, with folders and files interleaved by date rather than every
 # folder pinned above every file. btime (creation) rather than mtime, because a
