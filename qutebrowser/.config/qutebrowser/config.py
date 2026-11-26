@@ -175,6 +175,27 @@ for mode in ("normal", "insert"):
 # This Chromium switch makes the browser itself report a dark system theme,
 # which DevTools' default "System preference" theme follows.
 config.set("qt.args", ["force-dark-mode"])
+
+# Google sign-in refuses embedded Chromium ("Couldn't sign you in: this browser
+# or app may not be secure"). qutebrowser's own quirk already shows
+# accounts.google.com a Firefox user agent, but with the Firefox version frozen
+# at qutebrowser's release, and an outdated Firefox is refused the same way
+# (qutebrowser issue 5182: a current version is what users report working). So
+# the quirk is replaced by one that follows Firefox's four-week release train
+# from a known release (146, 2025-12-09), stepping on 30 days so it lags a
+# release rather than claiming one that is not out yet. Only the request header
+# changes: page scripts and the Sec-CH-UA client hints still say Chromium, and
+# turning the hints off (disable-features=UserAgentClientHint) was tried and
+# does nothing on this Chromium.
+import datetime
+
+_firefox = 146 + (datetime.date.today() - datetime.date(2025, 12, 9)).days // 30
+config.set("content.site_specific_quirks.skip", ["ua-google"])
+config.set(
+    "content.headers.user_agent",
+    f"Mozilla/5.0 (X11; Linux x86_64; rv:{_firefox}.0) Gecko/20100101 Firefox/{_firefox}.0",
+    "https://accounts.google.com/*",
+)
 # The colour a page shows before it paints; white here is a flash on every load.
 config.set("colors.webpage.bg", "#2c292f")
 
