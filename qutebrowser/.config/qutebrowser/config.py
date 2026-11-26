@@ -74,6 +74,15 @@ config.bind("bH", "tab-move -")
 config.bind("bL", "tab-move +")
 config.bind("bd", "tab-close")
 config.bind("bt", "cmd-set-text -s :open -t")
+# Vimium's new-tab key. A single-key binding fires at once, so this shadows
+# qutebrowser's t-prefixed defaults: th/tl (back/forward in a new tab) and the
+# ts/tc/ti/tp per-site toggles for JavaScript, cookies, images and plugins.
+config.bind("t", "cmd-set-text -s :open -t")
+
+# <C-r> reloads like r, but in every mode a page can hold the keyboard in, so
+# it also works while typing in a field or in passthrough.
+for mode in ("normal", "insert", "passthrough", "caret"):
+    config.bind("<Ctrl-r>", "reload", mode=mode)
 
 # Brave's address-bar keys. <C-l> opens the current URL with the URL itself
 # selected, as Chrome does, so typing replaces it and an arrow key edits it.
@@ -147,6 +156,20 @@ ON_ACCENT = "#1e1b22"
 
 config.set("fonts.default_family", "JetBrainsMono Nerd Font")
 config.set("fonts.default_size", "10pt")
+
+# Tabs show just the page title: no index (tab numbers are on g0/g$ and Alt+n
+# anyway). Pinned tabs, which show only their favicon, keep just the audio
+# mark. qutebrowser hardcodes that mark as "[A] " / "[M] " on the tab widget
+# class; the Nerd Font speaker glyphs (the font above has them) replace it with
+# the icon Chrome shows. A class attribute, so a qutebrowser internal again.
+# The leading space is the gap after the favicon: qutebrowser has no setting
+# for it and draws the title flush against the icon.
+config.set("tabs.title.format", " {audio}{current_title}")
+config.set("tabs.title.format_pinned", "{audio}")
+from qutebrowser.mainwindow import tabwidget
+
+tabwidget.TabWidget.AUDIBLE_STRING = "\U000f057e "
+tabwidget.TabWidget.MUTE_STRING = "\U000f0581 "
 
 # Tabs: inactive ones sink into the bar, the active one is raised with bright
 # text, and the load indicator runs mauve to green, red on failure.
@@ -306,3 +329,135 @@ def reopen(win_id: int) -> None:
 
 config.bind("<Ctrl-Shift-T>", "reopen")
 config.bind("bT", "reopen")
+
+# Chrome-style inline completion for the address prompt (t, <C-t>, o). While a
+# single word is typed, the rest of the most recent history or bookmark address
+# that starts with it is filled in after the cursor, selected, so typing on
+# replaces it and Backspace drops it; Enter then goes there. "youtu" shows
+# "youtube.com" and opens the site's root rather than whatever page of it was
+# visited last; a prefix with a path in it ("github.com/qute") completes to the
+# full entry. Several words stay a search, a row picked with Tab is opened as
+# picked, and other commands run as typed. Like `reopen`, this reads
+# qutebrowser internals: the command line and the history database.
+import re
+from urllib.parse import urlparse
+
+from qutebrowser.browser import history
+from qutebrowser.mainwindow.statusbar import command as statuscommand
+from qutebrowser.qt.core import QTimer
+from qutebrowser.utils import usertypes
+
+_OPEN_RE = re.compile(r"(:open(?:\s+-\S+)*\s+)(\S+)")
+
+
+def _candidates(typed):
+    """History newest first, then bookmarks, containing what was typed."""
+    escaped = re.sub(r"([\\%_])", r"\\\1", typed)
+    query = history.web_history.database.query(
+        "SELECT url FROM CompletionHistory WHERE url LIKE :pat ESCAPE '\\' "
+        "ORDER BY last_atime DESC LIMIT 500"
+    )
+    for row in query.run(pat=f"%{escaped}%"):
+        yield row.url
+    yield from objreg.get("bookmark-manager").marks
+
+
+def _best_match(typed):
+    """The (url, shown) completing a typed address prefix, or None.
+
+    History is read straight from its database rather than from the completion
+    list on screen, which is filled on a timer and so may still hold the
+    results for the previous keystroke.
+    """
+    # A row picked with Tab puts its full URL, scheme included, on the command
+    # line, and no candidate's bare address starts with a scheme: so a picked
+    # row is opened as picked without having to ask the completion widget.
+    typed = typed.lower()
+    for url in _candidates(typed):
+        bare = re.sub(r"^[a-z]+://(www\.)?", "", url, flags=re.I)
+        if not bare.lower().startswith(typed):
+            continue
+        if "/" in typed:
+            return url, bare
+        parts = urlparse(url)
+        host = re.sub(r"^www\.", "", parts.netloc, flags=re.I)
+        return f"{parts.scheme}://{parts.netloc}/", host
+    return None
+
+
+def _complete_inline(cmd, typed_text):
+    # The user has typed on since this was scheduled; that keystroke has its own.
+    if cmd.text() != typed_text:
+        return
+    m = _OPEN_RE.fullmatch(typed_text)
+    if not m:
+        return
+    prefix, typed = m.groups()
+    match = _best_match(typed)
+    if match is None or len(match[1]) <= len(typed):
+        return
+    shown = typed + match[1][len(typed):]
+    cmd.setText(prefix + shown)
+    cmd.setSelection(len(prefix) + len(typed), len(shown) - len(typed))
+    cmd._inline_state["at"] = len(prefix) + len(typed)
+
+
+def _hook_command_line(cmd):
+    if hasattr(cmd, "_inline_state"):
+        return
+    # "at" is where the selected suggestion starts while one is showing.
+    state = cmd._inline_state = {"cur": "", "prev": "", "at": None}
+
+    def changed(text):
+        state["prev"], state["cur"] = state["cur"], text
+
+    def edited(text):
+        # textEdited and textChanged fire in an order Qt does not promise, so
+        # the text before this edit is whichever of the two is not this one.
+        before = state["cur"] if state["cur"] != text else state["prev"]
+        at, state["at"] = state["at"], None
+        # Backspace on a suggestion removes just the suggestion; completing
+        # again would put it straight back. Any other deletion is left alone
+        # too; typing over a suggestion (shorter, but not this) completes anew.
+        if at is not None and text == before[:at]:
+            return
+        if at is None and len(text) < len(before):
+            return
+        # After the completer's own update, which runs on a zero timer.
+        QTimer.singleShot(10, lambda: _complete_inline(cmd, text))
+
+    cmd.textChanged.connect(changed)
+    cmd.textEdited.connect(edited)
+
+
+if not hasattr(statuscommand.Command, "_original_init"):
+    statuscommand.Command._original_init = statuscommand.Command.__init__
+
+
+def _command_init(self, *args, **kwargs):
+    statuscommand.Command._original_init(self, *args, **kwargs)
+    _hook_command_line(self)
+
+
+statuscommand.Command.__init__ = _command_init
+# Windows already open when this file is re-sourced.
+for _win in list(objreg.window_registry):
+    _hook_command_line(objreg.get("status-command", scope="window", window=_win))
+
+
+objects.commands.pop("command-accept-inline", None)
+
+
+@cmdutils.register(name="command-accept-inline", modes=[usertypes.KeyMode.command])
+@cmdutils.argument("win_id", value=cmdutils.Value.win_id)
+def command_accept_inline(win_id: int) -> None:
+    """Accept the command line, completing a typed address prefix from history."""
+    cmd = objreg.get("status-command", scope="window", window=win_id)
+    m = _OPEN_RE.fullmatch(cmd.text())
+    match = _best_match(m.group(2)) if m else None
+    if match is not None:
+        cmd.setText(m.group(1) + match[0])
+    cmd.command_accept()
+
+
+config.bind("<Return>", "command-accept-inline", mode="command")
