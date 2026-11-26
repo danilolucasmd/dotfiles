@@ -284,6 +284,7 @@ config.bind("<Ctrl-Shift-T>", "reopen")
 # copied for the step after the password.
 import json
 import shutil
+import sys
 from urllib.parse import urlparse
 
 from qutebrowser.commands import runners
@@ -297,28 +298,71 @@ OP = shutil.which("op") or next(
     "op",
 )
 
-_op_processes = set()
+SYSTEMD_RUN = shutil.which("systemd-run")
+
+# Every op call goes through one long-lived helper process instead of starting
+# op from qutebrowser, for two reasons:
+#
+# - A qutebrowser started from the launcher gets every op it runs, even through
+#   sh, refused by the 1Password app ("InvalidClientInfo" in the app's journal),
+#   while one started from a terminal does not; the cause was not found. On
+#   Linux the helper runs as a transient systemd service, which takes
+#   qutebrowser out of op's ancestry entirely and is accepted.
+# - The app asks for approval per calling process, so a fresh process per call
+#   meant a prompt for the login list and another for the login itself. With
+#   every op a child of the same helper, one approval covers the helper's life.
+#
+# The protocol is one JSON line each way: op's arguments in, its exit code,
+# stdout and stderr out. Requests are answered in order.
+_OP_HELPER = """
+import json, subprocess, sys
+for line in sys.stdin:
+    r = subprocess.run([sys.argv[1], *json.loads(line)], capture_output=True, text=True)
+    print(json.dumps({"code": r.returncode, "out": r.stdout, "err": r.stderr}), flush=True)
+"""
+
+_op = {"proc": None, "buffer": b"", "pending": []}
 _login_choices = {}
 
 
-def _run_op(args, on_success):
+def _op_helper():
+    proc = _op["proc"]
+    if proc is not None and proc.state() != QProcess.ProcessState.NotRunning:
+        return proc
     proc = QProcess()
-    _op_processes.add(proc)
+    _op.update(proc=proc, buffer=b"", pending=[])
 
-    def finished(code, _status):
-        _op_processes.discard(proc)
-        out = bytes(proc.readAllStandardOutput()).decode()
-        err = bytes(proc.readAllStandardError()).decode().strip()
-        if code != 0:
-            message.error(f"1Password: {err or 'op exited with ' + str(code)}")
-            return
-        on_success(out)
+    def read():
+        _op["buffer"] += bytes(proc.readAllStandardOutput())
+        while b"\n" in _op["buffer"] and _op["pending"]:
+            line, _op["buffer"] = _op["buffer"].split(b"\n", 1)
+            reply = json.loads(line)
+            on_success = _op["pending"].pop(0)
+            if reply["code"] != 0:
+                message.error(f"1Password: {reply['err'].strip() or 'op failed'}")
+            else:
+                on_success(reply["out"])
 
-    proc.finished.connect(finished)
-    proc.errorOccurred.connect(
-        lambda _e: (_op_processes.discard(proc), message.error(f"1Password: cannot run {OP}"))
-    )
-    proc.start(OP, args)
+    def died(*_):
+        if _op["pending"]:
+            message.error("1Password: the op helper stopped")
+        _op["pending"].clear()
+
+    proc.readyReadStandardOutput.connect(read)
+    proc.finished.connect(died)
+    proc.errorOccurred.connect(died)
+    helper = [sys.executable, "-I", "-c", _OP_HELPER, OP]
+    if SYSTEMD_RUN:
+        proc.start(SYSTEMD_RUN, ["--user", "--pipe", "--quiet", "--collect", "--", *helper])
+    else:
+        proc.start(helper[0], helper[1:])
+    return proc
+
+
+def _run_op(args, on_success):
+    proc = _op_helper()
+    _op["pending"].append(on_success)
+    proc.write((json.dumps(args) + "\n").encode())
 
 
 def _host(url):
@@ -360,7 +404,16 @@ _FILL_JS = """
         el.dispatchEvent(new Event("input", { bubbles: true }));
         el.dispatchEvent(new Event("change", { bubbles: true }));
     };
-    const inputs = [...document.querySelectorAll("input")].filter(shown);
+    // Sites built from web components (Reddit) keep their inputs inside shadow
+    // roots, which querySelectorAll on the document does not enter.
+    const collect = (root, found = []) => {
+        for (const el of root.querySelectorAll("*")) {
+            if (el.tagName === "INPUT") found.push(el);
+            if (el.shadowRoot) collect(el.shadowRoot, found);
+        }
+        return found;
+    };
+    const inputs = collect(document).filter(shown);
     const pw = inputs.find((el) => el.type === "password");
     let userField;
     if (pw) {
