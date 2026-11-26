@@ -617,7 +617,8 @@ if _NOTIFICATION_MODULE in sys.modules:
     _patch_notifications()
     _patch_context_menu()
 
-# An "Inspect" item at the bottom of the right-click menu, as in Chrome: it opens
+# An "Inspect" item at the bottom of the right-click menu, as in Chrome (and on
+# an image, "Search image with Google" above it): Inspect opens
 # DevTools (docked, as :devtools does) on the element that was clicked. Qt's own
 # Inspect action only appears once DevTools has been opened for the tab, so it
 # is taken out and this one, which opens them first, is always there. Applied
@@ -639,6 +640,21 @@ def _inspect(view):
     view.page().triggerAction(QWebEnginePage.WebAction.InspectElement)
 
 
+# Chrome's "Search image with Google": Lens, given the image's address, in a
+# new tab next to this one. Only for images served over http(s), since Lens
+# fetches the image itself; a data: or blob: image exists only inside the page,
+# and the item is left out for those rather than offered and failing.
+def _search_image(view, image):
+    from qutebrowser.qt.core import QUrl, QUrlQuery
+
+    url = QUrl("https://lens.google.com/uploadbyurl")
+    query = QUrlQuery()
+    query.addQueryItem("url", image.toString(QUrl.ComponentFormattingOption.FullyEncoded))
+    url.setQuery(query)
+    tabbed = objreg.get("tabbed-browser", scope="window", window=view._win_id)
+    tabbed.tabopen(url, background=False, related=True)
+
+
 def _patch_context_menu():
     from qutebrowser.browser.webengine import webview
     from qutebrowser.config import config as live_config
@@ -653,6 +669,14 @@ def _patch_context_menu():
             return
         menu = self.createStandardContextMenu()
         menu.removeAction(self.pageAction(QWebEnginePage.WebAction.InspectElement))
+        request = self.lastContextMenuRequest()
+        if (request is not None
+                and request.mediaType() == request.MediaType.MediaTypeImage
+                and request.mediaUrl().scheme() in ("http", "https")):
+            image = request.mediaUrl()
+            menu.addSeparator()
+            menu.addAction("Search image with Google").triggered.connect(
+                lambda: _search_image(self, image))
         menu.addSeparator()
         menu.addAction("Inspect").triggered.connect(lambda: _inspect(self))
         menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
