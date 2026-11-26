@@ -56,6 +56,12 @@ config.bind(
 )
 config.bind("<Ctrl-t>", "cmd-set-text -s :open -t")
 
+# <C-v> pastes, as in every other browser. qutebrowser's default puts
+# passthrough mode there, which a paste into a field that never switched to
+# insert mode kept triggering; the key now goes to the page, and passthrough
+# has no key at all: `:mode-enter passthrough` when a page needs it.
+config.bind("<Ctrl-v>", "fake-key <Ctrl-v>")
+
 # Google as the engine behind the address bar. auto_search "naive" is what
 # makes typed text that does not look like a URL go to it, as in Chrome; it is
 # the default, set here so the behaviour does not hang on qutebrowser's choice.
