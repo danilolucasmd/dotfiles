@@ -1,0 +1,44 @@
+# PDF viewer, the default for application/pdf (see install.sh). Keys are
+# zathura's own vim set (j/k, d/u, gg/G, / to search, o to open), so this only
+# carries what differs from upstream.
+
+# Copying a selection goes to the clipboard Ctrl+V pastes from, rather than to
+# the primary selection only, which nothing else here reads.
+set selection-clipboard clipboard
+
+# The qutebrowser theme (qutebrowser/.config/qutebrowser/config.py): base
+# #2c292f, mauve accent, peach for the search match in focus.
+set font                    "JetBrainsMono Nerd Font 10"
+set default-bg              "#2c292f"
+set default-fg              "#dddddd"
+set statusbar-bg            "#231f26"
+set statusbar-fg            "#dddddd"
+set inputbar-bg             "#231f26"
+set inputbar-fg             "#dddddd"
+set notification-bg         "#3d3744"
+set notification-fg         "#dddddd"
+set notification-error-bg   "#3d3744"
+set notification-error-fg   "#f38ba8"
+set notification-warning-bg "#3d3744"
+set notification-warning-fg "#f9e2af"
+set completion-bg           "#231f26"
+set completion-fg           "#dddddd"
+set completion-group-bg     "#231f26"
+set completion-group-fg     "#8a8590"
+set completion-highlight-bg "#cba6f7"
+set completion-highlight-fg "#1e1b22"
+set highlight-color         "rgba(249, 226, 175, 0.4)"
+set highlight-active-color  "rgba(250, 179, 135, 0.6)"
+set index-bg                "#2c292f"
+set index-fg                "#dddddd"
+set index-active-bg         "#cba6f7"
+set index-active-fg         "#1e1b22"
+
+# Pages keep their own colours (white paper), since a PDF's layout and figures
+# are made for it. Ctrl+R still redraws one in the theme's colours on demand;
+# these are the colours it uses. recolor-keephue leaves colour figures and
+# photos recognisable when it does.
+set recolor                 false
+set recolor-keephue         true
+set recolor-lightcolor      "#2c292f"
+set recolor-darkcolor       "#dddddd"

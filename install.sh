@@ -626,6 +626,8 @@ pac \
   mpv \
   mpv-mpris \
   qutebrowser \
+  zathura \
+  zathura-pdf-mupdf \
   rclone \
   steam
 
@@ -1227,7 +1229,7 @@ sudo stow -t / sddm
 echo "==> Applying user dotfiles"
 resolve_stow_conflicts \
   btop fastfetch ghostty git hypr lazygit mpv nvim scripts sounds \
-  quickshell tensaku wallpapers wireplumber xcompose yazi zsh
+  quickshell tensaku wallpapers wireplumber xcompose yazi zathura zsh
 stow \
   btop \
   fastfetch \
@@ -1245,6 +1247,7 @@ stow \
   wireplumber \
   xcompose \
   yazi \
+  zathura \
   zsh
 
 # The wallpaper is addressed through one stable path, ~/.local/state/hypr/wallpaper,
@@ -1476,6 +1479,17 @@ fi
 try "qutebrowser as web browser" xdg-settings set default-web-browser org.qutebrowser.qutebrowser.desktop
 try "qutebrowser for about/unknown" xdg-mime default org.qutebrowser.qutebrowser.desktop \
   x-scheme-handler/about x-scheme-handler/unknown
+# Images and XML too. Nothing else claims them as a default, so with Brave
+# installed its desktop entry (which lists them) wins the fallback, and yazi's
+# Enter on a picture opened Brave.
+try "qutebrowser for images/xml" xdg-mime default org.qutebrowser.qutebrowser.desktop \
+  image/png image/jpeg image/gif image/webp \
+  text/xml application/xml application/xhtml+xml application/xhtml_xml \
+  application/rss+xml application/rdf+xml
+# PDFs in zathura rather than the browser: qutebrowser shows a local PDF as a
+# blank tab without pdf.js, and a viewer of its own keeps them out of the tabs.
+# The desktop entry is the mupdf backend's, which is the one that lists PDF.
+try "zathura for pdf" xdg-mime default org.pwmt.zathura-pdf-mupdf.desktop application/pdf
 
 # Through sudo, not as a bare `chsh`: chsh authenticates the user with PAM in
 # its own right, so a plain call asks for the password again -- at the very end
