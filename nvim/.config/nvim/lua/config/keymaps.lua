@@ -170,11 +170,14 @@ Snacks.toggle.zoom():map("<leader>wm")
 -- a global mode that reopens the view in whichever file window is entered.
 local function show_inline_diff()
   local buf = vim.api.nvim_get_current_buf()
+  local bcache = require("gitsigns.cache").cache[buf]
+  -- Option changes like toggle_numhl drop compare_text; on_update reopens the view once it is rebuilt.
   if
     vim.g.inline_diff
     and not vim.wo.diff
     and vim.bo[buf].buftype == ""
-    and require("gitsigns.cache").cache[buf]
+    and bcache
+    and bcache.compare_text
     and not require("gitsigns.unified").get_view()
   then
     require("gitsigns").diffthis(nil, { unified = true })
