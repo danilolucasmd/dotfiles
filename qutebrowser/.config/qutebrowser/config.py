@@ -7,10 +7,13 @@
 # Vimium's unmaps (J K u d r p P o O B T ge) are deliberately not ported yet:
 # qutebrowser's defaults on those keys stay until it is clear which are wanted.
 
-# config.py is the source of truth. `:set` still works for the running session,
-# but qutebrowser writes those to autoconfig.yml, which is not read back on the
-# next start: a setting worth keeping belongs in this file instead.
-config.load_autoconfig(False)
+# autoconfig.yml is where qutebrowser saves what is changed from inside the
+# browser (`:set`, `:config-cycle`), and it is read first, so anything this
+# file sets globally still wins over it. What it is loaded for is the per-site
+# dark mode switch below: a value scoped to one site is not something this
+# file sets, so it survives. It is machine-local state, like history, and stays
+# out of the repo; a setting worth keeping everywhere belongs in this file.
+config.load_autoconfig(True)
 
 # Vimium C's switchFocus jumps into the page's input. Without a focused-input
 # memory to toggle back to, the closest qutebrowser has is gi's first-input hint.
@@ -156,12 +159,12 @@ config.set("colors.webpage.preferred_color_scheme", "dark")
 config.set("colors.webpage.darkmode.enabled", True)
 config.set("colors.webpage.darkmode.policy.images", "smart")
 # Dark Reader's per-site switch. QtWebEngine 6.7+ applies darkmode.enabled per
-# URL pattern without a restart, so this flips it for the current host only.
-# -t keeps the override to this session, like everything set outside this file.
+# URL pattern without a restart, so this flips it for the current host only,
+# and the choice is saved to autoconfig.yml so the site stays that way.
 for mode in ("normal", "insert"):
     config.bind(
         "<Alt-Shift-A>",
-        "config-cycle -p -t -u *://{url:host}/* colors.webpage.darkmode.enabled false true ;; reload",
+        "config-cycle -p -u *://{url:host}/* colors.webpage.darkmode.enabled false true ;; reload",
         mode=mode,
     )
 # DevTools ignores preferred_color_scheme, which is a per-page Blink setting
