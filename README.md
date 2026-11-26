@@ -929,8 +929,9 @@ because notifications say more than their app name does:
 
   This is keyed on the app name (`-a "Screenshot"`), so a **screen recording is
   untouched**: its notification, and any other one naming a file that exists,
-  still opens nautilus on the folder with that file selected. There is nothing
-  to annotate in an mp4.
+  opens yazi in a new terminal on the folder, with that file under the cursor
+  (Enter plays it, `y` copies it to paste into a chat). There is nothing to
+  annotate in an mp4.
 
   The same editor is the second way into an image: **`ctrl+o` on an image in the
   clipboard history** (`super+V`, or `:` in the launcher) opens it in tensaku,

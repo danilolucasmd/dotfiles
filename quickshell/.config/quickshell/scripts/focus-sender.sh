@@ -39,8 +39,8 @@
 #   path   No window is the app, because the app was a script that wrote a file
 #          and exited -- screenshot.sh's "Image saved in /home/.../shot.png".
 #          What the notification is really pointing at is the file, so open it:
-#          a screenshot in the tensaku annotation editor, anything else as the
-#          folder around it with the file selected. Ranked under class so an app
+#          a screenshot in the tensaku annotation editor, anything else in yazi
+#          on the folder around it with the file selected. Ranked under class so an app
 #          that has a window still gets its window, and over title so a
 #          screenshot does not go looking for a terminal that happens to say
 #          "Pictures".
@@ -197,21 +197,18 @@ elif [ -n "$path" ]; then
   #
   # Keyed on the app name rather than on the file being a .png, so
   # screen-record.sh's "Recording saved" -- and any other tool that happens to
-  # name an image -- still gets the file manager below.
+  # name an image -- still gets yazi below.
   if [ "$app" = "Screenshot" ] && [ -f "$path" ]; then
     setsid -f tensaku --filename "$path" >/dev/null 2>&1
     exit 0
   fi
 
-  # Nothing identified the app, but it named a file. Nautilus is what this
-  # system opens a directory with; -s opens the folder *around* a file with it
-  # selected, which is not what a path that is already a folder wants. Detached,
-  # because opening a folder is not something to wait on.
-  if [ -d "$path" ]; then
-    setsid -f nautilus "$path" >/dev/null 2>&1
-  else
-    setsid -f nautilus -s "$path" >/dev/null 2>&1
-  fi
+  # Nothing identified the app, but it named a file: open yazi on it, in a new
+  # terminal. Given a file, yazi opens the folder around it with the file under
+  # the cursor (Enter plays a recording, y copies it to paste elsewhere); given
+  # a folder, it opens that folder. Detached, because a file manager window is
+  # not something to wait on.
+  setsid -f ghostty -e yazi "$path" >/dev/null 2>&1
   exit 0
 else
   # A title match only gets a say when nothing identified the app at all.
