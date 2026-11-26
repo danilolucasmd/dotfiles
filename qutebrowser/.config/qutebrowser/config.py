@@ -19,25 +19,42 @@ config.load_autoconfig(True)
 # memory to toggle back to, the closest qutebrowser has is gi's first-input hint.
 config.bind("gI", "hint inputs --first")
 
-# j/k and <C-d>/<C-u> scroll whatever is scrollable under the middle of the
-# view, the way Vimium does. qutebrowser's own commands only reach the page:
-# `scroll` presses arrow keys, which Google Docs turns into caret moves, and
-# `scroll-page` scrolls the window through qutebrowser's injected helper, which
-# does nothing where an inner pane scrolls (Docs, Slack) and breaks on sites
-# that wipe the helper (GitHub, AliExpress). Instant, like Vimium's jumps;
-# 60px is Vimium's step.
+# j/k and <C-d>/<C-u> scroll the page, and fall back to an inner pane only when
+# the page itself cannot move that way. qutebrowser's own commands only reach
+# the page: `scroll` presses arrow keys, which Google Docs turns into caret
+# moves, and `scroll-page` scrolls the window through qutebrowser's injected
+# helper, which does nothing where an inner pane scrolls (Docs, Slack) and
+# breaks on sites that wipe the helper (GitHub, AliExpress). Instant, like
+# Vimium's jumps; 60px is Vimium's step.
+#
+# Page first, because picking the pane under the middle of the view (the first
+# version of this) got captured: a code block or comment box that scrolled
+# past the middle took over the keys, and once it hit its end the page never
+# moved again. Now the page scrolls whenever it can, which keeps the keys on
+# it, and the pane under the middle is used only when the page cannot move:
+# app layouts where the page is a fixed frame (Docs, Slack, Gmail), or the
+# page already at its end. Even then the walk climbs out to the first
+# ancestor that can still move in that direction, so a pane at its end hands
+# over instead of swallowing the key.
 def _scroll_js(step):
+    down = not step.startswith("-")
     return (
         "jseval -q (() => {"
-        " let el = document.elementFromPoint(innerWidth / 2, innerHeight / 2);"
+        " const doc = document.scrollingElement;"
+        " const span = (e) => e === doc ? innerHeight : e.clientHeight;"
+        f" const moves = (e) => {'e.scrollTop + span(e) < e.scrollHeight - 1' if down else 'e.scrollTop > 0'};"
         " const root = (e) => !e || e === document.body || e === document.documentElement;"
-        " while (!root(el)) {"
-        "  const o = getComputedStyle(el).overflowY;"
-        "  if (/(auto|scroll|overlay)/.test(o) && el.scrollHeight > el.clientHeight) break;"
-        "  el = el.parentElement;"
+        " let el = doc;"
+        " if (!moves(doc)) {"
+        "  el = document.elementFromPoint(innerWidth / 2, innerHeight / 2);"
+        "  while (!root(el)) {"
+        "   const o = getComputedStyle(el).overflowY;"
+        "   if (/(auto|scroll|overlay)/.test(o) && el.scrollHeight > el.clientHeight && moves(el)) break;"
+        "   el = el.parentElement;"
+        "  }"
+        "  if (root(el)) el = doc;"
         " }"
-        " if (root(el)) el = document.scrollingElement;"
-        " const view = el === document.scrollingElement ? innerHeight : el.clientHeight;"
+        " const view = span(el);"
         f" el.scrollBy({{ top: {step}, behavior: 'instant' }});"
         " })()"
     )
