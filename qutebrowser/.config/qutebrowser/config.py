@@ -109,6 +109,14 @@ def _hint_fire(self, keystr):
 modeparsers.HintKeyParser.handle = _hint_handle
 _hints.HintManager._fire = _hint_fire
 
+# Closing a window that holds more than one tab asks first, as Brave does:
+# Enter quits, Escape keeps it open. A single-tab window closes without asking,
+# which covers the fresh window :reopen closes after restoring the last session
+# into it. Only the window's own close (Hyprland's close key, :close) asks;
+# :quit is typed on purpose and goes straight through. The web apps turn this
+# off (webapps/qutebrowser-app.sh), since closing one is routine.
+config.set("confirm_quit", ["multiple-tabs"])
+
 # History
 config.bind("<Ctrl-o>", "back")
 config.bind("<Ctrl-i>", "forward")

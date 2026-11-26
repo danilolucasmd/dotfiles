@@ -89,5 +89,6 @@ exec qutebrowser \
 	--set content.notifications.show_origin false \
 	--set colors.webpage.darkmode.enabled false \
 	--set content.register_protocol_handler false \
+	--set confirm_quit '["never"]' \
 	--set qt.args "[$qt_args]" \
 	"$url" "${startup[@]}"
