@@ -1728,6 +1728,9 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 - When an app has already written a config that stow wants to own, `install.sh`
   moves the original aside as `<name>.pre-stow` rather than failing
 - All non-deterministic or GUI-based steps are documented here on purpose
+- <kbd>y</kbd> in yazi also puts the yanked files on the system clipboard as
+  files (`yazi/.config/yazi/copy-files.sh`), so <kbd>Ctrl</kbd>+<kbd>V</kbd> in a
+  browser attaches them: a photo or document straight into WhatsApp.
 - Video opens in mpv everywhere: `install.sh` makes it the xdg handler for
   every `video/*` type its desktop file claims, which covers Nautilus, and
   yazi's `play` opener calls it directly so a multi-file selection becomes a

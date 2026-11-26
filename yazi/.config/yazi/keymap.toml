@@ -1,0 +1,10 @@
+# Overrides only; the preset compiled into yazi supplies the rest (see the
+# note at the top of yazi.toml).
+
+# y also copies the files to the system clipboard (copy-files.sh), so what was
+# yanked here pastes as attachments in a browser too: Ctrl+V in WhatsApp sends
+# the files. yazi's own yank is kept, so p still pastes them inside yazi.
+[mgr]
+prepend_keymap = [
+	{ on = "y", run = [ "yank", "shell -- ~/.config/yazi/copy-files.sh %s" ], desc = "Yank, and copy the files to the clipboard" },
+]
