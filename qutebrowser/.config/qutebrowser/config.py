@@ -168,7 +168,35 @@ config.bind("<Ctrl-t>", "cmd-set-text -s :open -t")
 # passthrough mode there, which a paste into a field that never switched to
 # insert mode kept triggering; the key now goes to the page, and passthrough
 # has no key at all: `:mode-enter passthrough` when a page needs it.
-config.bind("<Ctrl-v>", "fake-key <Ctrl-v>")
+#
+# A field can hold focus while qutebrowser sits in normal mode (a page that
+# autofocuses its search box, or focus left behind by Escape), so a paste there
+# used to leave the next keystrokes running bindings instead of typing. After
+# the paste, :insert-if-editable asks the page what is focused and enters insert
+# mode only when it is something typed into, the same check
+# input.insert_mode.auto_load makes after a page loads; a paste anywhere else
+# leaves the mode alone.
+from qutebrowser.api import cmdutils
+from qutebrowser.keyinput import modeman
+from qutebrowser.misc import objects
+from qutebrowser.utils import usertypes
+
+# Dropped first so `:config-source` can re-register it instead of failing.
+objects.commands.pop("insert-if-editable", None)
+
+
+@cmdutils.register(name="insert-if-editable")
+@cmdutils.argument("tab", value=cmdutils.Value.cur_tab)
+def insert_if_editable(tab) -> None:
+    """Enter insert mode if the focused element accepts typing."""
+    def _on_focused(elem):
+        if elem is not None and elem.is_editable():
+            modeman.enter(tab.win_id, usertypes.KeyMode.insert,
+                          "paste into a field", only_if_normal=True)
+    tab.elements.find_focused(_on_focused)
+
+
+config.bind("<Ctrl-v>", "fake-key <Ctrl-v> ;; insert-if-editable")
 
 # Google as the engine behind the address bar. auto_search "naive" is what
 # makes typed text that does not look like a URL go to it, as in Chrome; it is
