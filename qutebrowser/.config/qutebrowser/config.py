@@ -792,3 +792,41 @@ def _patch_context_menu():
 
 if _WEBVIEW_MODULE in sys.modules:
     _patch_context_menu()
+
+# Alt+, and Alt+. move the docked DevTools divider left/up and right/down, as
+# dragging it would; qutebrowser has no command for it. The divider moves the
+# way the key points whichever side DevTools is docked on, so the sign flips
+# for left/top. The size goes through the splitter's own preferred size, which
+# is what a drag sets, so it is kept across window resizes and saved to the
+# state file like a dragged size. Bound in insert mode too, because focusing
+# DevTools enters insert mode.
+_DEVTOOLS_STEP = 80
+
+objects.commands.pop("devtools-resize", None)
+
+
+@cmdutils.register(name="devtools-resize")
+@cmdutils.argument("tab", value=cmdutils.Value.cur_tab)
+def devtools_resize(tab, delta: int) -> None:
+    """Move the docked DevTools divider by delta pixels (negative: left/up)."""
+    from qutebrowser.browser import inspector
+
+    splitter = tab.data.splitter
+    insp = tab.data.inspector
+    if (splitter is None or insp is None or not insp.isVisible()
+            or splitter.count() < 2 or splitter._position is None):
+        message.error("No docked DevTools in this tab")
+        return
+    grows = splitter._position in (inspector.Position.right,
+                                   inspector.Position.bottom)
+    total = sum(splitter.sizes())
+    size = splitter.sizes()[splitter._inspector_idx] + (-delta if grows else delta)
+    splitter._preferred_size = max(
+        100, min(size, total - splitter._PROTECTED_MAIN_SIZE))
+    splitter._adjust_size()
+    splitter._save_preferred_size()
+
+
+for mode in ("normal", "insert"):
+    config.bind("<Alt-,>", f"devtools-resize -{_DEVTOOLS_STEP}", mode=mode)
+    config.bind("<Alt-.>", f"devtools-resize {_DEVTOOLS_STEP}", mode=mode)
