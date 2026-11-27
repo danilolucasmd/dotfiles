@@ -1,0 +1,43 @@
+{
+  "BraveRewardsDisabled": true,
+  "BraveWalletDisabled": true,
+  "BraveVPNDisabled": true,
+  "BraveAIChatEnabled": false,
+  "BraveLocalAIEnabled": false,
+  "BraveNewsDisabled": true,
+  "BraveTalkDisabled": true,
+  "BravePlaylistEnabled": false,
+  "BraveSpeedreaderEnabled": false,
+  "BraveWaybackMachineEnabled": false,
+  "TorDisabled": true,
+
+  "BraveP3AEnabled": false,
+  "BraveStatsPingEnabled": false,
+  "BraveWebDiscoveryEnabled": false,
+  "MetricsReportingEnabled": false,
+
+  "PasswordManagerEnabled": false,
+  "AutofillCreditCardEnabled": false,
+
+  "BookmarkBarEnabled": false,
+  "EditBookmarksEnabled": false,
+
+  "ExtensionInstallForcelist": [
+    "dbepggeogbaibhgnhhndojpepiihcmeb;https://clients2.google.com/service/update2/crx",
+    "aeblfdkhhhdcdjpifhhbdiojplfjncoa;https://clients2.google.com/service/update2/crx"
+  ],
+
+  "SpellcheckEnabled": true,
+  "SpellcheckLanguage": ["en-US", "pt-BR"],
+
+  "NotificationsAllowedForUrls": [
+    "https://calendar.google.com",
+    "https://claude.ai",
+    "https://fluxer.com",
+    "https://web.whatsapp.com"
+  ],
+  "NotificationsBlockedForUrls": [
+    "https://www.netflix.com",
+    "https://www.youtube.com"
+  ]
+}

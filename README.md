@@ -166,14 +166,37 @@ worth adding: `nautilus/README.md`.
 
 ---
 
-## 2. Brave Browser Language Settings
+## 2. Brave Browser Settings
 
-In Brave settings:
+Most of Brave is set up by `install.sh` through enterprise policy, which copies
+`brave/managed.json` and `brave/recommended.json` into
+`/etc/brave/policies/{managed,recommended}/dotfiles.json`. `brave/` is not a
+stow package: its profile files are signed per machine, so policy is the only
+part of Brave that a repo can hold.
+
+`managed.json` is enforced and shows as greyed out in Settings:
+
+- Everything Brave bundles is switched off: Rewards, Wallet, VPN, Leo, News,
+  Talk, Playlist, Speedreader, the Wayback Machine prompt, Tor windows, its
+  usage pings and web discovery, and the built-in password manager and card
+  autofill (1Password does both). Bookmarks are off too: the bar is hidden and
+  the star and editing are locked out.
+- Vimium and 1Password are installed automatically and cannot be removed.
+- Spellcheck runs in English and Portuguese (Brazil).
+- Notifications are allowed for Calendar, Claude, Fluxer and WhatsApp, and
+  blocked for Netflix and YouTube.
+
+`recommended.json` only sets defaults that Settings can still change: Google as
+the search engine.
+
+`brave://policy` lists what is in force and flags anything it rejected. After
+editing either file, copy it again and press "Reload policies" there.
+
+Policy cannot reach these, so they are set by hand in Brave settings:
 
 1. Add Portuguese (Brazil) to Languages
-2. Enable spell check for:
-   - English
-   - Portuguese (Brazil)
+2. Set every font to JetBrainsMono Nerd Font (Appearance, Customize fonts)
+3. Pick the grayscale theme in dark mode (Appearance)
 
 Vimium's exported settings live in `vimium/`. They are not stowed — the
 extension keeps its options in browser storage — so import them by hand from

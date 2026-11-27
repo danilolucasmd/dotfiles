@@ -1087,6 +1087,30 @@ if pacman -Q docker-desktop >/dev/null 2>&1; then
   systemctl --user disable docker-desktop.service
 fi
 
+# Brave is configured with enterprise policy, the only part of its setup that
+# can live in a repo: the profile's Preferences files are signed per machine,
+# and Brave resets any value it finds edited behind its back. Policy is also
+# the only switch that removes the extras' toolbar buttons and menu entries,
+# and it survives a profile reset.
+#
+# managed.json is enforced and greyed out in Settings: the debloat (Rewards,
+# Wallet, VPN, Leo, News, Talk, Tor, telemetry, bookmarks), the force-installed
+# extensions, spellcheck and per-site notifications. recommended.json only sets
+# a default that Settings can still change, which is why the search engine is
+# there. Policies that Chromium does not accept as recommended (the URL lists,
+# ExtensionInstallForcelist, SpellcheckLanguage) have to stay in managed.json;
+# brave://policy flags one put in the wrong file.
+#
+# Chromium reads every JSON file in each directory, so dotfiles.json is ours
+# alone and nothing else there is touched. Copied rather than symlinked: a
+# root-read policy file pointing into $HOME would let anything running as the
+# user rewrite browser policy. After editing either file, re-run these lines and
+# press "Reload policies" in brave://policy.
+for level in managed recommended; do
+  try "brave $level policy" sudo install -D -m 644 -o root -g root \
+    "$DOTFILES/brave/$level.json" "/etc/brave/policies/$level/dotfiles.json"
+done
+
 # docker-desktop points the CLI at its own socket by writing a `desktop-linux`
 # context and making it current, which is the right answer only while Desktop
 # is running. With Desktop no longer a boot service, that context leaves
