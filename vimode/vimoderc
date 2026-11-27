@@ -19,6 +19,10 @@ set passUnmappedKeys false
 # look is in style.css beside this file.
 set linkHintCharacters sadfjklewcmpgh
 
+# Pausing halfway through a key sequence shows the keys that continue it,
+# after this many ms (qutebrowser's keyhint.delay).
+set keyhintDelay 500
+
 # Modes
 map i enterInsertMode
 map : enterCommandMode
