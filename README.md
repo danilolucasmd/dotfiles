@@ -181,9 +181,8 @@ part of Brave that a repo can hold.
   usage pings and web discovery, and the built-in password manager and card
   autofill (1Password does both). Bookmarks are off too: the bar is hidden and
   the star and editing are locked out.
-- 1Password, Dark Reader, Custom New Tab and YouTube Row Fixer are
-  installed automatically and cannot be removed. Their own settings live in
-  browser storage, not here.
+- 1Password, Dark Reader and YouTube Row Fixer are installed automatically
+  and cannot be removed. Their own settings live in browser storage, not here.
 - Spellcheck runs in English and Portuguese (Brazil).
 - Notifications are allowed for Calendar, Claude, Fluxer and WhatsApp, and
   blocked for Netflix and YouTube.
