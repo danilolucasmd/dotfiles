@@ -37,8 +37,12 @@ QUTE_WEBAPP_NAME=$(awk -F'|' -v s="$slug" '!/^#/ { gsub(/^[ \t]+|[ \t]+$/, "", $
 export QUTE_WEBAPP_NAME
 
 # Launching an app that is already open raises it instead of opening a second
-# window, which is what a dock icon is expected to do.
-if command -v hyprctl >/dev/null 2>&1; then
+# window, which is what a dock icon is expected to do. Only when launched at
+# the app's own address, though: any other URL (mailto.sh handing Mail a
+# compose link) goes through to qutebrowser, which passes it to the running
+# instance over its socket, where tabs_are_windows opens it as a new window.
+home_url=$(awk -F'|' -v s="$slug" '!/^#/ { gsub(/[ \t]/, "", $2); gsub(/[ \t]/, "", $3); if ($3 == s) { print $2; exit } }' "$(dirname "$(realpath "$0")")/apps.conf")
+if [[ "$url" == "$home_url" ]] && command -v hyprctl >/dev/null 2>&1; then
 	addr=$(hyprctl clients -j | jq -r --arg c "$class" 'map(select(.class == $c)) | first | .address // empty')
 	if [[ -n "$addr" ]]; then
 		exec hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })"
@@ -46,11 +50,12 @@ if command -v hyprctl >/dev/null 2>&1; then
 fi
 
 # QtWebEngine ships no Widevine, so DRM video (Spotify) needs a copy from
-# elsewhere: Brave downloads one into its profile and keeps it updated. The
-# newest version is picked at launch, since the directory is versioned.
+# elsewhere: the chromium-widevine AUR package installs one system-wide (see
+# install.sh). QtWebEngine's own search does not look in /usr/lib/chromium, so
+# the path is handed over explicitly.
 qt_args='"force-dark-mode"'
-widevine=$(ls -d "$HOME"/.config/BraveSoftware/Brave-Browser/WidevineCdm/*/_platform_specific/linux_x64/libwidevinecdm.so 2>/dev/null | sort -V | tail -n1 || true)
-[[ -n "$widevine" ]] && qt_args+=", \"widevine-path=$widevine\""
+widevine=/usr/lib/chromium/WidevineCdm/_platform_specific/linux_x64/libwidevinecdm.so
+[[ -f "$widevine" ]] && qt_args+=", \"widevine-path=$widevine\""
 
 # WhatsApp starts in passthrough: it is all typing and its own shortcuts
 # (Ctrl+Alt+N, Alt+arrows through chats), and in normal mode every key that

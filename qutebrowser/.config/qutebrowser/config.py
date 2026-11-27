@@ -1,6 +1,7 @@
-# Bindings ported from vimium/vimium-c-options.json, the Vimium C keymap used on
-# Brave, so the same fingers work in both browsers. qutebrowser's own defaults
-# already cover most of Vimium's (j/k/h/l, gg/G, f/F, yy, /, n/N, gi, gt/gT,
+# Bindings ported from vimium/vimium-options.json, the Vimium keymap once used
+# on Brave, so the same fingers work in any Chromium browser with Vimium.
+# qutebrowser's own defaults already cover most of Vimium's (j/k/h/l, gg/G,
+# f/F, yy, /, n/N, gi, gt/gT,
 # g0/g$, gu/gU, and <C-u>/<C-d> as half-page scrolls, which is what Vimium's
 # scrollPageUp/Down are), so only the keys the Vimium config changes are here.
 #

@@ -59,5 +59,25 @@ EOF
   count=$((count + 1))
 done < "$CONF"
 
+# The mailto: handler, which opens a compose window in the Mail app. Hidden
+# from the launcher: it is only ever reached through a mail link, and install.sh
+# makes it the default for them. Written with the marker, so it is cleaned up
+# with the rest if Mail is ever dropped from apps.conf.
+if grep -qE '\|[[:space:]]*mail[[:space:]]*$' "$CONF"; then
+  cat > "$APPDIR/webapp-mailto.desktop" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Name=Gmail Compose
+Exec="$DIR/mailto.sh" %u
+Icon=$ICONS/mail.png
+NoDisplay=true
+MimeType=x-scheme-handler/mailto;
+$MARKER
+EOF
+  echo "generated: webapp-mailto.desktop  (mailto: handler)"
+fi
+
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APPDIR" 2>/dev/null || true
 echo "Done: $count web app(s)."

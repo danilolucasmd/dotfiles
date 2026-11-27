@@ -148,10 +148,10 @@ rm -f "$sudoers_candidate"
 
 # On a btrfs root this script REPLACES THE BOOTLOADER: archinstall leaves you on
 # systemd-boot, and the snapshot section installs Limine over it so that btrfs
-# snapshots become boot entries (see README.md section 10). The systemd-boot EFI
+# snapshots become boot entries (see README.md section 9). The systemd-boot EFI
 # binary and its NVRAM entry are left in place as a fallback, but this is the
 # one step here that can cost you a reboot, so it is worth knowing up front.
-echo "==> Note: on btrfs, this migrates the bootloader to Limine. See README.md section 10."
+echo "==> Note: on btrfs, this migrates the bootloader to Limine. See README.md section 9."
 
 # Everything below assumes the repo is checked out here: hyprland.lua, the
 # stow invocations and the sddm theme permissions all refer to it by path.
@@ -572,11 +572,10 @@ echo "==> Installing pacman packages"
 #
 # rclone backs game saves up to Google Drive. Its login is per machine and stays
 # out of this repo: run `rclone-gdrive-setup` after signing in to 1Password,
-# which reads our own OAuth client from 1Password (README section 3).
+# which reads our own OAuth client from 1Password (README section 2).
 #
 # qutebrowser is the default browser (see DEFAULT APPLICATIONS) and runs the
-# web apps (webapps/qutebrowser-app.sh). Brave stays installed: the web apps
-# borrow its Widevine copy for DRM video.
+# web apps (webapps/qutebrowser-app.sh).
 pac \
   stow \
   neovim \
@@ -1045,15 +1044,15 @@ echo "==> Installing AUR packages"
 # What is left is genuinely AUR: our own tools, the repackaged proprietary
 # ones, and three that still compile -- rtl8188gu-dkms-git because a kernel
 # module has to be built against the running kernel, tensaku and wifitui
-# because neither has a -bin variant. README section 10 has the accounting.
+# because neither has a -bin variant. README section 9 has the accounting.
 aur_packages=(
   rtl8188gu-dkms-git
   herdr-bin
   gh-dash-bin
   ttf-joypixels # the colour emoji font, and what gen-emoji-data.py checks coverage against
   1password
-  1password-cli # `op`; needs the app's "Integrate with 1Password CLI" toggle (README section 3)
-  brave-bin
+  1password-cli # `op`; needs the app's "Integrate with 1Password CLI" toggle (README section 2)
+  chromium-widevine # DRM video in the qutebrowser web apps (Spotify); QtWebEngine ships none
   orca-slicer-bin
   wifitui
   docker-desktop
@@ -1086,30 +1085,6 @@ fi
 if pacman -Q docker-desktop >/dev/null 2>&1; then
   systemctl --user disable docker-desktop.service
 fi
-
-# Brave is configured with enterprise policy, the only part of its setup that
-# can live in a repo: the profile's Preferences files are signed per machine,
-# and Brave resets any value it finds edited behind its back. Policy is also
-# the only switch that removes the extras' toolbar buttons and menu entries,
-# and it survives a profile reset.
-#
-# managed.json is enforced and greyed out in Settings: the debloat (Rewards,
-# Wallet, VPN, Leo, News, Talk, Tor, telemetry, bookmarks), the force-installed
-# extensions, spellcheck and per-site notifications. recommended.json only sets
-# a default that Settings can still change, which is why the search engine is
-# there. Policies that Chromium does not accept as recommended (the URL lists,
-# ExtensionInstallForcelist, SpellcheckLanguage) have to stay in managed.json;
-# brave://policy flags one put in the wrong file.
-#
-# Chromium reads every JSON file in each directory, so dotfiles.json is ours
-# alone and nothing else there is touched. Copied rather than symlinked: a
-# root-read policy file pointing into $HOME would let anything running as the
-# user rewrite browser policy. After editing either file, re-run these lines and
-# press "Reload policies" in brave://policy.
-for level in managed recommended; do
-  try "brave $level policy" sudo install -D -m 644 -o root -g root \
-    "$DOTFILES/brave/$level.json" "/etc/brave/policies/$level/dotfiles.json"
-done
 
 # docker-desktop points the CLI at its own socket by writing a `desktop-linux`
 # context and making it current, which is the right answer only while Desktop
@@ -1148,7 +1123,7 @@ pac tree-sitter-cli
 # Not what installs pkg any more -- since v0.1.2 it ships prebuilt binaries for
 # all four linux/macOS targets and the block below downloads one. It stays
 # because this box is where pkg gets worked on: pointing it at a clone means
-# `cargo install --path ~/Code/pkg --root ~/.local` (README section 13), and
+# `cargo install --path ~/Code/pkg --root ~/.local` (README section 12), and
 # that needs cargo on a machine that has never had it.
 #
 # Not for the installer's cargo fallback, which sounds like a second reason and
@@ -1499,13 +1474,13 @@ fi
 # qutebrowser is the browser for every link opened outside a browser: xdg-open,
 # and through it terminal links (ghostty, herdr) and other apps. xdg-settings
 # covers http, https and text/html; about: and unknown schemes go with them.
-# mailto: is left alone.
+# mailto: goes to the Gmail web app (see WEB APPS below).
 try "qutebrowser as web browser" xdg-settings set default-web-browser org.qutebrowser.qutebrowser.desktop
 try "qutebrowser for about/unknown" xdg-mime default org.qutebrowser.qutebrowser.desktop \
   x-scheme-handler/about x-scheme-handler/unknown
-# Images and XML too. Nothing else claims them as a default, so with Brave
-# installed its desktop entry (which lists them) wins the fallback, and yazi's
-# Enter on a picture opened Brave.
+# Images and XML too. Nothing else claims them as a default, so whichever
+# installed desktop entry lists them wins the fallback; with Brave installed,
+# yazi's Enter on a picture used to open Brave.
 try "qutebrowser for images/xml" xdg-mime default org.qutebrowser.qutebrowser.desktop \
   image/png image/jpeg image/gif image/webp \
   text/xml application/xml application/xhtml+xml application/xhtml_xml \
@@ -1544,6 +1519,10 @@ try "cedilla fix" "$DOTFILES/post-install.sh"
 # window with a profile of its own. See webapps/README.md.
 echo "==> Generating web app launchers"
 try "web apps" "$DOTFILES/webapps/generate.sh"
+# Mail links open a Gmail compose window in the Mail web app, through the
+# handler entry generate.sh writes (webapps/mailto.sh). Set here rather than
+# with the other defaults because the entry does not exist until now.
+try "gmail for mailto" xdg-mime default webapp-mailto.desktop x-scheme-handler/mailto
 
 ############################################################
 # SANITY CHECKS                                            #

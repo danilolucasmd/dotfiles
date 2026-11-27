@@ -45,9 +45,15 @@ all of it:
   but never remembers the grant, so without it apps like WhatsApp show their
   enable-notifications banner on every open.
 - **Launching an open app raises it** instead of opening a second window.
-- **Widevine** (DRM video, which Spotify needs) is borrowed from Brave's
-  profile, since QtWebEngine ships none. Without Brave installed and run once,
+  Launched at any address other than its own (a compose link), it opens that
+  address in a new window of the running app instead.
+- **Widevine** (DRM video, which Spotify needs) comes from the
+  `chromium-widevine` AUR package, since QtWebEngine ships none. Without it,
   Spotify will not play.
+- **`mailto:` links** open a Gmail compose window in the Mail app, as a new
+  window if it is already open. [`mailto.sh`](./mailto.sh) is the handler, and
+  `generate.sh` writes its hidden `webapp-mailto.desktop` entry alongside the
+  launchers.
 
 ## Fresh machine
 
