@@ -56,8 +56,8 @@ map zL scrollToRight
 # History and the address. o opens a URL or searches (bookmarks and history
 # listed as you type), O does it in a new tab, as in qutebrowser.
 map o open
-# l as in the browser's Ctrl+L, which focuses the address bar.
-map l open
+# l as in the browser's Ctrl+L: the page's URL filled in and selected.
+map l editUrl
 map O openInNewTab
 # The browser keeps Ctrl+T to itself, so t stands in for it.
 map t openInNewTab
