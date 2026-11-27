@@ -1753,7 +1753,10 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   purple statusbar. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> reopens the
   last closed tab, or, right after launch, every tab open when it last quit.
   `greasemonkey/youtube-grid.user.js` ports the YouTube Row Fixer extension: five
-  videos per row, a compact Shorts shelf, no channel avatars. It is
+  videos per row, a compact Shorts shelf, no channel avatars.
+  `greasemonkey/trusted-types.user.js` lets caret mode start on pages that
+  enforce Trusted Types (Google Docs, YouTube, Gmail), where qutebrowser's own
+  caret script is otherwise rejected. `config.py` is
   the only config qutebrowser reads: `:set` lasts for the session, so a setting
   worth keeping goes in `config.py`
 
