@@ -61,7 +61,7 @@ map yt duplicateTab
 map bd removeTab
 map X restoreTab
 map <a-p> togglePinTab
-map gbo closeOtherTabs
-map gbr closeTabsOnRight
-map gbH moveTabLeft
-map gbL moveTabRight
+map bo closeOtherTabs
+map br closeTabsOnRight
+map bH moveTabLeft
+map bL moveTabRight
