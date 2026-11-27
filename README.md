@@ -213,18 +213,19 @@ opens a qutebrowser-style command line in the bar, listing every command with
 its keys and narrowing the list as you type, and `?` shows every mapped key,
 grouped, as Vimium's help does. `/` searches the page from a prompt in the
 same bar, highlighting every match as you type, and `n`/`N` step through
-them.
+them. `o` and `O` open a URL or search, here or in a new tab, with bookmarks
+and history listed as you type, as qutebrowser's `:open` does.
 
 Its keymap is `vimode/vimoderc`, in Vimium's `map` syntax, and it is the
 whole keymap: nothing is built in, so a key does something only if a line
 there maps it. Link hints work as in Vimium (`f`, `F`, `<a-f>`, `yf`), across
 every frame; their characters are `set linkHintCharacters` in `vimoderc`, and
-their look is `vimode/style.css`.
+they keep Vimode's default look (an imported `style.css` could restyle them).
 
-Like Vimium's settings, the two files are imported rather than read live: an
+Like Vimium's settings, the file is imported rather than read live: an
 extension cannot read files on disk by itself, and the alternative (a native
 messaging host watching them) was a per-machine install that did not travel
-well to a work computer. So after editing either file, import it again with
+well to a work computer. So after editing it, import it again with
 `:importConfig`, which opens a file picker and lists any line it skipped.
 There is no settings page: `:reloadExtension` reloads the extension's code.
 
@@ -234,9 +235,9 @@ Setup on a new machine, once the repo is cloned:
    Policy can only force-install extensions from a store. Brave keeps loading
    it from that directory, so a change there applies after the reload button
    on its card.
-2. On any web page, type `:importConfig` and pick `vimode/vimoderc` and
-   `vimode/style.css`. Until then Vimode runs its own defaults, Vimium's
-   keys, which differ from these (tabs on `H`/`L` here, history there).
+2. On any web page, type `:importConfig` and pick `vimode/vimoderc`. Until
+   then Vimode runs its own defaults, Vimium's keys, which differ from these
+   (tabs on `H`/`L` here, history there).
 
 Vimium's old exported settings are still in `vimium/`.
 

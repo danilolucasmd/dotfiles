@@ -15,8 +15,8 @@ set grabBackFocus true
 # Alt, and arrows, space and Enter, still pass.
 set passUnmappedKeys false
 
-# The characters link hints are made of (Vimium's default). The labels'
-# look is in style.css beside this file.
+# The characters link hints are made of (Vimium's default). The labels keep
+# Vimode's default look (Vimium's yellow).
 set linkHintCharacters sadfjklewcmpgh
 
 # Pausing halfway through a key sequence shows the keys that continue it,
@@ -46,7 +46,6 @@ map N performBackwardsFind
 map j scrollDown
 map k scrollUp
 map h scrollLeft
-map l scrollRight
 map <c-d> scrollPageDown
 map <c-u> scrollPageUp
 map gg scrollToTop
@@ -54,7 +53,14 @@ map G scrollToBottom
 map zH scrollToLeft
 map zL scrollToRight
 
-# History and the address
+# History and the address. o opens a URL or searches (bookmarks and history
+# listed as you type), O does it in a new tab, as in qutebrowser.
+map o open
+# l as in the browser's Ctrl+L, which focuses the address bar.
+map l open
+map O openInNewTab
+# The browser keeps Ctrl+T to itself, so t stands in for it.
+map t openInNewTab
 map <c-o> goBack
 map <c-i> goForward
 map gu goUp
