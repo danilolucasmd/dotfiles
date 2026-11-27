@@ -212,26 +212,27 @@ in fullscreen, and it stays off WhatsApp, whose web app is all typing. `:`
 opens a qutebrowser-style command line in the bar, listing every command with
 its keys and narrowing the list as you type.
 
-Its keymap is the one file here, `vimode/vimoderc`, in
-Vimium's `map` syntax, and it is the whole keymap: nothing is built in, so a
-key does something only if a line there maps it. The extension cannot
-read files on its own, so a small native messaging host in the vimode repo
-watches the file and pushes each change in: saving it applies to every open tab
-within a second, with nothing to import. The options page shows whether it
-loaded and any line it skipped, and can point at a different path.
+Its keymap is `vimode/vimoderc`, in Vimium's `map` syntax, and it is the
+whole keymap: nothing is built in, so a key does something only if a line
+there maps it. Link hints work as in Vimium (`f`, `F`, `<a-f>`, `yf`), across
+every frame; their characters are `set linkHintCharacters` in `vimoderc`, and
+their look is `vimode/style.css`.
+
+Like Vimium's settings, the two files are imported rather than read live: an
+extension cannot read files on disk by itself, and the alternative (a native
+messaging host watching them) was a per-machine install that did not travel
+well to a work computer. So after editing either file, import it again from
+vimode's options page, which also shows any line it skipped.
 
 Setup on a new machine, once the repo is cloned:
 
-1. `~/Code/vimode/host/install.sh` registers the native host.
-2. `brave://extensions`, Developer mode on, "Load unpacked", pick `~/Code/vimode`.
+1. `brave://extensions`, Developer mode on, "Load unpacked", pick `~/Code/vimode`.
    Policy can only force-install extensions from a store. Brave keeps loading
    it from that directory, so a change there applies after the reload button
    on its card.
+2. On vimode's options page, import `vimode/vimoderc` and `vimode/style.css`.
 
-Link hints work as in Vimium (`f`, `F`, `<a-f>`, `yf`), across every frame.
-Their characters are `set linkHintCharacters` in `vimoderc`, and their look is
-`vimode/style.css`, which the host watches alongside `vimoderc` and applies on
-save. Vimium's old exported settings are still in `vimium/`.
+Vimium's old exported settings are still in `vimium/`.
 
 ---
 

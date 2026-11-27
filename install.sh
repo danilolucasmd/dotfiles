@@ -1118,14 +1118,6 @@ for level in managed recommended; do
     "$DOTFILES/brave/$level.json" "/etc/brave/policies/$level/dotfiles.json"
 done
 
-# vimode, the keyboard extension, reads vimode/vimoderc
-# through a native messaging host that its own repo registers. Only when that
-# repo is checked out: it is not cloned here yet, and the extension itself is
-# loaded unpacked by hand (README section 2).
-if [[ -x "$HOME/Code/vimode/host/install.sh" ]]; then
-  try "vimode native host" "$HOME/Code/vimode/host/install.sh"
-fi
-
 # docker-desktop points the CLI at its own socket by writing a `desktop-linux`
 # context and making it current, which is the right answer only while Desktop
 # is running. With Desktop no longer a boot service, that context leaves

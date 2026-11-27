@@ -1,9 +1,9 @@
-# vimode keymap, read live by the extension (~/Code/vimode) through its native
-# host: saving this file applies it to every open tab within a second. This is
-# the whole keymap, with nothing built in underneath: a key does something only
-# if a line here maps it. `map <keys> <command>` and `set <name> <value>`, in
-# Vimium's syntax. Problems (an unknown command, a typo) show on the
-# extension's options page and skip just that line.
+# vimode keymap, for the extension in ~/Code/vimode. Import it on vimode's
+# options page after every change. This is the whole keymap, with nothing built
+# in underneath: a key does something only if a line here maps it.
+# `map <keys> <command>` and `set <name> <value>`, in Vimium's syntax. Problems
+# (an unknown command, a typo) show on the options page and skip just that
+# line.
 
 # A page that focuses a field as it loads would otherwise start in insert mode
 # and swallow the first keys meant for here.

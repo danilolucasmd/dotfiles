@@ -1,6 +1,7 @@
 /*
- * vimode styles, applied live like vimoderc beside it. Rules here are added
- * after vimode's defaults (Vimium's yellow labels), so anything set here wins.
+ * vimode styles, imported on vimode's options page alongside vimoderc. Rules
+ * here are added after vimode's defaults (Vimium's yellow labels), so anything
+ * set here wins.
  *
  *   .vimode-hint            one link hint label
  *   .vimode-hint span       one character of it
