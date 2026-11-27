@@ -17,6 +17,7 @@ set passUnmappedKeys false
 
 # Modes
 map i enterInsertMode
+map : enterCommandMode
 map gi focusInput
 
 # Scrolling
