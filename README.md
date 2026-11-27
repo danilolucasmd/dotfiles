@@ -235,8 +235,8 @@ Setup on a new machine, once the repo is cloned:
    it from that directory, so a change there applies after the reload button
    on its card.
 2. On any web page, type `:importConfig` and pick `vimode/vimoderc` and
-   `vimode/style.css`. Until then Vimode runs its own default keymap, which
-   is close to this one.
+   `vimode/style.css`. Until then Vimode runs its own defaults, Vimium's
+   keys, which differ from these (tabs on `H`/`L` here, history there).
 
 Vimium's old exported settings are still in `vimium/`.
 
