@@ -830,3 +830,22 @@ def devtools_resize(tab, delta: int) -> None:
 for mode in ("normal", "insert"):
     config.bind("<Alt-,>", f"devtools-resize -{_DEVTOOLS_STEP}", mode=mode)
     config.bind("<Alt-.>", f"devtools-resize {_DEVTOOLS_STEP}", mode=mode)
+
+# The divider between the page and docked DevTools is drawn in Qt's default
+# light grey, a bright stripe between two dark surfaces. It is recoloured and
+# halved rather than removed, so it can still be grabbed with the mouse. The
+# colour is DevTools' own dark-theme divider grey, not the theme's BORDER: that
+# one is purple-tinted and read as a stray colour against DevTools' neutral
+# greys. The splitter is built per tab, after config.py runs, so its
+# constructor is wrapped rather than an existing widget restyled.
+from qutebrowser.misc import miscwidgets as _miscwidgets
+
+if not hasattr(_miscwidgets.InspectorSplitter, "_qb_orig_init"):
+    _miscwidgets.InspectorSplitter._qb_orig_init = _miscwidgets.InspectorSplitter.__init__
+
+    def _splitter_init(self, *args, **kwargs):
+        self._qb_orig_init(*args, **kwargs)
+        self.setStyleSheet("QSplitter::handle { background: #3c3c3c; }")
+        self.setHandleWidth(2)
+
+    _miscwidgets.InspectorSplitter.__init__ = _splitter_init
