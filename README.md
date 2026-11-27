@@ -210,7 +210,8 @@ right (green for https, blue for a hovered link) and any half-typed key
 sequence after it. It overlays the bottom 20px, clicks pass through, it hides
 in fullscreen, and it stays off WhatsApp, whose web app is all typing. `:`
 opens a qutebrowser-style command line in the bar, listing every command with
-its keys and narrowing the list as you type.
+its keys and narrowing the list as you type, and `?` shows every mapped key,
+grouped, as Vimium's help does.
 
 Its keymap is `vimode/vimoderc`, in Vimium's `map` syntax, and it is the
 whole keymap: nothing is built in, so a key does something only if a line

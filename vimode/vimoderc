@@ -26,6 +26,7 @@ set keyhintDelay 500
 # Modes
 map i enterInsertMode
 map : enterCommandMode
+map ? showHelp
 map gi focusInput
 
 # Link hints, Vimium's keys. Holding Shift while picking swaps opening in this
