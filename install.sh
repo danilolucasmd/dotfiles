@@ -1118,6 +1118,30 @@ for level in managed recommended; do
     "$DOTFILES/brave/$level.json" "/etc/brave/policies/$level/dotfiles.json"
 done
 
+# Keyboard shortcuts have no policy. Brave keeps them in the profile's
+# Preferences, under brave.accelerators: command id to its keys. That pref is
+# not one of the signed ones, so it can be patched, but only while Brave is
+# closed (it rewrites the file as it runs) and only once Brave has run and
+# written the full table (a partial one is not known to be safe).
+# brave/shortcuts.json holds the commands changed from Brave's defaults, with
+# their keys as they should be:
+#   34014  New tab: Ctrl+T removed, so it reaches the page and Vimode maps it
+#          (<c-t> in vimode/vimoderc); AppNew is the keyboard's media key.
+# To find a command's id, change it in brave://settings/system/shortcuts and
+# compare brave.accelerators with brave.default_accelerators.
+brave_prefs="$HOME/.config/BraveSoftware/Brave-Browser/Default/Preferences"
+if [ ! -f "$brave_prefs" ] || ! jq -e '.brave.accelerators' "$brave_prefs" >/dev/null 2>&1; then
+  skip "brave shortcuts (open Brave once, quit it, and run this again)"
+elif pgrep -x brave >/dev/null; then
+  skip "brave shortcuts (quit Brave and run this again)"
+else
+  try "brave shortcuts" sh -c '
+    tmp=$(mktemp) &&
+    jq --slurpfile s "$1" ".brave.accelerators += \$s[0]" "$2" > "$tmp" &&
+    mv "$tmp" "$2"
+  ' sh "$DOTFILES/brave/shortcuts.json" "$brave_prefs"
+fi
+
 # docker-desktop points the CLI at its own socket by writing a `desktop-linux`
 # context and making it current, which is the right answer only while Desktop
 # is running. With Desktop no longer a boot service, that context leaves

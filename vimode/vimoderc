@@ -59,8 +59,11 @@ map o open
 # l as in the browser's Ctrl+L: the page's URL filled in and selected.
 map l editUrl
 map O openInNewTab
-# The browser keeps Ctrl+T to itself, so t stands in for it.
 map t openInNewTab
+# Ctrl+T only reaches the page once Brave's own binding is removed
+# (brave://settings/system/shortcuts); until then Brave opens a
+# plain new tab and this never fires.
+map <c-t> openInNewTab
 map <c-o> goBack
 map <c-i> goForward
 map gu goUp

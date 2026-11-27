@@ -200,6 +200,12 @@ Policy cannot reach these, so they are set by hand in Brave settings:
 2. Set every font to JetBrainsMono Nerd Font (Appearance, Customize fonts)
 3. Pick the grayscale theme in dark mode (Appearance)
 
+Keyboard shortcuts have no policy either, but `install.sh` patches them into
+the profile from `brave/shortcuts.json`, which lists the ones changed from
+Brave's defaults. It needs Brave to have run once and to be closed, and skips
+with a note otherwise. Today it frees Ctrl+T (removed from "New tab") so the
+key reaches pages and Vimode maps it to its `open -t` prompt.
+
 Keyboard navigation is Vimode, our own extension, in its own repo at
 `~/Code/vimode`. Vim-style keys (scrolling, history, the tab commands) with
 modes that work like Vimium's: normal mode runs the keymap, and focusing a
