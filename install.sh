@@ -283,6 +283,12 @@ fi
 # and hyprlock all ask for "JetBrainsMono Nerd Font") plus the symbol-only
 # faces the bar glyphs come from. The `nerd-fonts` group is 69 packages and
 # several GB for fonts nothing here names.
+#
+# noto-fonts is what the generic families resolve to: sans-serif, serif and
+# monospace on any web page, and the system-ui and monospace stacks DevTools
+# draws its interface with. With no general-purpose font installed, fontconfig
+# fell back to the URW PostScript clones (Nimbus Sans, Nimbus Mono PS) in
+# gsfonts, which evince and graphviz pull in, and DevTools looked wrong.
 echo "==> Installing core tools"
 
 # The one pacman step that is deliberately fatal and not routed through pac():
@@ -304,6 +310,7 @@ pac \
   ttf-jetbrains-mono-nerd \
   ttf-nerd-fonts-symbols \
   ttf-nerd-fonts-symbols-mono \
+  noto-fonts \
   stow
 
 ############################################################
