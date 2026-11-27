@@ -200,7 +200,7 @@ Policy cannot reach these, so they are set by hand in Brave settings:
 2. Set every font to JetBrainsMono Nerd Font (Appearance, Customize fonts)
 3. Pick the grayscale theme in dark mode (Appearance)
 
-Keyboard navigation is vimode, our own extension, in its own repo at
+Keyboard navigation is Vimode, our own extension, in its own repo at
 `~/Code/vimode`. Vim-style keys (scrolling, history, the tab commands) with
 modes that work like Vimium's: normal mode runs the keymap, and focusing a
 text field or pressing `i` switches to insert mode until Escape. A
@@ -222,7 +222,7 @@ Like Vimium's settings, the two files are imported rather than read live: an
 extension cannot read files on disk by itself, and the alternative (a native
 messaging host watching them) was a per-machine install that did not travel
 well to a work computer. So after editing either file, import it again from
-vimode's options page, which also shows any line it skipped.
+Vimode's options page, which also shows any line it skipped.
 
 Setup on a new machine, once the repo is cloned:
 
@@ -230,7 +230,7 @@ Setup on a new machine, once the repo is cloned:
    Policy can only force-install extensions from a store. Brave keeps loading
    it from that directory, so a change there applies after the reload button
    on its card.
-2. On vimode's options page, import `vimode/vimoderc` and `vimode/style.css`.
+2. On Vimode's options page, import `vimode/vimoderc` and `vimode/style.css`.
 
 Vimium's old exported settings are still in `vimium/`.
 
@@ -1800,7 +1800,7 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 - qutebrowser stays installed with its config, but nothing opens in it: Google
   refuses to sign in from its embedded Chromium ("Couldn't sign you in"), which
   took Gmail and Calendar with it, so Brave came back. Its `config.py` ports the
-  Vimium keymap from `vimium/`, the same keys vimode's `vimoderc` carries, and
+  Vimium keymap from `vimium/`, the same keys Vimode's `vimoderc` carries, and
   sets Google as the search engine and dark mode on every page
   (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> opens a private window, marked by a
