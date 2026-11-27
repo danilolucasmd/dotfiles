@@ -77,7 +77,7 @@ but you lose that safety net completely.
 The best-effort layout gives a 1 GiB ESP mounted at `/boot`, which is enough:
 `install.sh` trims the initramfs to fit snapshot kernels into it. If you are
 partitioning by hand anyway, give the ESP 2 GiB and stop thinking about it.
-See `README.md` section 9 for why that number exists.
+See `README.md` section 10 for why that number exists.
 
 ### Swap
 - Swap: default

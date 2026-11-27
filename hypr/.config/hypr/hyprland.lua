@@ -172,9 +172,9 @@ hl.config({
         disable_hyprland_logo = false,
 
         -- Honour xdg-activation requests, so an app that asks to be raised actually
-        -- gets focus. Clicking a browser notification works through this: the
-        -- browser focuses the window holding the tab that fired it, and without
-        -- this Hyprland drops the request. See quickshell's focus-sender.sh.
+        -- gets focus. Clicking a Brave notification works through this: Brave
+        -- focuses the window holding the tab that fired it, and without this
+        -- Hyprland drops the request. See quickshell's focus-sender.sh.
         focus_on_activate = true,
     },
 
@@ -463,6 +463,14 @@ hl.window_rule({
     name = "suppress-maximize-events",
     match = { class = ".*" },
     suppress_event = "maximize",
+})
+
+-- Only let the browser pull focus to its workspace on activation (e.g. clicking a link).
+-- Keeps terminals/Claude from stealing focus when they request activation.
+hl.window_rule({
+    name = "brave-focus-on-activate",
+    match = { class = "^(brave-browser)$" },
+    focus_on_activate = true,
 })
 
 hl.window_rule({

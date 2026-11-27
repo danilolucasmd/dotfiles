@@ -1,13 +1,18 @@
 # webapps
 
-Declarative web apps, each a bare qutebrowser window of its own: no tab bar, no
-status bar, its own icon and window class.
+Declarative, toolbar-free Brave web apps.
+
+Brave's built-in "Install app" creates launchers with `--app-id=<id>`, which open
+the installed-PWA window. That window shows a thin toolbar at the top whenever the
+site's web-app manifest requests it — and Brave has no setting to hide it. These
+launchers use `--app=<URL>` instead, which gives a bare content-only window with
+no toolbar.
 
 ## Add / change / remove an app
 
-1. Edit [`apps.conf`](./apps.conf): one line per app, `Name | URL | slug`.
-2. Drop an `icons/<slug>.png` (any square PNG; 256 to 512px is ideal). Optional:
-   a missing icon falls back to a themed name.
+1. Edit [`apps.conf`](./apps.conf) — one line per app: `Name | URL | slug`.
+2. Drop a `icons/<slug>.png` (any square PNG; 256–512px is ideal). Optional — a
+   missing icon just falls back to a themed name.
 3. Run the generator:
 
    ```sh
@@ -15,46 +20,27 @@ status bar, its own icon and window class.
    ```
 
 It writes `~/.local/share/applications/webapp-<slug>.desktop` for every app and
-removes launchers for apps you deleted from `apps.conf`. The launcher picks up a
-new entry without a restart.
+removes launchers for apps you deleted from `apps.conf`. Log out/in or restart
+your launcher (walker) if a new entry doesn't show up immediately.
 
-## How an app runs
+You do **not** install these through Brave. Cookies/logins are shared with the
+Brave `Default` profile, so you stay signed in.
 
-Every launcher runs [`qutebrowser-app.sh`](./qutebrowser-app.sh), which holds
-all of it:
+## Options
 
-- **A qutebrowser instance per app.** One instance gives all its windows the
-  same app id, and an app needs its own: its icon in the bar, its windows kept
-  apart from the browser's, notifications routed back to it. The window class
-  is `webapp-<host>` (`webapp-web.whatsapp.com`), which is how quickshell's
-  `focus-sender.sh` sends a clicked notification to the right window.
-- **A profile per app**, in `~/.local/share/qutebrowser-apps/<slug>`. Logins are
-  not shared with the main qutebrowser, so each app is signed into once.
-- **The main `config.py`** for keys and theme, with forced dark mode off (the
-  apps' own dark themes still apply), the tab bar off,
-  the status bar shown only outside normal mode (insert, hints, the command
-  line), and notifications allowed. Notifications are signed with the app's
-  name instead of "qutebrowser", with no origin URL above the message. A link the app opens in a
-  new tab becomes a new window, since there is no tab bar to show it in.
-- **WhatsApp starts in passthrough mode**, so every key goes to the page
-  (typing anywhere, its own shortcuts), and has no status bar at all.
-  Shift+Escape returns to normal mode.
-- **User scripts for the apps** live in [`greasemonkey/`](./greasemonkey),
-  linked into every profile at launch. `notifications.user.js` asks for the
-  notification permission on each load: qutebrowser grants it without a prompt
-  but never remembers the grant, so without it apps like WhatsApp show their
-  enable-notifications banner on every open.
-- **Launching an open app raises it** instead of opening a second window.
-  Launched at any address other than its own (a compose link), it opens that
-  address in a new window of the running app instead.
-- **Widevine** (DRM video, which Spotify needs) comes from the
-  `chromium-widevine` AUR package, since QtWebEngine ships none. Without it,
-  Spotify will not play.
-- **`mailto:` links** open a Gmail compose window in the Mail app, as a new
-  window if it is already open. [`mailto.sh`](./mailto.sh) is the handler, and
-  `generate.sh` writes its hidden `webapp-mailto.desktop` entry alongside the
-  launchers.
+- `BRAVE_PROFILE=Work ./generate.sh` — use a different Brave profile.
+- `BRAVE_BIN=/opt/brave-bin/brave ./generate.sh` — pin a specific binary
+  (otherwise `brave` / `brave-browser` on `$PATH` is autodetected).
 
 ## Fresh machine
 
-Part of the dotfiles install (see `../install.sh`), which runs `./generate.sh`.
+Part of the dotfiles install (see `../install.sh`). Just run `./generate.sh`
+once after Brave is installed.
+
+## Notes
+
+- Each window gets a stable `--class=webapp-<slug>` so Hyprland/Waybar group it
+  under the right icon. If Hyprland still mis-groups a window, match on
+  `class:^(webapp-<slug>)$` in a windowrule.
+- To go back to Brave's PWA launchers, reinstall the app from Brave and delete
+  the matching `webapp-<slug>.desktop`.

@@ -11,14 +11,12 @@
 #      default action instead, and lets the app raise itself
 #
 # That split exists because the app's default action is not always the better
-# answer. A browser's notification names the browser, so its default action
-# points at the browser window, while the site may be open as a web app of its
-# own. The main qutebrowser puts the origin on the first line of the body
-# ("https://web.whatsapp.com"), and a web app's window class is built from the
-# same host (webapp-web.whatsapp.com), so the host pass below can still find
-# the app. The web apps themselves need none of that: config.py makes their
-# notifications carry their window class as the desktop entry, which the class
-# pass matches exactly.
+# answer. Brave sets desktop-entry=brave-browser on every notification and its
+# default action raises the *browser* window, but the notification for a
+# WhatsApp message belongs to the web-app window, which Brave will never raise.
+# The origin is the first line of the body ("web.whatsapp.com"), and the
+# generated launchers give those windows classes built from the same host
+# (brave-web.whatsapp.com__-Default), so matching on that beats both.
 #
 # Five passes, in order of how much the match can be trusted:
 #

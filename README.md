@@ -166,7 +166,47 @@ worth adding: `nautilus/README.md`.
 
 ---
 
-## 2. 1Password
+## 2. Brave Browser Settings
+
+Most of Brave is set up by `install.sh` through enterprise policy, which copies
+`brave/managed.json` and `brave/recommended.json` into
+`/etc/brave/policies/{managed,recommended}/dotfiles.json`. `brave/` is not a
+stow package: its profile files are signed per machine, so policy is the only
+part of Brave that a repo can hold.
+
+`managed.json` is enforced and shows as greyed out in Settings:
+
+- Everything Brave bundles is switched off: Rewards, Wallet, VPN, Leo, News,
+  Talk, Playlist, Speedreader, the Wayback Machine prompt, Tor windows, its
+  usage pings and web discovery, and the built-in password manager and card
+  autofill (1Password does both). Bookmarks are off too: the bar is hidden and
+  the star and editing are locked out.
+- Vimium, 1Password, Dark Reader, Custom New Tab and YouTube Row Fixer are
+  installed automatically and cannot be removed. Their own settings live in
+  browser storage, not here.
+- Spellcheck runs in English and Portuguese (Brazil).
+- Notifications are allowed for Calendar, Claude, Fluxer and WhatsApp, and
+  blocked for Netflix and YouTube.
+
+`recommended.json` only sets defaults that Settings can still change: Google as
+the search engine.
+
+`brave://policy` lists what is in force and flags anything it rejected. After
+editing either file, copy it again and press "Reload policies" there.
+
+Policy cannot reach these, so they are set by hand in Brave settings:
+
+1. Add Portuguese (Brazil) to Languages
+2. Set every font to JetBrainsMono Nerd Font (Appearance, Customize fonts)
+3. Pick the grayscale theme in dark mode (Appearance)
+
+Vimium's exported settings live in `vimium/`. They are not stowed — the
+extension keeps its options in browser storage — so import them by hand from
+the extension's options page after signing in.
+
+---
+
+## 3. 1Password
 
 After installation:
 
@@ -218,7 +258,7 @@ client secret.
 
 ---
 
-## 3. Proton VPN
+## 4. Proton VPN
 
 After installation:
 
@@ -228,7 +268,7 @@ After installation:
 
 ---
 
-## 4. Status Bar
+## 5. Status Bar
 
 The bar is [quickshell](https://quickshell.org) (`quickshell/.config/quickshell`),
 launched by `hl.exec_cmd("qs")` in the `hyprland.start` handler in `hyprland.lua`.
@@ -648,7 +688,7 @@ standard categories under their headings, in CLDR order. Typing filters on the
 CLDR search keywords as well as the names, so
 `lol` finds 😂 and `hi` finds 👋, neither of which says so in its name; the
 arrows walk the grid and Return picks. Choosing one copies it, closes the panel
-and pastes it into whatever had focus, which is section 14 below.
+and pastes it into whatever had focus, which is section 15 below.
 
 `super+E` used to open walker on elephant's `symbols` provider, and ordering is
 why it stopped. That provider sorts by name, so an empty query opened on "1st
@@ -657,7 +697,7 @@ everybody does, with no shape to the list at all. elephant had no ordering knob
 to turn, and walker's list was flat and could not have carried the headings even
 if it had. The picker outlived both of them; what did not survive is the rest of
 that provider, the arrows and the maths and the currency signs, which went when
-walker did (section 14). They were never emoji and never belonged in this grid,
+walker did (section 15). They were never emoji and never belonged in this grid,
 and nothing has asked for them back.
 
 The dataset is generated rather than written: `scripts/gen-emoji-data.py` builds
@@ -829,7 +869,7 @@ pactl get-default-sink                     # the sink used before it, not the lo
 
 ---
 
-## 5. Notifications
+## 6. Notifications
 
 Quickshell is the notification daemon. It owns `org.freedesktop.Notifications`
 outright: the popups, the bell in the bar and the history panel (`super+N`, or
@@ -865,15 +905,11 @@ Clicking a notification — or hitting enter on it in the panel — jumps to the
 that sent it, through `focus-sender.sh`. The matching is better than mako's,
 because notifications say more than their app name does:
 
-- **Web apps.** qutebrowser stamps `desktop-entry=org.qutebrowser.qutebrowser`
-  and the app name "qutebrowser" on everything, and heads the body with the
-  origin URL. In a web app, `config.py` replaces both with the app's own name
-  and window class (`webapp-web.whatsapp.com`) and the origin line is turned
-  off, so the popup reads "WhatsApp" over the message alone and the class
-  match takes a click straight to that window. The main browser keeps the
-  origin line, and a site it notifies for that is also open as a web app
-  (`https://web.whatsapp.com` against `webapp-web.whatsapp.com`) still goes to
-  the app's window.
+- **Web apps.** Brave stamps `desktop-entry=brave-browser` on everything and its
+  own default action raises the *browser*, so a WhatsApp message used to land on
+  whatever tab was last open. But Brave puts the origin on the first line of the
+  body (`web.whatsapp.com`), and the generated launchers carry a matching class,
+  so that is matched first and the message goes to its own window.
 - **The app's own action is the fallback, not the first choice.** If the origin
   names a site with no web-app window open, the script bows out and the
   notification's default action runs instead — the browser opens the tab, which is the
@@ -924,7 +960,7 @@ because notifications say more than their app name does:
   on the file that listing already decoded into `~/.cache/quickshell/clipboard`
   for the thumbnail, so nothing has to be written out again to open it. Return
   there stays paste — the entry back onto the clipboard and into the window you
-  came from, per section 14 — because that is what the history is opened for,
+  came from, per section 15 — because that is what the history is opened for,
   and `ctrl+o` is the exception rather than the other way round.
 - **Everything else anonymous.** A `notify-send` typed at a prompt, or a tool
   that shells out to one without naming itself (`gh-dash`, through the beeep
@@ -1031,7 +1067,7 @@ at all.
 
 ---
 
-## 6. Terminal Multiplexer
+## 7. Terminal Multiplexer
 
 [herdr](https://herdr.dev) is the multiplexer (`herdr/.config/herdr/config.toml`).
 
@@ -1065,13 +1101,13 @@ into this repo. Only `config.toml` is tracked.
 
 One of those plugins is ours — [herdr-clone-layout](https://github.com/danilolucasmd/herdr-clone-layout),
 installed by `install.sh` with `herdr plugin install
-danilolucasmd/herdr-clone-layout --yes` (section 12). Every new workspace or
+danilolucasmd/herdr-clone-layout --yes` (section 13). Every new workspace or
 worktree opens with the tab and pane geometry of the one it was created from. It
 needs `jq`, which is in the pacman list.
 
 ---
 
-## 7. Claude Code
+## 8. Claude Code
 
 `claude/.claude/` is stowed with `--no-folding`, so `~/.claude` stays a real
 directory. Claude Code keeps credentials, history, caches and file state in
@@ -1081,11 +1117,11 @@ Only two files are tracked: `CLAUDE.md` and `settings.json`. Deliberately not
 tracked:
 
 - `autoMode.environment`, a per-repo analysis cache Claude Code rewrites itself.
-- `hooks/herdr-agent-state.sh`, which herdr owns (section 6).
+- `hooks/herdr-agent-state.sh`, which herdr owns (section 7).
 
 `statusLine` runs `quickshell/.config/quickshell/scripts/agent-usage-statusline.sh`.
 That is not cosmetic — it is the freshest of the three sources the bar's agent
-module reads (section 4). Claude Code hands `.rate_limits` to every status-line
+module reads (section 5). Claude Code hands `.rate_limits` to every status-line
 render, so the module gets near-live numbers for free, without touching the
 OAuth usage endpoint (which rate-limits hard: ~20 requests in 30s earns a
 multi-minute 429). Without the entry the module falls back to polling and goes
@@ -1128,7 +1164,7 @@ To drop the plugin: `claude plugin uninstall caveman@caveman`, `claude plugin ma
 
 ---
 
-## 8. Nautilus Video Previews (NVIDIA)
+## 9. Nautilus Video Previews (NVIDIA)
 
 Fully automated by `install.sh` — nothing to do by hand. Noted here because the
 failure is baffling if the override ever goes missing.
@@ -1143,7 +1179,7 @@ Full write-up, including how to verify it: `dbus/README.md`.
 
 ---
 
-## 9. Btrfs Snapshots
+## 10. Btrfs Snapshots
 
 This is how the system recovers itself. `install.sh` sets up snapper, snap-pac
 and Limine so that every meaningful change to `/` leaves a restore point, and so
@@ -1341,7 +1377,7 @@ Everything else that used to compile no longer does. `ghostty`, `btop`,
 one Zig build and two Rust builds gone. `ghostty` is not optional there: its AUR
 package was deleted when the repo package appeared. The rest of the AUR list is
 already `-bin`, or a repackaged upstream binary (`1password`, `1password-cli`, `docker-desktop`,
-`chromium-widevine`, `orca-slicer-bin`), and downloads rather than builds.
+`brave-bin`, `orca-slicer-bin`), and downloads rather than builds.
 
 ### Re-running install.sh on a machine set up before this
 
@@ -1378,7 +1414,7 @@ was never doing anything. Where GRUB is real, it stays and keeps working.
 
 ---
 
-## 10. Cedilla
+## 11. Cedilla
 
 `'` + `c` gives ç rather than ć on the us-intl layout. Two pieces make that happen.
 
@@ -1388,7 +1424,7 @@ The compose table is `xcompose/.XCompose`. It includes the locale's stock table 
 
 ---
 
-## 11. Manual Development Toolchains
+## 12. Manual Development Toolchains
 
 `.zshrc` puts these on `PATH`, but nothing installs them — they are large,
 versioned by project, and better managed by their own tooling:
@@ -1402,7 +1438,7 @@ them.
 
 ---
 
-## 12. Our Own Projects
+## 13. Our Own Projects
 
 Three of the tools this setup depends on are ours. `install.sh` installs all
 three **from GitHub over HTTPS**, not from `~/Code` — a fresh machine has no
@@ -1448,7 +1484,7 @@ Details that are easy to get wrong:
 
 ---
 
-## 13. Keyboard Remapping (kanata)
+## 14. Keyboard Remapping (kanata)
 
 `kanata` remaps the **laptop's built-in keyboard only**, porting the ergonomics
 of the Lily58 (`~/Code/lily58`) onto it. External keyboards -- the Lily58 over
@@ -1488,7 +1524,7 @@ AltGr, which the `us,intl` secondary layout uses for accented characters.
 
 ---
 
-## 14. The Launcher
+## 15. The Launcher
 
 `super+SPACE` opens the launcher, `super+V` opens it already switched to the
 clipboard history, and `super+shift+/` opens the keybind sheet. All three are
@@ -1602,7 +1638,7 @@ can only ever be the entry it was named for, and the same pass drops the
 thumbnail and the note of every id the listing no longer has: cliphist evicts
 silently at its own `max-items`, and a cache that only ever grew would hold
 every image copied since the machine was installed. `ctrl+O` opens an image in tensaku,
-which is the same annotation editor a screenshot notification opens (section 5),
+which is the same annotation editor a screenshot notification opens (section 6),
 and it works because that decode already happened.
 
 ### The keybind sheet
@@ -1668,7 +1704,7 @@ produce something else.
 
 ---
 
-## 15. `copy` from a pipe
+## 16. `copy` from a pipe
 
 `copy` is the shell end of all this: a zsh function in `.zshrc` that puts stdin,
 or its arguments, on the clipboard through `wl-copy --trim-newline`. It was an
@@ -1703,7 +1739,7 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 
 ---
 
-## 16. General Notes
+## 17. General Notes
 
 - `install.sh` is safe to re-run
 - System-level dotfiles (`sddm`) are stowed with `sudo stow -t /`
@@ -1724,15 +1760,17 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
   `mpv` stow package, empty for now; to keep a tweak made in a running window, quit it with
   <kbd>Shift</kbd>+<kbd>Q</kbd> and copy the properties from the file that
   lands in `~/.local/state/mpv/watch_later/`
-- qutebrowser is the default browser, for every link opened outside a browser
-  (terminals and herdr included) and for images and XML files, and runs the web apps (`webapps/`); `mailto:`
-  links open a Gmail compose window in the Mail web app. Enter on an image in yazi opens it in
+- Brave is the default browser, for every link opened outside a browser
+  (terminals and herdr included) and for images and XML files, and runs the
+  web apps (`webapps/`). Enter on an image in yazi opens it in
   tensaku instead, ready to mark up (the default app is the second choice in its
   open-with menu). PDFs open in zathura instead, with vim keys
   and the browser's colours around the page (`zathura/`); pages stay white,
-  and <kbd>Ctrl</kbd>+<kbd>R</kbd> redraws one dark. Its `config.py` ports the
-  Vimium keymap from `vimium/`, so the same keys work in a Chromium browser
-  with the Vimium extension (imported by hand from its options page), and
+  and <kbd>Ctrl</kbd>+<kbd>R</kbd> redraws one dark.
+- qutebrowser stays installed with its config, but nothing opens in it: Google
+  refuses to sign in from its embedded Chromium ("Couldn't sign you in"), which
+  took Gmail and Calendar with it, so Brave came back. Its `config.py` ports the
+  Vimium keymap from `vimium/`, so both browsers navigate the same way, and
   sets Google as the search engine and dark mode on every page
   (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> opens a private window, marked by a
@@ -1752,18 +1790,16 @@ Superseded packages that may still be installed from earlier runs. Nothing
 depends on them and `install.sh` no longer pulls them in:
 
 ```bash
-sudo pacman -Rns rofi rofi-calc anyrun cliphist pcmanfm tmux waybar brave-bin
-sudo rm -rf /etc/brave
-rm -rf ~/.config/BraveSoftware ~/.cache/BraveSoftware
+sudo pacman -Rns rofi rofi-calc anyrun cliphist pcmanfm tmux waybar chromium-widevine
 ```
 
-Brave's two `rm` lines are its enterprise policy and its profile, which
-removing the package leaves behind.
+`chromium-widevine` was the qutebrowser web apps' DRM copy; on Brave they use
+Brave's own.
 
 `mako` and `dunst` belong on that list too, but `install.sh` removes them itself
 -- they would otherwise steal the notification bus name from quickshell at
-login, see section 5. `grub-btrfs` and `grub` are the same case, removed by
-`install.sh` -- see section 9 for why they were never doing anything.
+login, see section 6. `grub-btrfs` and `grub` are the same case, removed by
+`install.sh` -- see section 10 for why they were never doing anything.
 
 Fingerprint unlock was here and is gone: it made fresh installs fail in ways the
 reader was never worth. A machine that ran the old `install.sh` still has the

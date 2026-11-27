@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 #
-# Generate the web-app launchers from apps.conf: one desktop entry per app,
-# each running it through qutebrowser-app.sh as a bare qutebrowser window of its
-# own. That script holds everything about how an app runs; this one only writes
-# the entries, and removes the ones it wrote for apps since deleted.
+# Generate toolbar-free Brave web-app launchers from apps.conf.
+#
+# Brave's own "Install app" writes launchers that use --app-id=<id>, which opens
+# the installed-PWA window — and that window shows a thin toolbar whenever the
+# site's web-app manifest asks for it (display: minimal-ui / out-of-scope nav).
+# There is no Brave setting to turn that off.
+#
+# This script instead writes launchers that use --app=<URL>, which opens a bare
+# content-only window with no toolbar, regardless of the site's manifest.
+# A stable --class is set so Hyprland / Waybar group each window under its icon.
 #
 # Usage:  ./generate.sh
+# Env:    BRAVE_PROFILE  (default: Default)   BRAVE_BIN (default: autodetected)
 
 set -euo pipefail
 
@@ -13,7 +20,11 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONF="$DIR/apps.conf"
 ICONS="$DIR/icons"
 APPDIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+PROFILE="${BRAVE_PROFILE:-Default}"
 MARKER="X-Generated-By=webapps-generator"
+
+BRAVE="${BRAVE_BIN:-$(command -v brave || command -v brave-browser || echo /opt/brave-bin/brave)}"
+[[ -x "$BRAVE" ]] || { echo "error: brave binary not found (set BRAVE_BIN)" >&2; exit 1; }
 
 mkdir -p "$APPDIR"
 
@@ -36,11 +47,9 @@ while IFS='|' read -r name url slug _rest || [[ -n "${name:-}" ]]; do
     echo "skip (missing url/slug): $name" >&2; continue
   fi
 
-  # Must match the app id qutebrowser-app.sh gives the window.
-  host="$(printf '%s' "$url" | sed -E 's#^[a-z]+://##; s#[/?#].*##')"
-  wmclass="webapp-$host"
+  wmclass="webapp-$slug"
   icon="$ICONS/$slug.png"
-  [[ -f "$icon" ]] || icon="webapp-$slug"   # fall back to a themed icon name
+  [[ -f "$icon" ]] || icon="$wmclass"   # fall back to a themed icon name
 
   out="$APPDIR/webapp-$slug.desktop"
   cat > "$out" <<EOF
@@ -49,7 +58,7 @@ Version=1.0
 Type=Application
 Terminal=false
 Name=$name
-Exec="$DIR/qutebrowser-app.sh" $slug $url
+Exec=$BRAVE --profile-directory=$PROFILE --app=$url --class=$wmclass
 Icon=$icon
 StartupWMClass=$wmclass
 Categories=Network;
@@ -59,25 +68,5 @@ EOF
   count=$((count + 1))
 done < "$CONF"
 
-# The mailto: handler, which opens a compose window in the Mail app. Hidden
-# from the launcher: it is only ever reached through a mail link, and install.sh
-# makes it the default for them. Written with the marker, so it is cleaned up
-# with the rest if Mail is ever dropped from apps.conf.
-if grep -qE '\|[[:space:]]*mail[[:space:]]*$' "$CONF"; then
-  cat > "$APPDIR/webapp-mailto.desktop" <<EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Terminal=false
-Name=Gmail Compose
-Exec="$DIR/mailto.sh" %u
-Icon=$ICONS/mail.png
-NoDisplay=true
-MimeType=x-scheme-handler/mailto;
-$MARKER
-EOF
-  echo "generated: webapp-mailto.desktop  (mailto: handler)"
-fi
-
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APPDIR" 2>/dev/null || true
-echo "Done: $count web app(s)."
+echo "Done — $count web app(s). Using: $BRAVE (profile: $PROFILE)"

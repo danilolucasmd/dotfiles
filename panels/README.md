@@ -93,5 +93,5 @@ Add the `IpcHandler` in `shell.qml`, then drop a `qs-panel-<slug>.desktop` in
 here next to the others and `stow --no-folding panels` again. Nothing needs
 restarting after that -- `DesktopEntries` watches the directory. The `--no-folding`
 is what keeps `~/.local/share/applications` a real directory: it is shared with
-the web-app launchers that `webapps/generate.sh` writes, and folding it
+the Brave web-app launchers that `webapps/generate.sh` writes, and folding it
 into a single symlink would send those into this repo.

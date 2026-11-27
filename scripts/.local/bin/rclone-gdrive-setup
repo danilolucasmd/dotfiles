@@ -9,7 +9,7 @@
 # holds the login token.
 #
 # Run it after signing in to 1Password with "Integrate with 1Password CLI" on
-# (README section 2). It opens a browser for the Google login; Google warns that
+# (README section 3). It opens a browser for the Google login; Google warns that
 # the app is unverified, which is expected for a personal client.
 #
 # Re-running is safe: an existing remote gets the credentials updated and is
