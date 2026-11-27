@@ -15,10 +15,21 @@ set grabBackFocus true
 # Alt, and arrows, space and Enter, still pass.
 set passUnmappedKeys false
 
+# The characters link hints are made of (Vimium's default). The labels'
+# look is in style.css beside this file.
+set linkHintCharacters sadfjklewcmpgh
+
 # Modes
 map i enterInsertMode
 map : enterCommandMode
 map gi focusInput
+
+# Link hints, Vimium's keys. Holding Shift while picking swaps opening in this
+# tab and in a new one; Space cycles labels that overlap.
+map f LinkHints.activateMode
+map F LinkHints.activateModeToOpenInNewTab
+map <a-f> LinkHints.activateModeWithQueue
+map yf LinkHints.activateModeToCopyLinkUrl
 
 # Scrolling
 map j scrollDown

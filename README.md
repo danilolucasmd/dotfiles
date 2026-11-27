@@ -228,9 +228,10 @@ Setup on a new machine, once the repo is cloned:
    it from that directory, so a change there applies after the reload button
    on its card.
 
-Link hints are not in vimode yet. Vimium's old exported settings are still in
-`vimium/`, and it is no longer force-installed, so it can be installed from the
-store and switched on for hints.
+Link hints work as in Vimium (`f`, `F`, `<a-f>`, `yf`), across every frame.
+Their characters are `set linkHintCharacters` in `vimoderc`, and their look is
+`vimode/style.css`, which the host watches alongside `vimoderc` and applies on
+save. Vimium's old exported settings are still in `vimium/`.
 
 ---
 
