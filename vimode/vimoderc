@@ -9,6 +9,12 @@
 # and swallow the first keys meant for here.
 set grabBackFocus true
 
+# A printable key with no mapping is dropped in normal mode instead of reaching
+# the page, as in qutebrowser. Otherwise Google Docs takes any such key as
+# typing, refocuses its editor and drops into insert mode. Keys with Ctrl or
+# Alt, and arrows, space and Enter, still pass.
+set passUnmappedKeys false
+
 # Modes
 map i enterInsertMode
 map gi focusInput
