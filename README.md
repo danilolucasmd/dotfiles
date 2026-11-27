@@ -211,7 +211,9 @@ sequence after it. It overlays the bottom 20px, clicks pass through, it hides
 in fullscreen, and it stays off WhatsApp, whose web app is all typing. `:`
 opens a qutebrowser-style command line in the bar, listing every command with
 its keys and narrowing the list as you type, and `?` shows every mapped key,
-grouped, as Vimium's help does.
+grouped, as Vimium's help does. `/` searches the page from a prompt in the
+same bar, highlighting every match as you type, and `n`/`N` step through
+them.
 
 Its keymap is `vimode/vimoderc`, in Vimium's `map` syntax, and it is the
 whole keymap: nothing is built in, so a key does something only if a line
@@ -222,8 +224,9 @@ their look is `vimode/style.css`.
 Like Vimium's settings, the two files are imported rather than read live: an
 extension cannot read files on disk by itself, and the alternative (a native
 messaging host watching them) was a per-machine install that did not travel
-well to a work computer. So after editing either file, import it again from
-Vimode's options page, which also shows any line it skipped.
+well to a work computer. So after editing either file, import it again with
+`:importConfig`, which opens a file picker and lists any line it skipped.
+There is no settings page: `:reloadExtension` reloads the extension's code.
 
 Setup on a new machine, once the repo is cloned:
 
@@ -231,7 +234,9 @@ Setup on a new machine, once the repo is cloned:
    Policy can only force-install extensions from a store. Brave keeps loading
    it from that directory, so a change there applies after the reload button
    on its card.
-2. On Vimode's options page, import `vimode/vimoderc` and `vimode/style.css`.
+2. On any web page, type `:importConfig` and pick `vimode/vimoderc` and
+   `vimode/style.css`. Before the first import `:` is the only key Vimode
+   knows, so the command line is always reachable.
 
 Vimium's old exported settings are still in `vimium/`.
 

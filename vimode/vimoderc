@@ -1,8 +1,8 @@
-# vimode keymap, for the extension in ~/Code/vimode. Import it on vimode's
-# options page after every change. This is the whole keymap, with nothing built
-# in underneath: a key does something only if a line here maps it.
+# vimode keymap, for the extension in ~/Code/vimode. Import it with
+# :importConfig after every change. This is the whole keymap, with nothing
+# built in underneath: a key does something only if a line here maps it.
 # `map <keys> <command>` and `set <name> <value>`, in Vimium's syntax. Problems
-# (an unknown command, a typo) show on the options page and skip just that
+# (an unknown command, a typo) are listed after the import and skip just that
 # line.
 
 # A page that focuses a field as it loads would otherwise start in insert mode
@@ -35,6 +35,12 @@ map f LinkHints.activateMode
 map F LinkHints.activateModeToOpenInNewTab
 map <a-f> LinkHints.activateModeWithQueue
 map yf LinkHints.activateModeToCopyLinkUrl
+
+# Find. Lowercase ignores case, a capital makes it exact; Escape clears the
+# highlights.
+map / enterFindMode
+map n performFind
+map N performBackwardsFind
 
 # Scrolling
 map j scrollDown
