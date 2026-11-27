@@ -202,8 +202,12 @@ Policy cannot reach these, so they are set by hand in Brave settings:
 Keyboard shortcuts have no policy either, but `install.sh` patches them into
 the profile from `brave/shortcuts.json`, which lists the ones changed from
 Brave's defaults. It needs Brave to have run once and to be closed, and skips
-with a note otherwise. Today it frees Ctrl+T (removed from "New tab") so the
-key reaches pages and Vimode maps it to its `open -t` prompt.
+with a note otherwise, so a fresh install takes one more pass: open Brave,
+quit it, and run `install.sh` again (or just its "brave shortcuts" lines).
+Today it frees Ctrl+T (removed from "New tab") so the key reaches pages and
+Vimode maps it to its `open -t` prompt. Only the shortcuts Chromium reserves
+(Ctrl+T, Ctrl+W, Ctrl+N, Ctrl+Tab and a few more) need this; any other, like
+Ctrl+L for Vimode's URL editor, reaches the page first and Vimode takes it.
 
 Keyboard navigation is Vimode, our own extension, in its own repo at
 `~/Code/vimode`. Vim-style keys (scrolling, history, the tab commands) with

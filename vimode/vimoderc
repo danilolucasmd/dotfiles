@@ -58,6 +58,8 @@ map zL scrollToRight
 map o open
 # l as in the browser's Ctrl+L: the page's URL filled in and selected.
 map l editUrl
+# Ctrl+L itself too: unlike Ctrl+T, Brave lets the page have it first.
+map <c-l> editUrl
 map O openInNewTab
 map t openInNewTab
 # Ctrl+T only reaches the page once Brave's own binding is removed

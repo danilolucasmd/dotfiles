@@ -1127,6 +1127,10 @@ done
 # their keys as they should be:
 #   34014  New tab: Ctrl+T removed, so it reaches the page and Vimode maps it
 #          (<c-t> in vimode/vimoderc); AppNew is the keyboard's media key.
+# Only the shortcuts Chromium reserves (Ctrl+T, Ctrl+W, Ctrl+N, Ctrl+Tab...)
+# need removing: the browser acts on those before the page sees them. Any
+# other, Ctrl+L included, goes to the page first, and Vimode cancels the ones
+# it maps.
 # To find a command's id, change it in brave://settings/system/shortcuts and
 # compare brave.accelerators with brave.default_accelerators.
 brave_prefs="$HOME/.config/BraveSoftware/Brave-Browser/Default/Preferences"
