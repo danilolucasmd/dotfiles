@@ -181,7 +181,7 @@ part of Brave that a repo can hold.
   usage pings and web discovery, and the built-in password manager and card
   autofill (1Password does both). Bookmarks are off too: the bar is hidden and
   the star and editing are locked out.
-- Vimium, 1Password, Dark Reader, Custom New Tab and YouTube Row Fixer are
+- 1Password, Dark Reader, Custom New Tab and YouTube Row Fixer are
   installed automatically and cannot be removed. Their own settings live in
   browser storage, not here.
 - Spellcheck runs in English and Portuguese (Brazil).
@@ -200,9 +200,35 @@ Policy cannot reach these, so they are set by hand in Brave settings:
 2. Set every font to JetBrainsMono Nerd Font (Appearance, Customize fonts)
 3. Pick the grayscale theme in dark mode (Appearance)
 
-Vimium's exported settings live in `vimium/`. They are not stowed — the
-extension keeps its options in browser storage — so import them by hand from
-the extension's options page after signing in.
+Keyboard navigation is vimode, our own extension, in its own repo at
+`~/Code/vimode`. Vim-style keys (scrolling, history, the tab commands) with
+modes that work like Vimium's: normal mode runs the keymap, and focusing a
+text field or pressing `i` switches to insert mode until Escape. A
+qutebrowser-style status bar runs along the bottom of every page, grey in
+normal mode and green with "-- INSERT --" in insert mode, with the URL on the
+right (green for https, blue for a hovered link) and any half-typed key
+sequence after it. It overlays the bottom 20px, clicks pass through, it hides
+in fullscreen, and it stays off WhatsApp, whose web app is all typing.
+
+Its keymap is the one file here, `vimode/vimoderc`, in
+Vimium's `map` syntax, and it is the whole keymap: nothing is built in, so a
+key does something only if a line there maps it. The extension cannot
+read files on its own, so a small native messaging host in the vimode repo
+watches the file and pushes each change in: saving it applies to every open tab
+within a second, with nothing to import. The options page shows whether it
+loaded and any line it skipped, and can point at a different path.
+
+Setup on a new machine, once the repo is cloned:
+
+1. `~/Code/vimode/host/install.sh` registers the native host.
+2. `brave://extensions`, Developer mode on, "Load unpacked", pick `~/Code/vimode`.
+   Policy can only force-install extensions from a store. Brave keeps loading
+   it from that directory, so a change there applies after the reload button
+   on its card.
+
+Link hints are not in vimode yet. Vimium's old exported settings are still in
+`vimium/`, and it is no longer force-installed, so it can be installed from the
+store and switched on for hints.
 
 ---
 
@@ -1770,7 +1796,7 @@ nothing is in the pipe but `cat`, so an image piped in still copies as bytes.
 - qutebrowser stays installed with its config, but nothing opens in it: Google
   refuses to sign in from its embedded Chromium ("Couldn't sign you in"), which
   took Gmail and Calendar with it, so Brave came back. Its `config.py` ports the
-  Vimium keymap from `vimium/`, so both browsers navigate the same way, and
+  Vimium keymap from `vimium/`, the same keys vimode's `vimoderc` carries, and
   sets Google as the search engine and dark mode on every page
   (<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> turns it off for the current site).
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> opens a private window, marked by a

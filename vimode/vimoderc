@@ -1,0 +1,49 @@
+# vimode keymap, read live by the extension (~/Code/vimode) through its native
+# host: saving this file applies it to every open tab within a second. This is
+# the whole keymap, with nothing built in underneath: a key does something only
+# if a line here maps it. `map <keys> <command>` and `set <name> <value>`, in
+# Vimium's syntax. Problems (an unknown command, a typo) show on the
+# extension's options page and skip just that line.
+
+# A page that focuses a field as it loads would otherwise start in insert mode
+# and swallow the first keys meant for here.
+set grabBackFocus true
+
+# Modes
+map i enterInsertMode
+map gi focusInput
+
+# Scrolling
+map j scrollDown
+map k scrollUp
+map h scrollLeft
+map l scrollRight
+map <c-d> scrollPageDown
+map <c-u> scrollPageUp
+map gg scrollToTop
+map G scrollToBottom
+map zH scrollToLeft
+map zL scrollToRight
+
+# History and the address
+map <c-o> goBack
+map <c-i> goForward
+map gu goUp
+map gU goToRoot
+map yy copyCurrentUrl
+
+# Tabs
+map L nextTab
+map H previousTab
+map g0 firstTab
+map g$ lastTab
+map ^ visitPreviousTab
+map bt createTab
+map yt duplicateTab
+map bd removeTab
+map X restoreTab
+map <a-p> togglePinTab
+map gbo closeOtherTabs
+map gbr closeTabsOnRight
+map gbH moveTabLeft
+map gbL moveTabRight

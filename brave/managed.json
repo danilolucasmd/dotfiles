@@ -23,7 +23,6 @@
   "EditBookmarksEnabled": false,
 
   "ExtensionInstallForcelist": [
-    "dbepggeogbaibhgnhhndojpepiihcmeb;https://clients2.google.com/service/update2/crx",
     "aeblfdkhhhdcdjpifhhbdiojplfjncoa;https://clients2.google.com/service/update2/crx",
     "eimadpbcbfnmbkopoojfekhnkhdbieeh;https://clients2.google.com/service/update2/crx",
     "lfjnnkckddkopjfgmbcpdiolnmfobflj;https://clients2.google.com/service/update2/crx",
