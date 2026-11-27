@@ -354,6 +354,26 @@ config.set("colors.statusbar.url.success.https.fg", GREEN)
 config.set("colors.statusbar.url.warn.fg", YELLOW)
 config.set("colors.statusbar.url.error.fg", RED)
 
+# The url colours are global, not per mode, so an https address is GREEN on the
+# GREEN insert bar and unreadable. In insert mode the plain url types take the
+# mode label's colour instead; hover, warn and error keep their own so they
+# still stand out. This has to live in UrlText's own stylesheet: Qt lets a
+# widget's own sheet beat any ancestor's, so a rule on the StatusBar sheet
+# would lose to the urltype colours. The ancestor selector still tracks the
+# mode because the bar re-registers its sheet on every mode change.
+from qutebrowser.mainwindow.statusbar import url as _statusurl
+
+_INSERT_URL_MARK = "/* insert-mode url */"
+if _INSERT_URL_MARK not in _statusurl.UrlText.STYLESHEET:
+    _statusurl.UrlText.STYLESHEET += _INSERT_URL_MARK + "".join(
+        f"""
+        QWidget#StatusBar[color_flags~="insert"] QLabel#UrlText[urltype="{kind}"] {{
+            color: {{{{ conf.colors.statusbar.insert.fg }}}};
+        }}
+        """
+        for kind in ("normal", "success", "success_https")
+    )
+
 # Completion (the :open list): mauve marks the selected row and the typed
 # match, categories sit a step darker than the rows.
 config.set("colors.completion.fg", FG)
