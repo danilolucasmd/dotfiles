@@ -24,6 +24,13 @@ return {
         json = { "biome-check" },
         css = { "biome-check" },
       },
+      formatters = {
+        -- Without a biome.json, Biome formats with its own defaults (tabs,
+        -- short arrays joined on one line), turning a one-line edit in a
+        -- project with another style into a whole-file diff. So it only runs
+        -- in projects that configure it.
+        ["biome-check"] = { require_cwd = true },
+      },
       format_on_save = function(buf)
         local enabled = vim.b[buf].autoformat
         if enabled == nil then
