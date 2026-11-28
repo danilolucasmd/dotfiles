@@ -46,6 +46,7 @@
     }
   },
   "theme": "auto",
+  "editorMode": "vim",
   "preferredNotifChannel": "ghostty",
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
