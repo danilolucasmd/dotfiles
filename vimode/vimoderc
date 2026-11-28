@@ -23,6 +23,10 @@ set linkHintCharacters sadfjklewcmpgh
 # after this many ms (qutebrowser's keyhint.delay).
 set keyhintDelay 500
 
+# Scrolling glides, and a held key keeps gliding without the system's key
+# repeat delay.
+set smoothScroll true
+
 # Modes
 map i enterInsertMode
 map : enterCommandMode
